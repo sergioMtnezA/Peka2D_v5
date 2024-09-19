@@ -1,34 +1,34 @@
 # **CPU compilation**
 Set SET_SIMGPU=0 in define.h
 
-make
+`make`
 
-./peka pathFolder/ caseName
+`./peka pathFolder/ caseName`
 
-*DEBUG mode*
+**DEBUG mode**
 
-make DEBUG=yes
+`make DEBUG=yes`
 
-valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka pathFolder/ caseName
+`valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka pathFolder/ caseName`
 
-*Parallelzed OMP*
+**Parallelzed OMP**
 
 Set the number of CPU cores SET_OPENMP in define.h
 
-make OMP=yes
+`make OMP=yes`
 
 
 # **GPU compilation**
 Set SET_SIMGPU=1 in define.h
 
-make -f MakefileCUDA
+`make -f MakefileCUDA`
 
-./gpeka pathFolder/ caseName
+`./gpeka pathFolder/ caseName`
 
 *DEBUG mode*
 
-make -f MakefileCUDA DEBUG=yes
+`make -f MakefileCUDA DEBUG=yes`
 
-compute-sanitizer --tool memcheck --leak-check full ./peka pathFolder/ caseName
+`compute-sanitizer --tool memcheck --leak-check full ./peka pathFolder/ caseName`
  
 
