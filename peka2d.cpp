@@ -31,10 +31,9 @@
 #include <string.h>
 #include <math.h>
 
-#include "lib/define.h"
-#include "lib/mainKernel.h"
-//#include "lib/read_io.h"
-//#include "lib/hydronia.h"
+#include "src/define.h"
+#include "src/mainKernel.h"
+
 
 Peka2D_Setup *pksetup;
 
