@@ -19,10 +19,6 @@ jobs:
       with:
         cuda: '12.5.0'
       
-  build-and-test:
-    runs-on: ubuntu-latest
-
-    steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
@@ -32,10 +28,19 @@ jobs:
           
     - name: Build project CPU
       run: |
-        make
+        make DEBUG=yes
+
+    - name: Build project GPU
+      run: |
+        make -f MakefileCUDA DEBUG=yes
 
     - name: Run CPU memory check with Valgrind
       run: |
-        cd build
         valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_square
         valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_triangle
+
+    - name: Run GPU memory check with Sanitizer
+      run: |
+        compute-sanitizer --tool memcheck --leak-check full ./peka benchmark_tests/ case_square
+        compute-sanitizer --tool memcheck --leak-check full ./peka benchmark_tests/ case_triangle
+      
