@@ -1,3 +1,6 @@
+# **Documentation**
+Open docs/html/index.html in any web-browser (Firefox, Chrome, Edge, etc)
+
 # **CPU compilation**
 Set SET_SIMGPU=0 in define.h
 
