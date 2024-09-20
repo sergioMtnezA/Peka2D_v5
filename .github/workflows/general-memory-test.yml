@@ -45,7 +45,6 @@ jobs:
 
     - name: Run CPU memory check with Valgrind
       run: |
-        cd build
         valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_square 2> valgrind_case_square.log
         valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_triangle 2> valgrind_case_triangle.log
 
