@@ -30,11 +30,13 @@ typedef struct t_cuPtr_ t_cuPtr;
 
 typedef struct t_timers_ t_timers;
 
-
+/**
+ * @brief Compilation and execution messages
+*/
 struct t_message_{
-	char logFile[1024];     /**< Log file */
-	int error;                    /**< If Error > 0, Execution will be aborted */
-	char errorProperty[1024];     /**< Error string */	
+	char logFile[1024]; /**< @brief Log file path*/
+	int error; /**< If Error > 0, Execution will be aborted */
+	char errorProperty[1024]; /**< @brief Error string */	
 	int nWarning;
 	char **warning;
 	int nMsgL0;
@@ -47,6 +49,10 @@ struct t_message_{
 	char **MsgL3;
 };
 
+
+/**
+ * @brief Simulation execution paramenters
+*/
 struct t_parameters_{
 	char proj[1024];
 	char dir[1024];
@@ -64,6 +70,10 @@ struct t_parameters_{
 
 };
 
+
+/**
+ * @brief Geometrical mesh and flow data
+*/
 struct t_mesh_{
 	int id;
     int NCwall;
@@ -92,6 +102,10 @@ struct t_mesh_{
     double minZ, maxZ;
 };
 
+
+/**
+ * @brief Calculus cells: flow variables in cells
+*/
 struct t_c_cell_{
 	int id;
     double z;
@@ -113,6 +127,10 @@ struct t_c_cell_{
 	t_g_cell *geom;
 };
 
+
+/**
+ * @brief List of calculus cells @ref t_c_cell_
+*/
 struct l_c_cells_{
 	int size;
 	int n;
@@ -120,6 +138,10 @@ struct l_c_cells_{
 	t_c_cell** pcells;
 };
 
+
+/**
+ * @brief Geometry cells: mesh characteristics in cells
+*/
 struct t_g_cell_{
 	int id;
     int isBound;//isBound is and identifier to know if a cell is bound or not. 0->normal cell, negative=inlet cell, positive->outletcell
@@ -134,17 +156,29 @@ struct t_g_cell_{
     double Lwallmax;
 };
 
+
+/**
+ * @brief List of geometry cells @ref t_g_cell_
+*/
 struct l_g_cells_{
 	int size;
 	int n;
 	t_g_cell *cells;
 };
 
+
+/**
+ * @brief Geometry mesh node
+*/
 struct t_node_{
 	int id;
 	double x,y,z;
 };
 
+
+/**
+ * @brief List of geometry nodes @ref t_node_
+*/
 struct l_nodes_{
 	int size;
 	int n;
@@ -152,6 +186,10 @@ struct l_nodes_{
 	t_node *nodes;
 };
 
+
+/**
+ * @brief Wall characteristics for computation
+*/
 struct t_wall_{
     int idWall;
 
@@ -188,12 +226,20 @@ struct t_wall_{
 
 };
 
+
+/**
+ * @brief List of walls for computation @ref t_wall_
+*/
 struct l_wall_{
 	int size;
 	int n;
 	t_wall *wall;
 };
 
+
+/**
+ * @brief Geometrical edges for mesh topology construction
+*/
 struct t_edge_{
 	int id;
 	double normal[3];
@@ -202,6 +248,10 @@ struct t_edge_{
 	int isBoundary;
 };
 
+
+/**
+ * @brief List of geometrical edges for mesh construction
+*/
 struct l_edges_{
 	int size;
 	int n;
@@ -209,6 +259,9 @@ struct l_edges_{
 };
 
 
+/**
+ * @brief Open boundary geometry and flow conditions
+*/
 struct t_bound_{
     char idname[1024];
     int type;               /**< Hydraulic boundary type*/
@@ -242,109 +295,133 @@ struct t_bound_{
 };
 
 
+/**
+ * @brief Arrange all the domain parameters, run controls and data arrays required for computation
+*/
 struct t_arrays_{
 
     //parameters
-	int ncores, gpuid;
-	double ti,tf,CFL;
+	int ncores; /**< @brief Number of CPU threads selected */
+	int gpuid; /**< @brief GPU device ID selected by user*/
+	double ti; /**< @brief Initial time for simulation*/
+	double tf; /**< @brief Final time for simulation*/
+	double CFL; /**< @brief CFL restriction for time step limitation */
 
-	int writeMass;
-	int writeExtremes;
-	int indexWriteHotstart;
+	int writeMass; /**< @brief Write in output file mass balance information */
+	int writeExtremes; /**< @brief Compute and write maximum values for the variables */
+	int indexWriteHotstart; /**< @brief Initial output index for the hortstart initialization */
 
-    int nIterOut;
-	double dtOut;
-	double dtDump;
-	double minh;  
+    int nIterOut; /**< @brief Number of iterations for sreen output */
+	double dtOut; /**< @brief Temporal frequency for writing state resutls */  
+	double dtDump; /**< @brief Temporal frequency for dump components integrations */
+	double minh; /**< @brief Minimun flow depth for neglecting cell velocity */
 
-	int NCwall;
-	int ncells;		//-->NC
-	int nw_calc;	//-->NW
-	int nw_bound;
-	int nInlet,nOutlet;
+	int NCwall; /**< @brief Number of walls per cell :: NCWALL*/
+	int ncells; /**< @brief Number of cells in the domain :: NCELLS */
+	int nw_calc; /**< @brief Number of internal (calculus) walls :: NWCALC */
+	int nw_bound; /**< @brief Number of boundary walls */
+	int nInlet; /**< @brief Number of inlets in the domain */
+	int nOutlet; /**< @brief Number of outlets in the domain */
 
 
     //computation controls
-    double t, dt;
+    double t; /**< @brief Run-control time mark */
+	double dt; /**< @brief Run-control time step */
 
-	int nIter, indexOut, indexDump;
-    int dumpComponent, dumpState;
+	int nIter; /**< @brief Run-control iteration*/
+	int indexOut; /**< @brief Run-control state output index*/
+	int indexDump; /**< @brief Run-control component output index*/
+    int dumpComponent; /**< @brief Run-control flag to dump components in the current iteration*/
+	int dumpState; /**< @brief Run-control flag to dump state in the current iteration*/
 
-	double massOld, massNew;
-    double massError;
+	double massOld; /**< @brief Run-control integrated volume at the beginning of the time step*/
+	double massNew; /**< @brief Run-control current integrated volume */
+    double massError; /**< @brief Run-control mass error computed at the end of the time stop */
 
-	double massIn, massOut;
-	double qTotalIn, qTotalOut;
+	double massIn; /**< @brief Run-control total inflow volume accumulated during the simulation*/
+	double massOut; /**< @brief Run-control total outflow volume accumulated during the simulation*/
+	double qTotalIn; /**< @brief Run-control inflow discharge inegrated for all the inlet boundaries*/
+	double qTotalOut; /**< @brief Run-control outflow discharge inegrated for all the outlet boundaries*/
 
 
 	//ARRAY DE CELDA
-    int nActCells;
-    int *actCells;   //NC
-    int *activeC;    //NC	
+    int nActCells; /**< @brief Run-control number of active cells*/
+    int *actCells; /**< @brief [NCELLS] Active cell indexes*/
+    int *activeC; /**< @brief [NCELLS] Local flags for active cells :: [0] Unactive cell - [1] Active cell*/	
 
-    int *cidx;
-    int *nneig;     //NC
+    int *cidx; /**< [NCELLS] @brief Cell indexes*/
+    int *nneig; /**< [NCELLS] @brief Number of neighboring cells*/
 
-	double *z;		//NC
-	double *h;		//NC
-	double *hu;		//NC
-	double *hv;		//NC	
-    double *u,*v; 		//NC equivalent to c1->u,c1->v respectively
-    double *modulou;
-	double *sqrh;   //NC equivalent to c1->raizh	
+	double *z; /**< @brief [NCELLS] Bed elevation in cells*/
+	double *h; /**< @brief [NCELLS] Flow depth in cells*/
+	double *hu; /**< @brief [NCELLS] X-discharge in cells*/
+	double *hv; /**< @brief [NCELLS] Y-discharge in cells*/
+    double *u; /**< @brief [NCELLS] X-velocity in cells*/ 
+	double *v; /**< @brief [NCELLS] Y-velocity in cells*/
+    double *modulou; /**< @brief [NCELLS] Velocity modulus in cells*/
+	double *sqrh; /**< @brief [NCELLS] Square depth of flow depth in cells*/
 
     
-	double *area;	//NC
-	double *nman;	//NC
-    double *SOX,*SOY; //NC
+	double *area; /**< @brief [NCELLS] Cell area*/
+	double *nman; /**< @brief [NCELLS] Manning roughness coefficient nMan [s m^(-1/3)] in cells*/
+    double *SOX; /**< @brief [NCELLS] X-direction bed slope*/
+	double *SOY; /**< @brief [NCELLS] Y-direction bed slope*/
 
-	double *mass;	//NC
+	double *mass; /**< @brief [NCELLS] Mass in cells*/
 	
 
 	//ARRAY DE CELDAS*NPAREDES
     int nWallCell;
-	double *dh;		//NC * NCwall
-	double *dhu;	//NC * NCwall
-	double *dhv;	//NC * NCwall
+	double *dh; /**< @brief [NCELLS*NCWALL] Wall-contributions to cell mass*/
+	double *dhu;/**< @brief [NCELLS*NCWALL] Wall-contributions to cell X-momentum*/
+	double *dhv;/**< @brief [NCELLS*NCWALL] Wall-contributions to cell X-momentum*/
 
-    int *solidWallByCell;	//NC * NCwall
-    int *neighCell;		//NC * NCwall It specifies the idenfifier of the neigcell of i at edge j by means of neigOfCell[j*ncell+i]
-    int *neighWall;		//NC * NCwall It specifies the idenfifier of the neigcell of i at edge j by means of neigOfCell[j*ncell+i]
+    int *solidWallByCell; /**< @brief [NCELLS*NCWALL] Local flag for solid wall behaviour*/
+    int *neighCell; /**< @brief [NCELLS*NCWALL] Neigboring cell indexes. Boundary neigbour marked with index -1*/
+    int *neighWall; /**< @brief [NCELLS*NCWALL] Neigboring wall IDs :: Internal calculus wall - Bound walls*/
 	
-	double *normalXbyCell; //NC * NCwall
-	double *normalYbyCell; //NC * NCwall
+	double *normalXbyCell; /**< @brief [NCELLS*NCWALL] X-nomall neighboring wall*/
+	double *normalYbyCell; /**< @brief [NCELLS*NCWALL] Y-nomall neighboring wall*/
 	
 
     //ARRAY DE PAREDES INTERNAS DE CALCULO
-    int nActWalls;
-    int *actWalls;      //NW
-    int *activeW;       //NW
+    int nActWalls; /**< @brief Run-control number of active calculus walls*/
+    int *actWalls; /**< @brief [NWCALC] Active calculus walls indexes*/
+    int *activeW; /**< @brief [NWCALC] Local flags for active calculus walls :: [0] Unactive wall - [1] Active wall*/
 
-    int *widx;			//NW
+    int *widx; /**< @brief [NWCALC] Calculus walls IDs*/
 
-	int *idx1;			//NW
-	int *idx2;			//NW
-	int *idw1;			//NW
-	int *idw2;			//NW
+	int *idx1; /**< @brief [NWCALC] Neighboring left-cell ID for calculus wall*/
+	int *idx2; /**< @brief [NWCALC] Neigboring right-cell ID for calculus wall*/
+	int *idw1; /**< @brief [NWCALC] Wall-ordering flag in left-cell*/
+	int *idw2; /**< @brief [NWCALC] Wall-ordering flag in right-cell*/
 	    
-	double *normalX, *normalY;	//NW
-	double *deltaX;		//NW
-	double *length;		//NW
-	double *distNormal; //NW
-    double *distCentX, *distCentY;
+	double *normalX; /**< @brief [NWCALC] X-normal for calculus wall*/
+	double *normalY; /**< @brief [NWCALC] Y-normal for calculus wall*/
+	double *deltaX; /**< @brief [NWCALC] Distance factor for time step computation*/
+	double *length; /**< @brief [NWCALC] Wall length*/
+	double *distNormal; /**< @brief [NWCALC] Distance between neighboring cell centers projected on the wall-normal direction*/
+    double *distCentX;  /**< @brief [NWCALC] Distance between neighboring cell centers projected on the X-direction*/
+	double *distCentY; /**< @brief [NWCALC] Distance between neighboring cell centers projected on the Y-direction*/
     
-    double *nman2wall; 		//NW
-    double *gp;			//NW
+    double *nman2wall; /**< @brief [NWCALC] Square of the averaged Manning parameter at the calculus wall*/
+    double *gp; /**< @brief [NWCALC] Projected gravity acceleration along the bed-normal direction :: gp=g*cos^2(B)*/
 
-	int *typeOfBound;	//NW
-    int *solidWall;		//NW
+	int *typeOfBound; /**< @brief [NWCALC] Type of bound condition at the wall*/
+    int *solidWall; /**< @brief [NWCALC] Local flag of solid wall behaviour for calculus wall* /
 
-    double *qnormalL;	//NW
-	double *localDt;	//NW
+    double *qnormalL; /**< @brief [NWCALC] Upwind-left volume rate for the calculus wall*/
+	double *localDt; /**< @brief [NWCALC] Local time step limitation for the calculus wall*/
 
 };
 
 
+/**
+ * @brief Arrange the pointers to CUDA memory for all the run-control and data-arrays in @ref t_arrays
+ * 
+ * The definition of the variables and memory size is the same as that in the @ref t_arrays description.
+ * This structure is created in the RAM memory but the CUDA memory for data-arrays is allocated using these pointers.
+*/
 struct t_cuPtr_{
 
 	int *index, *check;
@@ -389,6 +466,9 @@ struct t_cuPtr_{
 };
 
 
+/**
+ * @brief Timers for accounting computational time
+*/
 struct t_timers_{
 	double total=0.0;
 	double loading=0.0;
