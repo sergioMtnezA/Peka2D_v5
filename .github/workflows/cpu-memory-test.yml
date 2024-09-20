@@ -9,6 +9,16 @@ on:
       - main
 
 jobs:
+
+  CI:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: Jimver/cuda-toolkit@v0.2.16
+      id: cuda-toolkit
+      with:
+        cuda: '12.5.0'
+      
   build-and-test:
     runs-on: ubuntu-latest
 
@@ -19,9 +29,6 @@ jobs:
     - name: Clean previous build
       run: |
         make clean
-        
-    - name: cuda-toolkit
-      uses: Jimver/cuda-toolkit@v0.2.16
           
     - name: Build project CPU
       run: |
