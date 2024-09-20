@@ -408,8 +408,8 @@ struct t_arrays_{
     double *gp; /**< @brief [NWCALC] Projected gravity acceleration along the bed-normal direction :: gp=g*cos^2(B)*/
 
 	int *typeOfBound; /**< @brief [NWCALC] Type of bound condition at the wall*/
-    int *solidWall; /**< @brief [NWCALC] Local flag of solid wall behaviour for calculus wall* /
-
+    int *solidWall; /**< @brief [NWCALC] Local flag of solid wall behaviour for calculus wall*/
+	
     double *qnormalL; /**< @brief [NWCALC] Upwind-left volume rate for the calculus wall*/
 	double *localDt; /**< @brief [NWCALC] Local time step limitation for the calculus wall*/
 
