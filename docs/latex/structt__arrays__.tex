@@ -1,0 +1,969 @@
+\hypertarget{structt__arrays__}{}\doxysection{t\+\_\+arrays\+\_\+ Struct Reference}
+\label{structt__arrays__}\index{t\_arrays\_@{t\_arrays\_}}
+
+
+Arrange all the domain parameters, run controls and data arrays required for computation.  
+
+
+
+
+{\ttfamily \#include $<$structs.\+h$>$}
+
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{structt__arrays___a18c2a3dcc784896ab11ebe6a0c2f4302}{ncores}}
+\begin{DoxyCompactList}\small\item\em Number of CPU threads selected. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a9ff1cfb5926cea3a0d93b53c3286587f}{gpuid}}
+\begin{DoxyCompactList}\small\item\em GPU device ID selected by user. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___a61ede194766b1ce52563a99d09428d0c}{ti}}
+\begin{DoxyCompactList}\small\item\em Initial time for simulation. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___adf942b4a09a753caf8add3308b6992f7}{tf}}
+\begin{DoxyCompactList}\small\item\em Final time for simulation. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___a7215812fbe3ad267229f1d6673021d41}{CFL}}
+\begin{DoxyCompactList}\small\item\em CFL restriction for time step limitation. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a9f55fbf0fba7e2e7395073afbd52c62b}{write\+Mass}}
+\begin{DoxyCompactList}\small\item\em Write in output file mass balance information. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a29a3baced4650446d85a0cc79454aa42}{write\+Extremes}}
+\begin{DoxyCompactList}\small\item\em Compute and write maximum values for the variables. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___ac69f7446f646ad9f4d495bab36f8db16}{index\+Write\+Hotstart}}
+\begin{DoxyCompactList}\small\item\em Initial output index for the hortstart initialization. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a5a158ea36013a3dce6fea311e91789ea}{n\+Iter\+Out}}
+\begin{DoxyCompactList}\small\item\em Number of iterations for sreen output. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___ac9b844c164344a0729af332adf76ca26}{dt\+Out}}
+\begin{DoxyCompactList}\small\item\em Temporal frequency for writing state resutls. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___a596d322be6cf48e36694c8459608becc}{dt\+Dump}}
+\begin{DoxyCompactList}\small\item\em Temporal frequency for dump components integrations. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___a5e2e1fb12b3cf9feb1b2381bb20a546f}{minh}}
+\begin{DoxyCompactList}\small\item\em Minimun flow depth for neglecting cell velocity. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a31e69a388973f7935854d31d68f78af6}{NCwall}}
+\begin{DoxyCompactList}\small\item\em Number of walls per cell \+:: NCWALL. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a14f1a5246b923385aba7e2a310995dd2}{ncells}}
+\begin{DoxyCompactList}\small\item\em Number of cells in the domain \+:: NCELLS. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___aa00972d9c20291c650abb1c70ada0174}{nw\+\_\+calc}}
+\begin{DoxyCompactList}\small\item\em Number of internal (calculus) walls \+:: NWCALC. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a04e33fb501ef3193441e35262e5d6f0b}{nw\+\_\+bound}}
+\begin{DoxyCompactList}\small\item\em Number of boundary walls. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___ac07f29747bac88d7970c71909036ba14}{n\+Inlet}}
+\begin{DoxyCompactList}\small\item\em Number of inlets in the domain. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a2aa0adc754d212b0715435e86736f44b}{n\+Outlet}}
+\begin{DoxyCompactList}\small\item\em Number of outlets in the domain. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___a1e43528d3e3abcc3772f3b5c97a7a4c9}{t}}
+\begin{DoxyCompactList}\small\item\em Run-\/control time mark. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___ae4879c967b39912c8b516d98406cfc55}{dt}}
+\begin{DoxyCompactList}\small\item\em Run-\/control time step. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a3a9a8f8f93ff9a45a50111bd8b2b65b9}{n\+Iter}}
+\begin{DoxyCompactList}\small\item\em Run-\/control iteration. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a640ac8bd848a364586bdb115c91370bc}{index\+Out}}
+\begin{DoxyCompactList}\small\item\em Run-\/control state output index. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a25c352e7e9efdb25e74fe5e9e96ea80e}{index\+Dump}}
+\begin{DoxyCompactList}\small\item\em Run-\/control component output index. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a827c739b32f6e55225d39e2d631698ff}{dump\+Component}}
+\begin{DoxyCompactList}\small\item\em Run-\/control flag to dump components in the current iteration. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a9d6695393841ac3421ffca4041f6f013}{dump\+State}}
+\begin{DoxyCompactList}\small\item\em Run-\/control flag to dump state in the current iteration. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___a3bd402d5738e678675db232881540a80}{mass\+Old}}
+\begin{DoxyCompactList}\small\item\em Run-\/control integrated volume at the beginning of the time step. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___a07ddf7711a2a5f4e88bd70e1bf676b7f}{mass\+New}}
+\begin{DoxyCompactList}\small\item\em Run-\/control current integrated volume. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___a8acbbb13385dd0fabadd7c2df2c3db1f}{mass\+Error}}
+\begin{DoxyCompactList}\small\item\em Run-\/control mass error computed at the end of the time stop. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___ae4fb5fa2be2379cb884f2f1789f0b307}{mass\+In}}
+\begin{DoxyCompactList}\small\item\em Run-\/control total inflow volume accumulated during the simulation. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___add95c6fff44343b5cdcb847118f19883}{mass\+Out}}
+\begin{DoxyCompactList}\small\item\em Run-\/control total outflow volume accumulated during the simulation. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___af0d93a6d48babe2d567da71bc0ecbf04}{q\+Total\+In}}
+\begin{DoxyCompactList}\small\item\em Run-\/control inflow discharge inegrated for all the inlet boundaries. \end{DoxyCompactList}\item 
+double \mbox{\hyperlink{structt__arrays___ad2dc7abd32238506e3e99023a2afb479}{q\+Total\+Out}}
+\begin{DoxyCompactList}\small\item\em Run-\/control outflow discharge inegrated for all the outlet boundaries. \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a44a7f03a2e51a8cc327c0a5ed4828989}{n\+Act\+Cells}}
+\begin{DoxyCompactList}\small\item\em Run-\/control number of active cells. \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a12829ef94d16c80187ac6f7632b616d1}{act\+Cells}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Active cell indexes \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a86ba8118789494ff4c319f7550958261}{activeC}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Local flags for active cells \+:: \mbox{[}0\mbox{]} Unactive cell -\/ \mbox{[}1\mbox{]} Active cell \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___ab02f4a9de243d9e6b7ea05a5137031c9}{cidx}}
+\begin{DoxyCompactList}\small\item\em Cell indexes. \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a7479e2083a8dd9d410a633bb505fd3e4}{nneig}}
+\begin{DoxyCompactList}\small\item\em Number of neighboring cells. \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a40ebf43328963b2e54b798ae24ae3e95}{z}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Bed elevation in cells \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a72226f52788539c120a509a026404460}{h}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Flow depth in cells \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a17e78707559d8417e1029a8db2c4cacd}{hu}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} X-\/discharge in cells \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___aa39883b3f502626ed8c57e1776083d60}{hv}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Y-\/discharge in cells \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a143d92d6a90c8bab56f3459daa35c4b7}{u}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} X-\/velocity in cells \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___af9e1cebd9217291e3eb2ac91669b8c04}{v}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Y-\/velocity in cells \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___aca8a3114c06796c64192f436bdf3c033}{modulou}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Velocity modulus in cells \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a15506a6247e7cc9ab1ba28c29614f03f}{sqrh}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Square depth of flow depth in cells \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a797b159bf8de057ca1433a0afec19a42}{area}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Cell area \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a531759c42e23a1d94e33c2e87e6d9a55}{nman}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Manning roughness coefficient n\+Man \mbox{[}s m$^\wedge$(-\/1/3)\mbox{]} in cells \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___aec34a48bfa4a09971bcfe9959204d919}{SOX}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} X-\/direction bed slope \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a79025c5b56731d3215ed299d17a5b8b1}{SOY}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Y-\/direction bed slope \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a09d446564b7de9a9305cf7e403380e55}{mass}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS\mbox{]} Mass in cells \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___a1b3143c6f7e36baaac196d0d8e52c67d}{n\+Wall\+Cell}}
+\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a5a752282f5b46a30663547f47361bbb3}{dh}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Wall-\/contributions to cell mass \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a824ce55974933a8ab968929887cdb4cc}{dhu}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Wall-\/contributions to cell X-\/momentum \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___ada4fbcc4d7e465bb95f0a142834cdfbb}{dhv}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Wall-\/contributions to cell X-\/momentum \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a0e1ea955aa5da7b200606df18eb92b6d}{solid\+Wall\+By\+Cell}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Local flag for solid wall behaviour \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a887b4a09f8f283dade3962928cdd1c4e}{neigh\+Cell}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Neigboring cell indexes. Boundary neigbour marked with index -\/1 \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a0e0c61e5463b8b119daf6e855f2a7a52}{neigh\+Wall}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Neigboring wall IDs \+:: Internal calculus wall -\/ Bound walls \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a05991a8201199380ef8317aff1bfdec3}{normal\+Xby\+Cell}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} X-\/nomall neighboring wall \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a0817f6ff811662b0627aeb53184dafd7}{normal\+Yby\+Cell}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Y-\/nomall neighboring wall \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{structt__arrays___ab15aa71e005580dbddb1a1226b2061dc}{n\+Act\+Walls}}
+\begin{DoxyCompactList}\small\item\em Run-\/control number of active calculus walls. \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a9348608a9347e6b18abec5b447ced93b}{act\+Walls}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Active calculus walls indexes \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a7ba80d5dc1bfe02ece02993521aa551c}{activeW}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Local flags for active calculus walls \+:: \mbox{[}0\mbox{]} Unactive wall -\/ \mbox{[}1\mbox{]} Active wall \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a6706bb8507e07a8893351fb5631f1e92}{widx}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Calculus walls IDs \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a14eca7a06a251bf8e3a1fb5e07730796}{idx1}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Neighboring left-\/cell ID for calculus wall \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a6937151a92cbedfd681aef94f67274d5}{idx2}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Neigboring right-\/cell ID for calculus wall \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___acb855897cbd4e35ee5050697af0e3486}{idw1}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Wall-\/ordering flag in left-\/cell \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___a903657a304eda11977b8fa6df954c1cd}{idw2}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Wall-\/ordering flag in right-\/cell \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___af5d57ddda481bda38320099ebd7aff04}{normalX}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} X-\/normal for calculus wall \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___ae75709bfb257e0a761bde8835c8b23e0}{normalY}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Y-\/normal for calculus wall \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a545229f1de73214f6cd2147fc4bb7a34}{deltaX}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Distance factor for time step computation \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a543f87e6a192018a94b3ddd93724802f}{length}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Wall length \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a9ccdc3ffe651f3a1da58aac477ea2eba}{dist\+Normal}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Distance between neighboring cell centers projected on the wall-\/normal direction \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a0cdaca2586f3b6cf6f605b2698c5dfab}{dist\+CentX}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Distance between neighboring cell centers projected on the X-\/direction \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___aae06c838746e36122dfcb346db43392a}{dist\+CentY}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Distance between neighboring cell centers projected on the Y-\/direction \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a878be8f901fdfbcfadb795dc964455ee}{nman2wall}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Square of the averaged Manning parameter at the calculus wall \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___ae03a9c2a587c4c535059608329df1c1e}{gp}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Projected gravity acceleration along the bed-\/normal direction \+:: gp=g$\ast$cos$^\wedge$2(B) \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___aef77233a579d3bfa1dd116e8ea8ee22e}{type\+Of\+Bound}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Type of bound condition at the wall \end{DoxyCompactList}\item 
+int $\ast$ \mbox{\hyperlink{structt__arrays___af7595a9a737b5a97ab394f1964fb6603}{solid\+Wall}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Local flag of solid wall behaviour for calculus wall$\ast$ / \end{DoxyCompactList}\item 
+double $\ast$ \mbox{\hyperlink{structt__arrays___a0d1de8bef845d2bd948b99f2fa340e40}{local\+Dt}}
+\begin{DoxyCompactList}\small\item\em \mbox{[}NWCALC\mbox{]} Local time step limitation for the calculus wall \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Arrange all the domain parameters, run controls and data arrays required for computation. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structt__arrays___a12829ef94d16c80187ac6f7632b616d1}\label{structt__arrays___a12829ef94d16c80187ac6f7632b616d1}} 
+\index{t\_arrays\_@{t\_arrays\_}!actCells@{actCells}}
+\index{actCells@{actCells}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{actCells}{actCells}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::act\+Cells}
+
+
+
+\mbox{[}NCELLS\mbox{]} Active cell indexes 
+
+\mbox{\Hypertarget{structt__arrays___a86ba8118789494ff4c319f7550958261}\label{structt__arrays___a86ba8118789494ff4c319f7550958261}} 
+\index{t\_arrays\_@{t\_arrays\_}!activeC@{activeC}}
+\index{activeC@{activeC}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{activeC}{activeC}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::activeC}
+
+
+
+\mbox{[}NCELLS\mbox{]} Local flags for active cells \+:: \mbox{[}0\mbox{]} Unactive cell -\/ \mbox{[}1\mbox{]} Active cell 
+
+\mbox{\Hypertarget{structt__arrays___a7ba80d5dc1bfe02ece02993521aa551c}\label{structt__arrays___a7ba80d5dc1bfe02ece02993521aa551c}} 
+\index{t\_arrays\_@{t\_arrays\_}!activeW@{activeW}}
+\index{activeW@{activeW}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{activeW}{activeW}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::activeW}
+
+
+
+\mbox{[}NWCALC\mbox{]} Local flags for active calculus walls \+:: \mbox{[}0\mbox{]} Unactive wall -\/ \mbox{[}1\mbox{]} Active wall 
+
+\mbox{\Hypertarget{structt__arrays___a9348608a9347e6b18abec5b447ced93b}\label{structt__arrays___a9348608a9347e6b18abec5b447ced93b}} 
+\index{t\_arrays\_@{t\_arrays\_}!actWalls@{actWalls}}
+\index{actWalls@{actWalls}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{actWalls}{actWalls}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::act\+Walls}
+
+
+
+\mbox{[}NWCALC\mbox{]} Active calculus walls indexes 
+
+\mbox{\Hypertarget{structt__arrays___a797b159bf8de057ca1433a0afec19a42}\label{structt__arrays___a797b159bf8de057ca1433a0afec19a42}} 
+\index{t\_arrays\_@{t\_arrays\_}!area@{area}}
+\index{area@{area}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{area}{area}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::area}
+
+
+
+\mbox{[}NCELLS\mbox{]} Cell area 
+
+\mbox{\Hypertarget{structt__arrays___a7215812fbe3ad267229f1d6673021d41}\label{structt__arrays___a7215812fbe3ad267229f1d6673021d41}} 
+\index{t\_arrays\_@{t\_arrays\_}!CFL@{CFL}}
+\index{CFL@{CFL}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{CFL}{CFL}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::\+CFL}
+
+
+
+CFL restriction for time step limitation. 
+
+\mbox{\Hypertarget{structt__arrays___ab02f4a9de243d9e6b7ea05a5137031c9}\label{structt__arrays___ab02f4a9de243d9e6b7ea05a5137031c9}} 
+\index{t\_arrays\_@{t\_arrays\_}!cidx@{cidx}}
+\index{cidx@{cidx}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{cidx}{cidx}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::cidx}
+
+
+
+Cell indexes. 
+
+\mbox{[}NCELLS\mbox{]} \mbox{\Hypertarget{structt__arrays___a545229f1de73214f6cd2147fc4bb7a34}\label{structt__arrays___a545229f1de73214f6cd2147fc4bb7a34}} 
+\index{t\_arrays\_@{t\_arrays\_}!deltaX@{deltaX}}
+\index{deltaX@{deltaX}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{deltaX}{deltaX}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::deltaX}
+
+
+
+\mbox{[}NWCALC\mbox{]} Distance factor for time step computation 
+
+\mbox{\Hypertarget{structt__arrays___a5a752282f5b46a30663547f47361bbb3}\label{structt__arrays___a5a752282f5b46a30663547f47361bbb3}} 
+\index{t\_arrays\_@{t\_arrays\_}!dh@{dh}}
+\index{dh@{dh}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{dh}{dh}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::dh}
+
+
+
+\mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Wall-\/contributions to cell mass 
+
+\mbox{\Hypertarget{structt__arrays___a824ce55974933a8ab968929887cdb4cc}\label{structt__arrays___a824ce55974933a8ab968929887cdb4cc}} 
+\index{t\_arrays\_@{t\_arrays\_}!dhu@{dhu}}
+\index{dhu@{dhu}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{dhu}{dhu}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::dhu}
+
+
+
+\mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Wall-\/contributions to cell X-\/momentum 
+
+\mbox{\Hypertarget{structt__arrays___ada4fbcc4d7e465bb95f0a142834cdfbb}\label{structt__arrays___ada4fbcc4d7e465bb95f0a142834cdfbb}} 
+\index{t\_arrays\_@{t\_arrays\_}!dhv@{dhv}}
+\index{dhv@{dhv}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{dhv}{dhv}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::dhv}
+
+
+
+\mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Wall-\/contributions to cell X-\/momentum 
+
+\mbox{\Hypertarget{structt__arrays___a0cdaca2586f3b6cf6f605b2698c5dfab}\label{structt__arrays___a0cdaca2586f3b6cf6f605b2698c5dfab}} 
+\index{t\_arrays\_@{t\_arrays\_}!distCentX@{distCentX}}
+\index{distCentX@{distCentX}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{distCentX}{distCentX}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::dist\+CentX}
+
+
+
+\mbox{[}NWCALC\mbox{]} Distance between neighboring cell centers projected on the X-\/direction 
+
+\mbox{\Hypertarget{structt__arrays___aae06c838746e36122dfcb346db43392a}\label{structt__arrays___aae06c838746e36122dfcb346db43392a}} 
+\index{t\_arrays\_@{t\_arrays\_}!distCentY@{distCentY}}
+\index{distCentY@{distCentY}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{distCentY}{distCentY}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::dist\+CentY}
+
+
+
+\mbox{[}NWCALC\mbox{]} Distance between neighboring cell centers projected on the Y-\/direction 
+
+\mbox{\Hypertarget{structt__arrays___a9ccdc3ffe651f3a1da58aac477ea2eba}\label{structt__arrays___a9ccdc3ffe651f3a1da58aac477ea2eba}} 
+\index{t\_arrays\_@{t\_arrays\_}!distNormal@{distNormal}}
+\index{distNormal@{distNormal}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{distNormal}{distNormal}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::dist\+Normal}
+
+
+
+\mbox{[}NWCALC\mbox{]} Distance between neighboring cell centers projected on the wall-\/normal direction 
+
+\mbox{\Hypertarget{structt__arrays___ae4879c967b39912c8b516d98406cfc55}\label{structt__arrays___ae4879c967b39912c8b516d98406cfc55}} 
+\index{t\_arrays\_@{t\_arrays\_}!dt@{dt}}
+\index{dt@{dt}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{dt}{dt}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::dt}
+
+
+
+Run-\/control time step. 
+
+\mbox{\Hypertarget{structt__arrays___a596d322be6cf48e36694c8459608becc}\label{structt__arrays___a596d322be6cf48e36694c8459608becc}} 
+\index{t\_arrays\_@{t\_arrays\_}!dtDump@{dtDump}}
+\index{dtDump@{dtDump}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{dtDump}{dtDump}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::dt\+Dump}
+
+
+
+Temporal frequency for dump components integrations. 
+
+\mbox{\Hypertarget{structt__arrays___ac9b844c164344a0729af332adf76ca26}\label{structt__arrays___ac9b844c164344a0729af332adf76ca26}} 
+\index{t\_arrays\_@{t\_arrays\_}!dtOut@{dtOut}}
+\index{dtOut@{dtOut}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{dtOut}{dtOut}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::dt\+Out}
+
+
+
+Temporal frequency for writing state resutls. 
+
+\mbox{\Hypertarget{structt__arrays___a827c739b32f6e55225d39e2d631698ff}\label{structt__arrays___a827c739b32f6e55225d39e2d631698ff}} 
+\index{t\_arrays\_@{t\_arrays\_}!dumpComponent@{dumpComponent}}
+\index{dumpComponent@{dumpComponent}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{dumpComponent}{dumpComponent}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::dump\+Component}
+
+
+
+Run-\/control flag to dump components in the current iteration. 
+
+\mbox{\Hypertarget{structt__arrays___a9d6695393841ac3421ffca4041f6f013}\label{structt__arrays___a9d6695393841ac3421ffca4041f6f013}} 
+\index{t\_arrays\_@{t\_arrays\_}!dumpState@{dumpState}}
+\index{dumpState@{dumpState}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{dumpState}{dumpState}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::dump\+State}
+
+
+
+Run-\/control flag to dump state in the current iteration. 
+
+\mbox{\Hypertarget{structt__arrays___ae03a9c2a587c4c535059608329df1c1e}\label{structt__arrays___ae03a9c2a587c4c535059608329df1c1e}} 
+\index{t\_arrays\_@{t\_arrays\_}!gp@{gp}}
+\index{gp@{gp}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{gp}{gp}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::gp}
+
+
+
+\mbox{[}NWCALC\mbox{]} Projected gravity acceleration along the bed-\/normal direction \+:: gp=g$\ast$cos$^\wedge$2(B) 
+
+\mbox{\Hypertarget{structt__arrays___a9ff1cfb5926cea3a0d93b53c3286587f}\label{structt__arrays___a9ff1cfb5926cea3a0d93b53c3286587f}} 
+\index{t\_arrays\_@{t\_arrays\_}!gpuid@{gpuid}}
+\index{gpuid@{gpuid}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{gpuid}{gpuid}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::gpuid}
+
+
+
+GPU device ID selected by user. 
+
+\mbox{\Hypertarget{structt__arrays___a72226f52788539c120a509a026404460}\label{structt__arrays___a72226f52788539c120a509a026404460}} 
+\index{t\_arrays\_@{t\_arrays\_}!h@{h}}
+\index{h@{h}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{h}{h}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::h}
+
+
+
+\mbox{[}NCELLS\mbox{]} Flow depth in cells 
+
+\mbox{\Hypertarget{structt__arrays___a17e78707559d8417e1029a8db2c4cacd}\label{structt__arrays___a17e78707559d8417e1029a8db2c4cacd}} 
+\index{t\_arrays\_@{t\_arrays\_}!hu@{hu}}
+\index{hu@{hu}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{hu}{hu}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::hu}
+
+
+
+\mbox{[}NCELLS\mbox{]} X-\/discharge in cells 
+
+\mbox{\Hypertarget{structt__arrays___aa39883b3f502626ed8c57e1776083d60}\label{structt__arrays___aa39883b3f502626ed8c57e1776083d60}} 
+\index{t\_arrays\_@{t\_arrays\_}!hv@{hv}}
+\index{hv@{hv}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{hv}{hv}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::hv}
+
+
+
+\mbox{[}NCELLS\mbox{]} Y-\/discharge in cells 
+
+\mbox{\Hypertarget{structt__arrays___acb855897cbd4e35ee5050697af0e3486}\label{structt__arrays___acb855897cbd4e35ee5050697af0e3486}} 
+\index{t\_arrays\_@{t\_arrays\_}!idw1@{idw1}}
+\index{idw1@{idw1}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{idw1}{idw1}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::idw1}
+
+
+
+\mbox{[}NWCALC\mbox{]} Wall-\/ordering flag in left-\/cell 
+
+\mbox{\Hypertarget{structt__arrays___a903657a304eda11977b8fa6df954c1cd}\label{structt__arrays___a903657a304eda11977b8fa6df954c1cd}} 
+\index{t\_arrays\_@{t\_arrays\_}!idw2@{idw2}}
+\index{idw2@{idw2}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{idw2}{idw2}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::idw2}
+
+
+
+\mbox{[}NWCALC\mbox{]} Wall-\/ordering flag in right-\/cell 
+
+\mbox{\Hypertarget{structt__arrays___a14eca7a06a251bf8e3a1fb5e07730796}\label{structt__arrays___a14eca7a06a251bf8e3a1fb5e07730796}} 
+\index{t\_arrays\_@{t\_arrays\_}!idx1@{idx1}}
+\index{idx1@{idx1}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{idx1}{idx1}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::idx1}
+
+
+
+\mbox{[}NWCALC\mbox{]} Neighboring left-\/cell ID for calculus wall 
+
+\mbox{\Hypertarget{structt__arrays___a6937151a92cbedfd681aef94f67274d5}\label{structt__arrays___a6937151a92cbedfd681aef94f67274d5}} 
+\index{t\_arrays\_@{t\_arrays\_}!idx2@{idx2}}
+\index{idx2@{idx2}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{idx2}{idx2}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::idx2}
+
+
+
+\mbox{[}NWCALC\mbox{]} Neigboring right-\/cell ID for calculus wall 
+
+\mbox{\Hypertarget{structt__arrays___a25c352e7e9efdb25e74fe5e9e96ea80e}\label{structt__arrays___a25c352e7e9efdb25e74fe5e9e96ea80e}} 
+\index{t\_arrays\_@{t\_arrays\_}!indexDump@{indexDump}}
+\index{indexDump@{indexDump}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{indexDump}{indexDump}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::index\+Dump}
+
+
+
+Run-\/control component output index. 
+
+\mbox{\Hypertarget{structt__arrays___a640ac8bd848a364586bdb115c91370bc}\label{structt__arrays___a640ac8bd848a364586bdb115c91370bc}} 
+\index{t\_arrays\_@{t\_arrays\_}!indexOut@{indexOut}}
+\index{indexOut@{indexOut}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{indexOut}{indexOut}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::index\+Out}
+
+
+
+Run-\/control state output index. 
+
+\mbox{\Hypertarget{structt__arrays___ac69f7446f646ad9f4d495bab36f8db16}\label{structt__arrays___ac69f7446f646ad9f4d495bab36f8db16}} 
+\index{t\_arrays\_@{t\_arrays\_}!indexWriteHotstart@{indexWriteHotstart}}
+\index{indexWriteHotstart@{indexWriteHotstart}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{indexWriteHotstart}{indexWriteHotstart}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::index\+Write\+Hotstart}
+
+
+
+Initial output index for the hortstart initialization. 
+
+\mbox{\Hypertarget{structt__arrays___a543f87e6a192018a94b3ddd93724802f}\label{structt__arrays___a543f87e6a192018a94b3ddd93724802f}} 
+\index{t\_arrays\_@{t\_arrays\_}!length@{length}}
+\index{length@{length}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{length}{length}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::length}
+
+
+
+\mbox{[}NWCALC\mbox{]} Wall length 
+
+\mbox{\Hypertarget{structt__arrays___a0d1de8bef845d2bd948b99f2fa340e40}\label{structt__arrays___a0d1de8bef845d2bd948b99f2fa340e40}} 
+\index{t\_arrays\_@{t\_arrays\_}!localDt@{localDt}}
+\index{localDt@{localDt}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{localDt}{localDt}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::local\+Dt}
+
+
+
+\mbox{[}NWCALC\mbox{]} Local time step limitation for the calculus wall 
+
+\mbox{\Hypertarget{structt__arrays___a09d446564b7de9a9305cf7e403380e55}\label{structt__arrays___a09d446564b7de9a9305cf7e403380e55}} 
+\index{t\_arrays\_@{t\_arrays\_}!mass@{mass}}
+\index{mass@{mass}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{mass}{mass}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::mass}
+
+
+
+\mbox{[}NCELLS\mbox{]} Mass in cells 
+
+\mbox{\Hypertarget{structt__arrays___a8acbbb13385dd0fabadd7c2df2c3db1f}\label{structt__arrays___a8acbbb13385dd0fabadd7c2df2c3db1f}} 
+\index{t\_arrays\_@{t\_arrays\_}!massError@{massError}}
+\index{massError@{massError}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{massError}{massError}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::mass\+Error}
+
+
+
+Run-\/control mass error computed at the end of the time stop. 
+
+\mbox{\Hypertarget{structt__arrays___ae4fb5fa2be2379cb884f2f1789f0b307}\label{structt__arrays___ae4fb5fa2be2379cb884f2f1789f0b307}} 
+\index{t\_arrays\_@{t\_arrays\_}!massIn@{massIn}}
+\index{massIn@{massIn}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{massIn}{massIn}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::mass\+In}
+
+
+
+Run-\/control total inflow volume accumulated during the simulation. 
+
+\mbox{\Hypertarget{structt__arrays___a07ddf7711a2a5f4e88bd70e1bf676b7f}\label{structt__arrays___a07ddf7711a2a5f4e88bd70e1bf676b7f}} 
+\index{t\_arrays\_@{t\_arrays\_}!massNew@{massNew}}
+\index{massNew@{massNew}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{massNew}{massNew}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::mass\+New}
+
+
+
+Run-\/control current integrated volume. 
+
+\mbox{\Hypertarget{structt__arrays___a3bd402d5738e678675db232881540a80}\label{structt__arrays___a3bd402d5738e678675db232881540a80}} 
+\index{t\_arrays\_@{t\_arrays\_}!massOld@{massOld}}
+\index{massOld@{massOld}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{massOld}{massOld}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::mass\+Old}
+
+
+
+Run-\/control integrated volume at the beginning of the time step. 
+
+\mbox{\Hypertarget{structt__arrays___add95c6fff44343b5cdcb847118f19883}\label{structt__arrays___add95c6fff44343b5cdcb847118f19883}} 
+\index{t\_arrays\_@{t\_arrays\_}!massOut@{massOut}}
+\index{massOut@{massOut}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{massOut}{massOut}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::mass\+Out}
+
+
+
+Run-\/control total outflow volume accumulated during the simulation. 
+
+\mbox{\Hypertarget{structt__arrays___a5e2e1fb12b3cf9feb1b2381bb20a546f}\label{structt__arrays___a5e2e1fb12b3cf9feb1b2381bb20a546f}} 
+\index{t\_arrays\_@{t\_arrays\_}!minh@{minh}}
+\index{minh@{minh}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{minh}{minh}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::minh}
+
+
+
+Minimun flow depth for neglecting cell velocity. 
+
+\mbox{\Hypertarget{structt__arrays___aca8a3114c06796c64192f436bdf3c033}\label{structt__arrays___aca8a3114c06796c64192f436bdf3c033}} 
+\index{t\_arrays\_@{t\_arrays\_}!modulou@{modulou}}
+\index{modulou@{modulou}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{modulou}{modulou}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::modulou}
+
+
+
+\mbox{[}NCELLS\mbox{]} Velocity modulus in cells 
+
+\mbox{\Hypertarget{structt__arrays___a44a7f03a2e51a8cc327c0a5ed4828989}\label{structt__arrays___a44a7f03a2e51a8cc327c0a5ed4828989}} 
+\index{t\_arrays\_@{t\_arrays\_}!nActCells@{nActCells}}
+\index{nActCells@{nActCells}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nActCells}{nActCells}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::n\+Act\+Cells}
+
+
+
+Run-\/control number of active cells. 
+
+\mbox{\Hypertarget{structt__arrays___ab15aa71e005580dbddb1a1226b2061dc}\label{structt__arrays___ab15aa71e005580dbddb1a1226b2061dc}} 
+\index{t\_arrays\_@{t\_arrays\_}!nActWalls@{nActWalls}}
+\index{nActWalls@{nActWalls}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nActWalls}{nActWalls}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::n\+Act\+Walls}
+
+
+
+Run-\/control number of active calculus walls. 
+
+\mbox{\Hypertarget{structt__arrays___a14f1a5246b923385aba7e2a310995dd2}\label{structt__arrays___a14f1a5246b923385aba7e2a310995dd2}} 
+\index{t\_arrays\_@{t\_arrays\_}!ncells@{ncells}}
+\index{ncells@{ncells}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{ncells}{ncells}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::ncells}
+
+
+
+Number of cells in the domain \+:: NCELLS. 
+
+\mbox{\Hypertarget{structt__arrays___a18c2a3dcc784896ab11ebe6a0c2f4302}\label{structt__arrays___a18c2a3dcc784896ab11ebe6a0c2f4302}} 
+\index{t\_arrays\_@{t\_arrays\_}!ncores@{ncores}}
+\index{ncores@{ncores}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{ncores}{ncores}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::ncores}
+
+
+
+Number of CPU threads selected. 
+
+\mbox{\Hypertarget{structt__arrays___a31e69a388973f7935854d31d68f78af6}\label{structt__arrays___a31e69a388973f7935854d31d68f78af6}} 
+\index{t\_arrays\_@{t\_arrays\_}!NCwall@{NCwall}}
+\index{NCwall@{NCwall}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{NCwall}{NCwall}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::\+NCwall}
+
+
+
+Number of walls per cell \+:: NCWALL. 
+
+\mbox{\Hypertarget{structt__arrays___a887b4a09f8f283dade3962928cdd1c4e}\label{structt__arrays___a887b4a09f8f283dade3962928cdd1c4e}} 
+\index{t\_arrays\_@{t\_arrays\_}!neighCell@{neighCell}}
+\index{neighCell@{neighCell}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{neighCell}{neighCell}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::neigh\+Cell}
+
+
+
+\mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Neigboring cell indexes. Boundary neigbour marked with index -\/1 
+
+\mbox{\Hypertarget{structt__arrays___a0e0c61e5463b8b119daf6e855f2a7a52}\label{structt__arrays___a0e0c61e5463b8b119daf6e855f2a7a52}} 
+\index{t\_arrays\_@{t\_arrays\_}!neighWall@{neighWall}}
+\index{neighWall@{neighWall}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{neighWall}{neighWall}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::neigh\+Wall}
+
+
+
+\mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Neigboring wall IDs \+:: Internal calculus wall -\/ Bound walls 
+
+\mbox{\Hypertarget{structt__arrays___ac07f29747bac88d7970c71909036ba14}\label{structt__arrays___ac07f29747bac88d7970c71909036ba14}} 
+\index{t\_arrays\_@{t\_arrays\_}!nInlet@{nInlet}}
+\index{nInlet@{nInlet}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nInlet}{nInlet}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::n\+Inlet}
+
+
+
+Number of inlets in the domain. 
+
+\mbox{\Hypertarget{structt__arrays___a3a9a8f8f93ff9a45a50111bd8b2b65b9}\label{structt__arrays___a3a9a8f8f93ff9a45a50111bd8b2b65b9}} 
+\index{t\_arrays\_@{t\_arrays\_}!nIter@{nIter}}
+\index{nIter@{nIter}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nIter}{nIter}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::n\+Iter}
+
+
+
+Run-\/control iteration. 
+
+\mbox{\Hypertarget{structt__arrays___a5a158ea36013a3dce6fea311e91789ea}\label{structt__arrays___a5a158ea36013a3dce6fea311e91789ea}} 
+\index{t\_arrays\_@{t\_arrays\_}!nIterOut@{nIterOut}}
+\index{nIterOut@{nIterOut}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nIterOut}{nIterOut}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::n\+Iter\+Out}
+
+
+
+Number of iterations for sreen output. 
+
+\mbox{\Hypertarget{structt__arrays___a531759c42e23a1d94e33c2e87e6d9a55}\label{structt__arrays___a531759c42e23a1d94e33c2e87e6d9a55}} 
+\index{t\_arrays\_@{t\_arrays\_}!nman@{nman}}
+\index{nman@{nman}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nman}{nman}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::nman}
+
+
+
+\mbox{[}NCELLS\mbox{]} Manning roughness coefficient n\+Man \mbox{[}s m$^\wedge$(-\/1/3)\mbox{]} in cells 
+
+\mbox{\Hypertarget{structt__arrays___a878be8f901fdfbcfadb795dc964455ee}\label{structt__arrays___a878be8f901fdfbcfadb795dc964455ee}} 
+\index{t\_arrays\_@{t\_arrays\_}!nman2wall@{nman2wall}}
+\index{nman2wall@{nman2wall}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nman2wall}{nman2wall}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::nman2wall}
+
+
+
+\mbox{[}NWCALC\mbox{]} Square of the averaged Manning parameter at the calculus wall 
+
+\mbox{\Hypertarget{structt__arrays___a7479e2083a8dd9d410a633bb505fd3e4}\label{structt__arrays___a7479e2083a8dd9d410a633bb505fd3e4}} 
+\index{t\_arrays\_@{t\_arrays\_}!nneig@{nneig}}
+\index{nneig@{nneig}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nneig}{nneig}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::nneig}
+
+
+
+Number of neighboring cells. 
+
+\mbox{[}NCELLS\mbox{]} \mbox{\Hypertarget{structt__arrays___af5d57ddda481bda38320099ebd7aff04}\label{structt__arrays___af5d57ddda481bda38320099ebd7aff04}} 
+\index{t\_arrays\_@{t\_arrays\_}!normalX@{normalX}}
+\index{normalX@{normalX}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{normalX}{normalX}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::normalX}
+
+
+
+\mbox{[}NWCALC\mbox{]} X-\/normal for calculus wall 
+
+\mbox{\Hypertarget{structt__arrays___a05991a8201199380ef8317aff1bfdec3}\label{structt__arrays___a05991a8201199380ef8317aff1bfdec3}} 
+\index{t\_arrays\_@{t\_arrays\_}!normalXbyCell@{normalXbyCell}}
+\index{normalXbyCell@{normalXbyCell}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{normalXbyCell}{normalXbyCell}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::normal\+Xby\+Cell}
+
+
+
+\mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} X-\/nomall neighboring wall 
+
+\mbox{\Hypertarget{structt__arrays___ae75709bfb257e0a761bde8835c8b23e0}\label{structt__arrays___ae75709bfb257e0a761bde8835c8b23e0}} 
+\index{t\_arrays\_@{t\_arrays\_}!normalY@{normalY}}
+\index{normalY@{normalY}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{normalY}{normalY}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::normalY}
+
+
+
+\mbox{[}NWCALC\mbox{]} Y-\/normal for calculus wall 
+
+\mbox{\Hypertarget{structt__arrays___a0817f6ff811662b0627aeb53184dafd7}\label{structt__arrays___a0817f6ff811662b0627aeb53184dafd7}} 
+\index{t\_arrays\_@{t\_arrays\_}!normalYbyCell@{normalYbyCell}}
+\index{normalYbyCell@{normalYbyCell}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{normalYbyCell}{normalYbyCell}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::normal\+Yby\+Cell}
+
+
+
+\mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Y-\/nomall neighboring wall 
+
+\mbox{\Hypertarget{structt__arrays___a2aa0adc754d212b0715435e86736f44b}\label{structt__arrays___a2aa0adc754d212b0715435e86736f44b}} 
+\index{t\_arrays\_@{t\_arrays\_}!nOutlet@{nOutlet}}
+\index{nOutlet@{nOutlet}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nOutlet}{nOutlet}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::n\+Outlet}
+
+
+
+Number of outlets in the domain. 
+
+\mbox{\Hypertarget{structt__arrays___a04e33fb501ef3193441e35262e5d6f0b}\label{structt__arrays___a04e33fb501ef3193441e35262e5d6f0b}} 
+\index{t\_arrays\_@{t\_arrays\_}!nw\_bound@{nw\_bound}}
+\index{nw\_bound@{nw\_bound}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nw\_bound}{nw\_bound}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::nw\+\_\+bound}
+
+
+
+Number of boundary walls. 
+
+\mbox{\Hypertarget{structt__arrays___aa00972d9c20291c650abb1c70ada0174}\label{structt__arrays___aa00972d9c20291c650abb1c70ada0174}} 
+\index{t\_arrays\_@{t\_arrays\_}!nw\_calc@{nw\_calc}}
+\index{nw\_calc@{nw\_calc}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nw\_calc}{nw\_calc}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::nw\+\_\+calc}
+
+
+
+Number of internal (calculus) walls \+:: NWCALC. 
+
+\mbox{\Hypertarget{structt__arrays___a1b3143c6f7e36baaac196d0d8e52c67d}\label{structt__arrays___a1b3143c6f7e36baaac196d0d8e52c67d}} 
+\index{t\_arrays\_@{t\_arrays\_}!nWallCell@{nWallCell}}
+\index{nWallCell@{nWallCell}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{nWallCell}{nWallCell}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::n\+Wall\+Cell}
+
+\mbox{\Hypertarget{structt__arrays___af0d93a6d48babe2d567da71bc0ecbf04}\label{structt__arrays___af0d93a6d48babe2d567da71bc0ecbf04}} 
+\index{t\_arrays\_@{t\_arrays\_}!qTotalIn@{qTotalIn}}
+\index{qTotalIn@{qTotalIn}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{qTotalIn}{qTotalIn}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::q\+Total\+In}
+
+
+
+Run-\/control inflow discharge inegrated for all the inlet boundaries. 
+
+\mbox{\Hypertarget{structt__arrays___ad2dc7abd32238506e3e99023a2afb479}\label{structt__arrays___ad2dc7abd32238506e3e99023a2afb479}} 
+\index{t\_arrays\_@{t\_arrays\_}!qTotalOut@{qTotalOut}}
+\index{qTotalOut@{qTotalOut}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{qTotalOut}{qTotalOut}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::q\+Total\+Out}
+
+
+
+Run-\/control outflow discharge inegrated for all the outlet boundaries. 
+
+\mbox{\Hypertarget{structt__arrays___af7595a9a737b5a97ab394f1964fb6603}\label{structt__arrays___af7595a9a737b5a97ab394f1964fb6603}} 
+\index{t\_arrays\_@{t\_arrays\_}!solidWall@{solidWall}}
+\index{solidWall@{solidWall}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{solidWall}{solidWall}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::solid\+Wall}
+
+
+
+\mbox{[}NWCALC\mbox{]} Local flag of solid wall behaviour for calculus wall$\ast$ / 
+
+double $\ast$qnormalL; /$\ast$$\ast$$<$ \mbox{[}NWCALC\mbox{]} Upwind-\/left volume rate for the calculus wall \mbox{\Hypertarget{structt__arrays___a0e1ea955aa5da7b200606df18eb92b6d}\label{structt__arrays___a0e1ea955aa5da7b200606df18eb92b6d}} 
+\index{t\_arrays\_@{t\_arrays\_}!solidWallByCell@{solidWallByCell}}
+\index{solidWallByCell@{solidWallByCell}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{solidWallByCell}{solidWallByCell}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::solid\+Wall\+By\+Cell}
+
+
+
+\mbox{[}NCELLS$\ast$\+NCWALL\mbox{]} Local flag for solid wall behaviour 
+
+\mbox{\Hypertarget{structt__arrays___aec34a48bfa4a09971bcfe9959204d919}\label{structt__arrays___aec34a48bfa4a09971bcfe9959204d919}} 
+\index{t\_arrays\_@{t\_arrays\_}!SOX@{SOX}}
+\index{SOX@{SOX}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{SOX}{SOX}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::\+SOX}
+
+
+
+\mbox{[}NCELLS\mbox{]} X-\/direction bed slope 
+
+\mbox{\Hypertarget{structt__arrays___a79025c5b56731d3215ed299d17a5b8b1}\label{structt__arrays___a79025c5b56731d3215ed299d17a5b8b1}} 
+\index{t\_arrays\_@{t\_arrays\_}!SOY@{SOY}}
+\index{SOY@{SOY}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{SOY}{SOY}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::\+SOY}
+
+
+
+\mbox{[}NCELLS\mbox{]} Y-\/direction bed slope 
+
+\mbox{\Hypertarget{structt__arrays___a15506a6247e7cc9ab1ba28c29614f03f}\label{structt__arrays___a15506a6247e7cc9ab1ba28c29614f03f}} 
+\index{t\_arrays\_@{t\_arrays\_}!sqrh@{sqrh}}
+\index{sqrh@{sqrh}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{sqrh}{sqrh}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::sqrh}
+
+
+
+\mbox{[}NCELLS\mbox{]} Square depth of flow depth in cells 
+
+\mbox{\Hypertarget{structt__arrays___a1e43528d3e3abcc3772f3b5c97a7a4c9}\label{structt__arrays___a1e43528d3e3abcc3772f3b5c97a7a4c9}} 
+\index{t\_arrays\_@{t\_arrays\_}!t@{t}}
+\index{t@{t}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{t}{t}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::t}
+
+
+
+Run-\/control time mark. 
+
+\mbox{\Hypertarget{structt__arrays___adf942b4a09a753caf8add3308b6992f7}\label{structt__arrays___adf942b4a09a753caf8add3308b6992f7}} 
+\index{t\_arrays\_@{t\_arrays\_}!tf@{tf}}
+\index{tf@{tf}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{tf}{tf}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::tf}
+
+
+
+Final time for simulation. 
+
+\mbox{\Hypertarget{structt__arrays___a61ede194766b1ce52563a99d09428d0c}\label{structt__arrays___a61ede194766b1ce52563a99d09428d0c}} 
+\index{t\_arrays\_@{t\_arrays\_}!ti@{ti}}
+\index{ti@{ti}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{ti}{ti}}
+{\footnotesize\ttfamily double t\+\_\+arrays\+\_\+\+::ti}
+
+
+
+Initial time for simulation. 
+
+\mbox{\Hypertarget{structt__arrays___aef77233a579d3bfa1dd116e8ea8ee22e}\label{structt__arrays___aef77233a579d3bfa1dd116e8ea8ee22e}} 
+\index{t\_arrays\_@{t\_arrays\_}!typeOfBound@{typeOfBound}}
+\index{typeOfBound@{typeOfBound}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{typeOfBound}{typeOfBound}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::type\+Of\+Bound}
+
+
+
+\mbox{[}NWCALC\mbox{]} Type of bound condition at the wall 
+
+\mbox{\Hypertarget{structt__arrays___a143d92d6a90c8bab56f3459daa35c4b7}\label{structt__arrays___a143d92d6a90c8bab56f3459daa35c4b7}} 
+\index{t\_arrays\_@{t\_arrays\_}!u@{u}}
+\index{u@{u}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{u}{u}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::u}
+
+
+
+\mbox{[}NCELLS\mbox{]} X-\/velocity in cells 
+
+\mbox{\Hypertarget{structt__arrays___af9e1cebd9217291e3eb2ac91669b8c04}\label{structt__arrays___af9e1cebd9217291e3eb2ac91669b8c04}} 
+\index{t\_arrays\_@{t\_arrays\_}!v@{v}}
+\index{v@{v}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{v}{v}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::v}
+
+
+
+\mbox{[}NCELLS\mbox{]} Y-\/velocity in cells 
+
+\mbox{\Hypertarget{structt__arrays___a6706bb8507e07a8893351fb5631f1e92}\label{structt__arrays___a6706bb8507e07a8893351fb5631f1e92}} 
+\index{t\_arrays\_@{t\_arrays\_}!widx@{widx}}
+\index{widx@{widx}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{widx}{widx}}
+{\footnotesize\ttfamily int$\ast$ t\+\_\+arrays\+\_\+\+::widx}
+
+
+
+\mbox{[}NWCALC\mbox{]} Calculus walls IDs 
+
+\mbox{\Hypertarget{structt__arrays___a29a3baced4650446d85a0cc79454aa42}\label{structt__arrays___a29a3baced4650446d85a0cc79454aa42}} 
+\index{t\_arrays\_@{t\_arrays\_}!writeExtremes@{writeExtremes}}
+\index{writeExtremes@{writeExtremes}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{writeExtremes}{writeExtremes}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::write\+Extremes}
+
+
+
+Compute and write maximum values for the variables. 
+
+\mbox{\Hypertarget{structt__arrays___a9f55fbf0fba7e2e7395073afbd52c62b}\label{structt__arrays___a9f55fbf0fba7e2e7395073afbd52c62b}} 
+\index{t\_arrays\_@{t\_arrays\_}!writeMass@{writeMass}}
+\index{writeMass@{writeMass}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{writeMass}{writeMass}}
+{\footnotesize\ttfamily int t\+\_\+arrays\+\_\+\+::write\+Mass}
+
+
+
+Write in output file mass balance information. 
+
+\mbox{\Hypertarget{structt__arrays___a40ebf43328963b2e54b798ae24ae3e95}\label{structt__arrays___a40ebf43328963b2e54b798ae24ae3e95}} 
+\index{t\_arrays\_@{t\_arrays\_}!z@{z}}
+\index{z@{z}!t\_arrays\_@{t\_arrays\_}}
+\doxysubsubsection{\texorpdfstring{z}{z}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+arrays\+\_\+\+::z}
+
+
+
+\mbox{[}NCELLS\mbox{]} Bed elevation in cells 
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/\mbox{\hyperlink{structs_8h}{structs.\+h}}\end{DoxyCompactItemize}

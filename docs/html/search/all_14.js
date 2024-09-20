@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['sediment_403',['sediment',['../structPeka2D__Run__.html#a7b54717fbfea4e092e9689060de757f1',1,'Peka2D_Run_']]],
+  ['set_5fopenmp_404',['SET_OPENMP',['../define_8h.html#aca27a7be5e67530ca781b29b09bfd041',1,'define.h']]],
+  ['set_5fsimgpu_405',['SET_SIMGPU',['../define_8h.html#a2e03798ee8e6002f2e5646b719905530',1,'define.h']]],
+  ['setcontrolparameters_406',['setControlParameters',['../loadData_8h.html#a29e89e39b281495ce2e88b78900f4a1c',1,'setControlParameters(Peka2D_Setup *pksetup, t_parameters *spar, t_message *msg):&#160;loadData.cpp'],['../loadData_8cpp.html#a29e89e39b281495ce2e88b78900f4a1c',1,'setControlParameters(Peka2D_Setup *pksetup, t_parameters *spar, t_message *msg):&#160;loadData.cpp']]],
+  ['setinitialstate_407',['setInitialState',['../loadData_8h.html#a899de4c53e270baf070249080eadb2eb',1,'setInitialState(Peka2D_Setup *pksetup, t_parameters *spar, t_mesh *mesh, t_message *e):&#160;loadData.cpp'],['../loadData_8cpp.html#a899de4c53e270baf070249080eadb2eb',1,'setInitialState(Peka2D_Setup *pksetup, t_parameters *spar, t_mesh *mesh, t_message *e):&#160;loadData.cpp']]],
+  ['sign_408',['SIGN',['../define_8h.html#a8c5ff70b6b28cd0157c50a22406f92c4',1,'define.h']]],
+  ['size_409',['size',['../structl__c__cells__.html#aa9153452d89fd3ae10d7b088b4b5491d',1,'l_c_cells_::size()'],['../structl__g__cells__.html#af1683d1e9ac611215662c2c41909e962',1,'l_g_cells_::size()'],['../structl__nodes__.html#a140b5047781dfcb0dfc4fc28a26bc5e8',1,'l_nodes_::size()'],['../structl__wall__.html#a6f28c568f7e74fcf2a574b01ba9e1066',1,'l_wall_::size()'],['../structl__edges__.html#a6e1eb44bb66f0b12ee6206e1675fc4a0',1,'l_edges_::size()']]],
+  ['solidwall_410',['solidWall',['../structt__cuPtr__.html#a764bf27c48e66b0363676ecb602a9bb3',1,'t_cuPtr_::solidWall()'],['../structt__arrays__.html#af7595a9a737b5a97ab394f1964fb6603',1,'t_arrays_::solidWall()']]],
+  ['solidwallbycell_411',['solidWallByCell',['../structt__cuPtr__.html#ab4b566ff2d76dae6e780cdf7d663fb35',1,'t_cuPtr_::solidWallByCell()'],['../structt__arrays__.html#a0e1ea955aa5da7b200606df18eb92b6d',1,'t_arrays_::solidWallByCell()']]],
+  ['sources_412',['sources',['../structPeka2D__Run__.html#a45db58d0758f60d551b6bb8e36003ea6',1,'Peka2D_Run_']]],
+  ['sox_413',['SOX',['../structt__cuPtr__.html#a4e4c32d307b769f7960259ac76785857',1,'t_cuPtr_::SOX()'],['../structt__arrays__.html#aec34a48bfa4a09971bcfe9959204d919',1,'t_arrays_::SOX()']]],
+  ['soy_414',['SOY',['../structt__cuPtr__.html#a84c7f842b6bebcf09778970e95257b35',1,'t_cuPtr_::SOY()'],['../structt__arrays__.html#a79025c5b56731d3215ed299d17a5b8b1',1,'t_arrays_::SOY()']]],
+  ['spar_415',['spar',['../peka2d_8cpp.html#af1f171d758e20467ed00c8832ad5b974',1,'spar():&#160;peka2d.cpp'],['../mainKernel_8h.html#af1f171d758e20467ed00c8832ad5b974',1,'spar():&#160;peka2d.cpp']]],
+  ['sqrh_416',['sqrh',['../structt__cuPtr__.html#a890bf9a605aa89879c4a19180d72ef18',1,'t_cuPtr_::sqrh()'],['../structt__arrays__.html#a15506a6247e7cc9ab1ba28c29614f03f',1,'t_arrays_::sqrh()']]],
+  ['str_5fsize_417',['STR_SIZE',['../loadData_8h.html#a38a196d020f78f178a33927d741a03f2',1,'loadData.h']]],
+  ['structs_2eh_418',['structs.h',['../structs_8h.html',1,'']]],
+  ['swap_5fdouble_419',['SWAP_DOUBLE',['../cuTilities_8cuh.html#a10715b91589bcfbe8c6623249ea91b24',1,'SWAP_DOUBLE():&#160;cuTilities.cuh'],['../utilities_8h.html#a10715b91589bcfbe8c6623249ea91b24',1,'SWAP_DOUBLE():&#160;utilities.h']]],
+  ['swap_5ffloat_420',['SWAP_FLOAT',['../cuTilities_8cuh.html#a515b046adca3873eaedc395239819c08',1,'SWAP_FLOAT():&#160;cuTilities.cuh'],['../utilities_8h.html#a515b046adca3873eaedc395239819c08',1,'SWAP_FLOAT():&#160;utilities.h']]],
+  ['swap_5fint_421',['SWAP_INT',['../cuTilities_8cuh.html#ae21edbe3626f8eb788fb7b5a3158c33b',1,'SWAP_INT():&#160;cuTilities.cuh'],['../utilities_8h.html#ae21edbe3626f8eb788fb7b5a3158c33b',1,'SWAP_INT():&#160;utilities.h']]],
+  ['swap_5flong_422',['SWAP_LONG',['../utilities_8h.html#a25f71ecedd39ea92bc9dd844fd916baf',1,'SWAP_LONG():&#160;utilities.h'],['../cuTilities_8cuh.html#a25f71ecedd39ea92bc9dd844fd916baf',1,'SWAP_LONG():&#160;cuTilities.cuh']]],
+  ['swap_5fshort_423',['SWAP_SHORT',['../cuTilities_8cuh.html#ab062214e7bbaca24b1c4da6abf6d90b8',1,'SWAP_SHORT():&#160;cuTilities.cuh'],['../utilities_8h.html#ab062214e7bbaca24b1c4da6abf6d90b8',1,'SWAP_SHORT():&#160;utilities.h']]],
+  ['swap_5fulong_424',['SWAP_ULONG',['../cuTilities_8cuh.html#aedcead6a1978846fbded32ee633e03ae',1,'SWAP_ULONG():&#160;cuTilities.cuh'],['../utilities_8h.html#aedcead6a1978846fbded32ee633e03ae',1,'SWAP_ULONG():&#160;utilities.h']]],
+  ['swap_5fushort_425',['SWAP_USHORT',['../cuTilities_8cuh.html#aaa270c5c6c264a36a73c4186adf77b6b',1,'SWAP_USHORT():&#160;cuTilities.cuh'],['../utilities_8h.html#aaa270c5c6c264a36a73c4186adf77b6b',1,'SWAP_USHORT():&#160;utilities.h']]],
+  ['swapendian_426',['SwapEndian',['../cuTilities_8cu.html#a39d7cebfe233ff4f6832064fe2b9ce18',1,'SwapEndian(void *Addr, const int Nb):&#160;cuTilities.cu'],['../cuTilities_8cuh.html#a39d7cebfe233ff4f6832064fe2b9ce18',1,'SwapEndian(void *Addr, const int Nb):&#160;cuTilities.cu'],['../utilities_8cpp.html#a39d7cebfe233ff4f6832064fe2b9ce18',1,'SwapEndian(void *Addr, const int Nb):&#160;utilities.cpp'],['../utilities_8h.html#a39d7cebfe233ff4f6832064fe2b9ce18',1,'SwapEndian(void *Addr, const int Nb):&#160;cuTilities.cu']]]
+];

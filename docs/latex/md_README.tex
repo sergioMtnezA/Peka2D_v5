@@ -1,0 +1,28 @@
+Set SET\+\_\+\+SIMGPU=0 in \mbox{\hyperlink{define_8h}{define.\+h}}
+
+{\ttfamily make}
+
+{\ttfamily ./peka path\+Folder/ case\+Name}
+
+{\bfseries{DEBUG mode}}
+
+{\ttfamily make DEBUG=yes}
+
+{\ttfamily valgrind -\/-\/tool=memcheck -\/-\/leak-\/check=full -\/-\/track-\/origins=yes -\/-\/show-\/reachable=yes ./peka path\+Folder/ case\+Name}
+
+{\bfseries{Parallelzed OMP}}
+
+Set the number of CPU cores SET\+\_\+\+OPENMP in \mbox{\hyperlink{define_8h}{define.\+h}}
+
+{\ttfamily make OMP=yes}\hypertarget{md_README_autotoc_md1}{}\doxysection{$<$strong$>$\+GPU compilation$<$/strong$>$}\label{md_README_autotoc_md1}
+Set SET\+\_\+\+SIMGPU=1 in \mbox{\hyperlink{define_8h}{define.\+h}}
+
+{\ttfamily make -\/f Makefile\+CUDA}
+
+{\ttfamily ./gpeka path\+Folder/ case\+Name}
+
+{\itshape DEBUG mode}
+
+{\ttfamily make -\/f Makefile\+CUDA DEBUG=yes}
+
+{\ttfamily compute-\/sanitizer -\/-\/tool memcheck -\/-\/leak-\/check full ./peka path\+Folder/ case\+Name} 

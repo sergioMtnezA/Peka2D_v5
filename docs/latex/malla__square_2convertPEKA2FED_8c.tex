@@ -1,0 +1,161 @@
+\hypertarget{malla__square_2convertPEKA2FED_8c}{}\doxysection{benchmark\+\_\+tests/circular\+\_\+dambreak/malla\+\_\+square/convert\+PEKA2\+FED.c File Reference}
+\label{malla__square_2convertPEKA2FED_8c}\index{benchmark\_tests/circular\_dambreak/malla\_square/convertPEKA2FED.c@{benchmark\_tests/circular\_dambreak/malla\_square/convertPEKA2FED.c}}
+{\ttfamily \#include $<$stdio.\+h$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$string.\+h$>$}\newline
+{\ttfamily \#include $<$sys/stat.\+h$>$}\newline
+{\ttfamily \#include $<$sys/types.\+h$>$}\newline
+Include dependency graph for convert\+PEKA2\+FED.\+c\+:
+% FIG 0
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structt__node}{t\+\_\+node}}
+\item 
+struct \mbox{\hyperlink{structt__cell}{t\+\_\+cell}}
+\item 
+struct \mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}}
+\item 
+struct \mbox{\hyperlink{structt__polys}{t\+\_\+polys}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_aba51915c87d64af47fb1cc59348961c9}{OK}}~\char`\"{} \textbackslash{}033\mbox{[}1;35m\mbox{[}OK\mbox{]}\textbackslash{}033\mbox{[}0m \char`\"{}
+\item 
+\#define \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_a598a3330b3c21701223ee0ca14316eca}{PI}}~3.\+1415926535
+\item 
+\#define \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_a74e75242132eaabbc1c512488a135926}{MIN}}(x,  y)~(x $<$ y ? x \+: y)
+\item 
+\#define \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_aacc3ee1a7f283f8ef65cea31f4436a95}{MAX}}(x,  y)~(x $>$ y ? x \+: y)
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+double \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_aebb9cf325ea6831a74cc8b7fb9e83eb8}{triangle\+\_\+size}} (\mbox{\hyperlink{structt__node}{t\+\_\+node}} $\ast$n1, \mbox{\hyperlink{structt__node}{t\+\_\+node}} $\ast$n2, \mbox{\hyperlink{structt__node}{t\+\_\+node}} $\ast$n3)
+\item 
+int \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_a5994a3b09fecbfde3f21f2b2ca044eac}{dentro\+\_\+poligono}} (\mbox{\hyperlink{structt__node}{t\+\_\+node}} $\ast$poly, int npoints, \mbox{\hyperlink{structt__node}{t\+\_\+node}} point)
+\item 
+int \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_a028d6edbdb2cf43e9a202eca5872b7bc}{read\+\_\+peka\+\_\+mesh}} (\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, char $\ast$filename)
+\item 
+int \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_a07833d1f328b609fb2576eeadb7695e4}{read\+\_\+peka\+\_\+inicial}} (\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, char $\ast$filename)
+\item 
+int \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_afd5ebb76e7ed43ae366899f82719eabf}{read\+\_\+\+EHC\+\_\+ini}} (\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, char $\ast$filename)
+\item 
+int \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_aca74063806503a75e82ab6179c0aac3f}{write\+\_\+fed\+\_\+mesh}} (\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, char $\ast$filename)
+\item 
+int \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_aca6f25fc00750ef696dae175d8088474}{read\+\_\+polys}} (\mbox{\hyperlink{structt__polys}{t\+\_\+polys}} $\ast$polys, char $\ast$filename)
+\item 
+void \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_a1a6f7692d13d34d7389a5e9a597acf44}{assign\+\_\+\+Manning}} (\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structt__polys}{t\+\_\+polys}} $\ast$polys)
+\item 
+int \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_a5083edfdcabf6cbc0968097191f19893}{write\+\_\+manning\+\_\+list}} (\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, char $\ast$filename)
+\item 
+int \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_af653d60083a57e8ef5b6f90753d48ef1}{write\+\_\+d50\+\_\+list}} (\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, char $\ast$filename)
+\item 
+void \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_a16aa00fe25edb11df753912995411717}{volcado\+\_\+vtk}} (\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$s, char $\ast$filename)
+\item 
+int \mbox{\hyperlink{malla__square_2convertPEKA2FED_8c_a0ddf1224851353fc92bfbff6f499fa97}{main}} (int argc, char $\ast$argv\mbox{[}$\,$\mbox{]})
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_aacc3ee1a7f283f8ef65cea31f4436a95}\label{malla__square_2convertPEKA2FED_8c_aacc3ee1a7f283f8ef65cea31f4436a95}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!MAX@{MAX}}
+\index{MAX@{MAX}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{MAX}{MAX}}
+{\footnotesize\ttfamily \#define MAX(\begin{DoxyParamCaption}\item[{}]{x,  }\item[{}]{y }\end{DoxyParamCaption})~(x $>$ y ? x \+: y)}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_a74e75242132eaabbc1c512488a135926}\label{malla__square_2convertPEKA2FED_8c_a74e75242132eaabbc1c512488a135926}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!MIN@{MIN}}
+\index{MIN@{MIN}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{MIN}{MIN}}
+{\footnotesize\ttfamily \#define MIN(\begin{DoxyParamCaption}\item[{}]{x,  }\item[{}]{y }\end{DoxyParamCaption})~(x $<$ y ? x \+: y)}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_aba51915c87d64af47fb1cc59348961c9}\label{malla__square_2convertPEKA2FED_8c_aba51915c87d64af47fb1cc59348961c9}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!OK@{OK}}
+\index{OK@{OK}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{OK}{OK}}
+{\footnotesize\ttfamily \#define OK~\char`\"{} \textbackslash{}033\mbox{[}1;35m\mbox{[}OK\mbox{]}\textbackslash{}033\mbox{[}0m \char`\"{}}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_a598a3330b3c21701223ee0ca14316eca}\label{malla__square_2convertPEKA2FED_8c_a598a3330b3c21701223ee0ca14316eca}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!PI@{PI}}
+\index{PI@{PI}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{PI}{PI}}
+{\footnotesize\ttfamily \#define PI~3.\+1415926535}
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_a1a6f7692d13d34d7389a5e9a597acf44}\label{malla__square_2convertPEKA2FED_8c_a1a6f7692d13d34d7389a5e9a597acf44}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!assign\_Manning@{assign\_Manning}}
+\index{assign\_Manning@{assign\_Manning}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{assign\_Manning()}{assign\_Manning()}}
+{\footnotesize\ttfamily void assign\+\_\+\+Manning (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structt__polys}{t\+\_\+polys}} $\ast$}]{polys }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_a5994a3b09fecbfde3f21f2b2ca044eac}\label{malla__square_2convertPEKA2FED_8c_a5994a3b09fecbfde3f21f2b2ca044eac}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!dentro\_poligono@{dentro\_poligono}}
+\index{dentro\_poligono@{dentro\_poligono}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{dentro\_poligono()}{dentro\_poligono()}}
+{\footnotesize\ttfamily int dentro\+\_\+poligono (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__node}{t\+\_\+node}} $\ast$}]{poly,  }\item[{int}]{npoints,  }\item[{\mbox{\hyperlink{structt__node}{t\+\_\+node}}}]{point }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_a0ddf1224851353fc92bfbff6f499fa97}\label{malla__square_2convertPEKA2FED_8c_a0ddf1224851353fc92bfbff6f499fa97}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!main@{main}}
+\index{main@{main}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{main()}{main()}}
+{\footnotesize\ttfamily int main (\begin{DoxyParamCaption}\item[{int}]{argc,  }\item[{char $\ast$}]{argv\mbox{[}$\,$\mbox{]} }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_afd5ebb76e7ed43ae366899f82719eabf}\label{malla__square_2convertPEKA2FED_8c_afd5ebb76e7ed43ae366899f82719eabf}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!read\_EHC\_ini@{read\_EHC\_ini}}
+\index{read\_EHC\_ini@{read\_EHC\_ini}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{read\_EHC\_ini()}{read\_EHC\_ini()}}
+{\footnotesize\ttfamily int read\+\_\+\+EHC\+\_\+ini (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{char $\ast$}]{filename }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_a07833d1f328b609fb2576eeadb7695e4}\label{malla__square_2convertPEKA2FED_8c_a07833d1f328b609fb2576eeadb7695e4}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!read\_peka\_inicial@{read\_peka\_inicial}}
+\index{read\_peka\_inicial@{read\_peka\_inicial}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{read\_peka\_inicial()}{read\_peka\_inicial()}}
+{\footnotesize\ttfamily int read\+\_\+peka\+\_\+inicial (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{char $\ast$}]{filename }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_a028d6edbdb2cf43e9a202eca5872b7bc}\label{malla__square_2convertPEKA2FED_8c_a028d6edbdb2cf43e9a202eca5872b7bc}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!read\_peka\_mesh@{read\_peka\_mesh}}
+\index{read\_peka\_mesh@{read\_peka\_mesh}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{read\_peka\_mesh()}{read\_peka\_mesh()}}
+{\footnotesize\ttfamily int read\+\_\+peka\+\_\+mesh (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{char $\ast$}]{filename }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_aca6f25fc00750ef696dae175d8088474}\label{malla__square_2convertPEKA2FED_8c_aca6f25fc00750ef696dae175d8088474}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!read\_polys@{read\_polys}}
+\index{read\_polys@{read\_polys}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{read\_polys()}{read\_polys()}}
+{\footnotesize\ttfamily int read\+\_\+polys (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__polys}{t\+\_\+polys}} $\ast$}]{polys,  }\item[{char $\ast$}]{filename }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_aebb9cf325ea6831a74cc8b7fb9e83eb8}\label{malla__square_2convertPEKA2FED_8c_aebb9cf325ea6831a74cc8b7fb9e83eb8}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!triangle\_size@{triangle\_size}}
+\index{triangle\_size@{triangle\_size}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{triangle\_size()}{triangle\_size()}}
+{\footnotesize\ttfamily double triangle\+\_\+size (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__node}{t\+\_\+node}} $\ast$}]{n1,  }\item[{\mbox{\hyperlink{structt__node}{t\+\_\+node}} $\ast$}]{n2,  }\item[{\mbox{\hyperlink{structt__node}{t\+\_\+node}} $\ast$}]{n3 }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_a16aa00fe25edb11df753912995411717}\label{malla__square_2convertPEKA2FED_8c_a16aa00fe25edb11df753912995411717}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!volcado\_vtk@{volcado\_vtk}}
+\index{volcado\_vtk@{volcado\_vtk}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{volcado\_vtk()}{volcado\_vtk()}}
+{\footnotesize\ttfamily void volcado\+\_\+vtk (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$}]{s,  }\item[{char $\ast$}]{filename }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_af653d60083a57e8ef5b6f90753d48ef1}\label{malla__square_2convertPEKA2FED_8c_af653d60083a57e8ef5b6f90753d48ef1}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!write\_d50\_list@{write\_d50\_list}}
+\index{write\_d50\_list@{write\_d50\_list}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{write\_d50\_list()}{write\_d50\_list()}}
+{\footnotesize\ttfamily int write\+\_\+d50\+\_\+list (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{char $\ast$}]{filename }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_aca74063806503a75e82ab6179c0aac3f}\label{malla__square_2convertPEKA2FED_8c_aca74063806503a75e82ab6179c0aac3f}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!write\_fed\_mesh@{write\_fed\_mesh}}
+\index{write\_fed\_mesh@{write\_fed\_mesh}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{write\_fed\_mesh()}{write\_fed\_mesh()}}
+{\footnotesize\ttfamily int write\+\_\+fed\+\_\+mesh (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{char $\ast$}]{filename }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{malla__square_2convertPEKA2FED_8c_a5083edfdcabf6cbc0968097191f19893}\label{malla__square_2convertPEKA2FED_8c_a5083edfdcabf6cbc0968097191f19893}} 
+\index{convertPEKA2FED.c@{convertPEKA2FED.c}!write\_manning\_list@{write\_manning\_list}}
+\index{write\_manning\_list@{write\_manning\_list}!convertPEKA2FED.c@{convertPEKA2FED.c}}
+\doxysubsubsection{\texorpdfstring{write\_manning\_list()}{write\_manning\_list()}}
+{\footnotesize\ttfamily int write\+\_\+manning\+\_\+list (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structt__mesh}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{char $\ast$}]{filename }\end{DoxyParamCaption})}
+

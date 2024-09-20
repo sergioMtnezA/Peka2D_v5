@@ -1,0 +1,117 @@
+\hypertarget{structt__g__cell__}{}\doxysection{t\+\_\+g\+\_\+cell\+\_\+ Struct Reference}
+\label{structt__g__cell__}\index{t\_g\_cell\_@{t\_g\_cell\_}}
+
+
+Geometry cells\+: mesh characteristics in cells.  
+
+
+
+
+{\ttfamily \#include $<$structs.\+h$>$}
+
+
+
+Collaboration diagram for t\+\_\+g\+\_\+cell\+\_\+\+:
+% FIG 0
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{structt__g__cell___ac1c3b8e45d108c8a71a70057f32025bf}{id}}
+\item 
+int \mbox{\hyperlink{structt__g__cell___a7b386d4f50f1af9affc3c5e9d94f48e9}{is\+Bound}}
+\item 
+double \mbox{\hyperlink{structt__g__cell___ab31093881582057026967a0bd709d271}{area}}
+\item 
+double \mbox{\hyperlink{structt__g__cell___ad7bcf856e16a1f19bcc9d9466ce38bcc}{center}} \mbox{[}3\mbox{]}
+\item 
+int \mbox{\hyperlink{structt__g__cell___a689df71519a547f924fd6ff045c6eadd}{nneig}}
+\item 
+int \mbox{\hyperlink{structt__g__cell___a36b04a92b40e5ac4ad3d5ee1a9dd2fd7}{nbound}}
+\item 
+\mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}} $\ast$ \mbox{\hyperlink{structt__g__cell___aceb578abebb26baf88087da07c4e3db4}{nodes}} \mbox{[}4\mbox{]}
+\item 
+\mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}} $\ast$ \mbox{\hyperlink{structt__g__cell___ab41ff9538471a299794a59bb97276c2c}{neigcell}} \mbox{[}4\mbox{]}
+\item 
+\mbox{\hyperlink{structs_8h_ac83b68e6fb9c9f59420d5757cb6b2f28}{t\+\_\+wall}} $\ast$ \mbox{\hyperlink{structt__g__cell___aafc0c36702871cf28beb523f3184a526}{neigwall}} \mbox{[}4\mbox{]}
+\item 
+\mbox{\hyperlink{structs_8h_ac81e42ab76ae59c3eb22792969678b24}{t\+\_\+edge}} $\ast$ \mbox{\hyperlink{structt__g__cell___a46f5092e1056c5bd9d5d21c9ac2c21ad}{wall}}
+\item 
+double \mbox{\hyperlink{structt__g__cell___a22bd33e2a19d64570359f31e22d606fb}{Lwallmax}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Geometry cells\+: mesh characteristics in cells. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structt__g__cell___ab31093881582057026967a0bd709d271}\label{structt__g__cell___ab31093881582057026967a0bd709d271}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!area@{area}}
+\index{area@{area}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{area}{area}}
+{\footnotesize\ttfamily double t\+\_\+g\+\_\+cell\+\_\+\+::area}
+
+\mbox{\Hypertarget{structt__g__cell___ad7bcf856e16a1f19bcc9d9466ce38bcc}\label{structt__g__cell___ad7bcf856e16a1f19bcc9d9466ce38bcc}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!center@{center}}
+\index{center@{center}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{center}{center}}
+{\footnotesize\ttfamily double t\+\_\+g\+\_\+cell\+\_\+\+::center\mbox{[}3\mbox{]}}
+
+\mbox{\Hypertarget{structt__g__cell___ac1c3b8e45d108c8a71a70057f32025bf}\label{structt__g__cell___ac1c3b8e45d108c8a71a70057f32025bf}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!id@{id}}
+\index{id@{id}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{id}{id}}
+{\footnotesize\ttfamily int t\+\_\+g\+\_\+cell\+\_\+\+::id}
+
+\mbox{\Hypertarget{structt__g__cell___a7b386d4f50f1af9affc3c5e9d94f48e9}\label{structt__g__cell___a7b386d4f50f1af9affc3c5e9d94f48e9}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!isBound@{isBound}}
+\index{isBound@{isBound}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{isBound}{isBound}}
+{\footnotesize\ttfamily int t\+\_\+g\+\_\+cell\+\_\+\+::is\+Bound}
+
+\mbox{\Hypertarget{structt__g__cell___a22bd33e2a19d64570359f31e22d606fb}\label{structt__g__cell___a22bd33e2a19d64570359f31e22d606fb}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!Lwallmax@{Lwallmax}}
+\index{Lwallmax@{Lwallmax}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{Lwallmax}{Lwallmax}}
+{\footnotesize\ttfamily double t\+\_\+g\+\_\+cell\+\_\+\+::\+Lwallmax}
+
+\mbox{\Hypertarget{structt__g__cell___a36b04a92b40e5ac4ad3d5ee1a9dd2fd7}\label{structt__g__cell___a36b04a92b40e5ac4ad3d5ee1a9dd2fd7}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!nbound@{nbound}}
+\index{nbound@{nbound}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{nbound}{nbound}}
+{\footnotesize\ttfamily int t\+\_\+g\+\_\+cell\+\_\+\+::nbound}
+
+\mbox{\Hypertarget{structt__g__cell___ab41ff9538471a299794a59bb97276c2c}\label{structt__g__cell___ab41ff9538471a299794a59bb97276c2c}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!neigcell@{neigcell}}
+\index{neigcell@{neigcell}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{neigcell}{neigcell}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}}$\ast$ t\+\_\+g\+\_\+cell\+\_\+\+::neigcell\mbox{[}4\mbox{]}}
+
+\mbox{\Hypertarget{structt__g__cell___aafc0c36702871cf28beb523f3184a526}\label{structt__g__cell___aafc0c36702871cf28beb523f3184a526}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!neigwall@{neigwall}}
+\index{neigwall@{neigwall}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{neigwall}{neigwall}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_ac83b68e6fb9c9f59420d5757cb6b2f28}{t\+\_\+wall}}$\ast$ t\+\_\+g\+\_\+cell\+\_\+\+::neigwall\mbox{[}4\mbox{]}}
+
+\mbox{\Hypertarget{structt__g__cell___a689df71519a547f924fd6ff045c6eadd}\label{structt__g__cell___a689df71519a547f924fd6ff045c6eadd}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!nneig@{nneig}}
+\index{nneig@{nneig}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{nneig}{nneig}}
+{\footnotesize\ttfamily int t\+\_\+g\+\_\+cell\+\_\+\+::nneig}
+
+\mbox{\Hypertarget{structt__g__cell___aceb578abebb26baf88087da07c4e3db4}\label{structt__g__cell___aceb578abebb26baf88087da07c4e3db4}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!nodes@{nodes}}
+\index{nodes@{nodes}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{nodes}{nodes}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}}$\ast$ t\+\_\+g\+\_\+cell\+\_\+\+::nodes\mbox{[}4\mbox{]}}
+
+\mbox{\Hypertarget{structt__g__cell___a46f5092e1056c5bd9d5d21c9ac2c21ad}\label{structt__g__cell___a46f5092e1056c5bd9d5d21c9ac2c21ad}} 
+\index{t\_g\_cell\_@{t\_g\_cell\_}!wall@{wall}}
+\index{wall@{wall}!t\_g\_cell\_@{t\_g\_cell\_}}
+\doxysubsubsection{\texorpdfstring{wall}{wall}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_ac81e42ab76ae59c3eb22792969678b24}{t\+\_\+edge}}$\ast$ t\+\_\+g\+\_\+cell\+\_\+\+::wall}
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/\mbox{\hyperlink{structs_8h}{structs.\+h}}\end{DoxyCompactItemize}

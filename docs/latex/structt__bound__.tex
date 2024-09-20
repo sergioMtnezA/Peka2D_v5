@@ -1,0 +1,245 @@
+\hypertarget{structt__bound__}{}\doxysection{t\+\_\+bound\+\_\+ Struct Reference}
+\label{structt__bound__}\index{t\_bound\_@{t\_bound\_}}
+
+
+Open boundary geometry and flow conditions.  
+
+
+
+
+{\ttfamily \#include $<$structs.\+h$>$}
+
+
+
+Collaboration diagram for t\+\_\+bound\+\_\+\+:
+% FIG 0
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+char \mbox{\hyperlink{structt__bound___af3ad84c8a5f709b95d5d95358436104c}{idname}} \mbox{[}1024\mbox{]}
+\item 
+int \mbox{\hyperlink{structt__bound___ad2e9581e0ca22cad242200a2ed42d36c}{type}}
+\item 
+int \mbox{\hyperlink{structt__bound___a994a70bca2e6851cfe01ce93974fae00}{n}}
+\item 
+int \mbox{\hyperlink{structt__bound___a10abf4ee82433a154bdf1b4d7aa9a5f8}{ncells\+Bound}}
+\item 
+int \mbox{\hyperlink{structt__bound___aba02ce3380e3061f8c4e8d74f0a34721}{ncells\+Inner}}
+\item 
+\mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}} $\ast$ \mbox{\hyperlink{structt__bound___a6c31e66baaa3ad630daec1e78b2d201a}{cellz\+Min}}
+\item 
+\mbox{\hyperlink{structs_8h_ac83b68e6fb9c9f59420d5757cb6b2f28}{t\+\_\+wall}} $\ast$$\ast$ \mbox{\hyperlink{structt__bound___ab3ce04ab2e6b501f651953d913458846}{wall\+Bound}}
+\item 
+\mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}} $\ast$$\ast$ \mbox{\hyperlink{structt__bound___ad7abeaef8a1e97e0c3ca7c76b33cb9ad}{cell\+Bound}}
+\item 
+\mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}} $\ast$$\ast$ \mbox{\hyperlink{structt__bound___a71436f7a4e4577f1ab14bfe0db712152}{cell\+Inner}}
+\item 
+double $\ast$ \mbox{\hyperlink{structt__bound___aeff25989a30839dec0e8bb555f6b4b17}{t}}
+\item 
+double $\ast$ \mbox{\hyperlink{structt__bound___a90f2518df59892b1bf7665bf7ff518e6}{q}}
+\item 
+double $\ast$ \mbox{\hyperlink{structt__bound___abf2ada12c93f8f707ddbe35cb7ff944e}{hZ}}
+\item 
+double $\ast$ \mbox{\hyperlink{structt__bound___a5092272e200e7f96274cd251d3986ccb}{Fr}}
+\item 
+double $\ast$$\ast$ \mbox{\hyperlink{structt__bound___ababb6bbe8150d1878106c18e32109f00}{phi}}
+\item 
+double \mbox{\hyperlink{structt__bound___ac950e1a9456cf69610c728801a5011cf}{max\+Froude}}
+\item 
+double \mbox{\hyperlink{structt__bound___acb3107d73ac4a1c77c0120a48164ee0e}{total\+Length}}
+\item 
+double \mbox{\hyperlink{structt__bound___a6b8a5a38b291fe8b0c9b8da7c39e1bf3}{total\+Area}}
+\item 
+double \mbox{\hyperlink{structt__bound___a6f260e39dac7675655fea68738fa7e11}{zmin}}
+\item 
+double \mbox{\hyperlink{structt__bound___a648d2e5128da39670dfc61fba295aa6b}{level\+Control}}
+\item 
+int \mbox{\hyperlink{structt__bound___ad60d79591f3b07dea6192edaa849a843}{flag\+Initialize}}
+\item 
+double \mbox{\hyperlink{structt__bound___a1946d12dd15aff624fdc8e8658d7c673}{q\+Mass}}
+\item 
+double \mbox{\hyperlink{structt__bound___a12c59d0e850464a297bad4aa1dfa4e7a}{q\+Discharge}}
+\item 
+\mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}} \mbox{\hyperlink{structt__bound___a434c7fee261ab4855fe99d5752d59f83}{node}} \mbox{[}2\mbox{]}
+\item 
+\mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}} \mbox{\hyperlink{structt__bound___a74a82e560cf133727e77233499579b15}{normal}}
+\item 
+int \mbox{\hyperlink{structt__bound___abe4e2406d27a5ec4da4312b32054b3e3}{i\+Act}}
+\item 
+double \mbox{\hyperlink{structt__bound___aead11716e3106307dff8d0afc30d0bdd}{qliquid}}
+\item 
+double \mbox{\hyperlink{structt__bound___a7832c95d2dd0ed580746d37cc3d8d25d}{qsolid}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Open boundary geometry and flow conditions. 
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structt__bound___ad7abeaef8a1e97e0c3ca7c76b33cb9ad}\label{structt__bound___ad7abeaef8a1e97e0c3ca7c76b33cb9ad}} 
+\index{t\_bound\_@{t\_bound\_}!cellBound@{cellBound}}
+\index{cellBound@{cellBound}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{cellBound}{cellBound}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}}$\ast$$\ast$ t\+\_\+bound\+\_\+\+::cell\+Bound}
+
+Array of pointers to boundary cells associated to boundary walls (of size ncells\+Bound) \mbox{\Hypertarget{structt__bound___a71436f7a4e4577f1ab14bfe0db712152}\label{structt__bound___a71436f7a4e4577f1ab14bfe0db712152}} 
+\index{t\_bound\_@{t\_bound\_}!cellInner@{cellInner}}
+\index{cellInner@{cellInner}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{cellInner}{cellInner}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}}$\ast$$\ast$ t\+\_\+bound\+\_\+\+::cell\+Inner}
+
+Array of pointers to boundary cell neighbors (of size ncells\+Inner) \mbox{\Hypertarget{structt__bound___a6c31e66baaa3ad630daec1e78b2d201a}\label{structt__bound___a6c31e66baaa3ad630daec1e78b2d201a}} 
+\index{t\_bound\_@{t\_bound\_}!cellzMin@{cellzMin}}
+\index{cellzMin@{cellzMin}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{cellzMin}{cellzMin}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}}$\ast$ t\+\_\+bound\+\_\+\+::cellz\+Min}
+
+Pointer to boundary with minimum elevation \mbox{\Hypertarget{structt__bound___ad60d79591f3b07dea6192edaa849a843}\label{structt__bound___ad60d79591f3b07dea6192edaa849a843}} 
+\index{t\_bound\_@{t\_bound\_}!flagInitialize@{flagInitialize}}
+\index{flagInitialize@{flagInitialize}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{flagInitialize}{flagInitialize}}
+{\footnotesize\ttfamily int t\+\_\+bound\+\_\+\+::flag\+Initialize}
+
+flag to determine if the inlet bound has been got inside the initialize inlet outlet function \mbox{\Hypertarget{structt__bound___a5092272e200e7f96274cd251d3986ccb}\label{structt__bound___a5092272e200e7f96274cd251d3986ccb}} 
+\index{t\_bound\_@{t\_bound\_}!Fr@{Fr}}
+\index{Fr@{Fr}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{Fr}{Fr}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+bound\+\_\+\+::\+Fr}
+
+\mbox{\Hypertarget{structt__bound___abf2ada12c93f8f707ddbe35cb7ff944e}\label{structt__bound___abf2ada12c93f8f707ddbe35cb7ff944e}} 
+\index{t\_bound\_@{t\_bound\_}!hZ@{hZ}}
+\index{hZ@{hZ}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{hZ}{hZ}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+bound\+\_\+\+::hZ}
+
+\mbox{\Hypertarget{structt__bound___abe4e2406d27a5ec4da4312b32054b3e3}\label{structt__bound___abe4e2406d27a5ec4da4312b32054b3e3}} 
+\index{t\_bound\_@{t\_bound\_}!iAct@{iAct}}
+\index{iAct@{iAct}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{iAct}{iAct}}
+{\footnotesize\ttfamily int t\+\_\+bound\+\_\+\+::i\+Act}
+
+\mbox{\Hypertarget{structt__bound___af3ad84c8a5f709b95d5d95358436104c}\label{structt__bound___af3ad84c8a5f709b95d5d95358436104c}} 
+\index{t\_bound\_@{t\_bound\_}!idname@{idname}}
+\index{idname@{idname}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{idname}{idname}}
+{\footnotesize\ttfamily char t\+\_\+bound\+\_\+\+::idname\mbox{[}1024\mbox{]}}
+
+\mbox{\Hypertarget{structt__bound___a648d2e5128da39670dfc61fba295aa6b}\label{structt__bound___a648d2e5128da39670dfc61fba295aa6b}} 
+\index{t\_bound\_@{t\_bound\_}!levelControl@{levelControl}}
+\index{levelControl@{levelControl}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{levelControl}{levelControl}}
+{\footnotesize\ttfamily double t\+\_\+bound\+\_\+\+::level\+Control}
+
+level\+Control accounts for the water level to be imposed in the case of extreme boundaries (dry domain i.\+e.) \mbox{\Hypertarget{structt__bound___ac950e1a9456cf69610c728801a5011cf}\label{structt__bound___ac950e1a9456cf69610c728801a5011cf}} 
+\index{t\_bound\_@{t\_bound\_}!maxFroude@{maxFroude}}
+\index{maxFroude@{maxFroude}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{maxFroude}{maxFroude}}
+{\footnotesize\ttfamily double t\+\_\+bound\+\_\+\+::max\+Froude}
+
+\mbox{\Hypertarget{structt__bound___a994a70bca2e6851cfe01ce93974fae00}\label{structt__bound___a994a70bca2e6851cfe01ce93974fae00}} 
+\index{t\_bound\_@{t\_bound\_}!n@{n}}
+\index{n@{n}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{n}{n}}
+{\footnotesize\ttfamily int t\+\_\+bound\+\_\+\+::n}
+
+Number of data points \mbox{\Hypertarget{structt__bound___a10abf4ee82433a154bdf1b4d7aa9a5f8}\label{structt__bound___a10abf4ee82433a154bdf1b4d7aa9a5f8}} 
+\index{t\_bound\_@{t\_bound\_}!ncellsBound@{ncellsBound}}
+\index{ncellsBound@{ncellsBound}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{ncellsBound}{ncellsBound}}
+{\footnotesize\ttfamily int t\+\_\+bound\+\_\+\+::ncells\+Bound}
+
+Number of cells in boundary \mbox{\Hypertarget{structt__bound___aba02ce3380e3061f8c4e8d74f0a34721}\label{structt__bound___aba02ce3380e3061f8c4e8d74f0a34721}} 
+\index{t\_bound\_@{t\_bound\_}!ncellsInner@{ncellsInner}}
+\index{ncellsInner@{ncellsInner}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{ncellsInner}{ncellsInner}}
+{\footnotesize\ttfamily int t\+\_\+bound\+\_\+\+::ncells\+Inner}
+
+Number of cells that are neighbors to boundary cells \mbox{\Hypertarget{structt__bound___a434c7fee261ab4855fe99d5752d59f83}\label{structt__bound___a434c7fee261ab4855fe99d5752d59f83}} 
+\index{t\_bound\_@{t\_bound\_}!node@{node}}
+\index{node@{node}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{node}{node}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}} t\+\_\+bound\+\_\+\+::node\mbox{[}2\mbox{]}}
+
+\mbox{\Hypertarget{structt__bound___a74a82e560cf133727e77233499579b15}\label{structt__bound___a74a82e560cf133727e77233499579b15}} 
+\index{t\_bound\_@{t\_bound\_}!normal@{normal}}
+\index{normal@{normal}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{normal}{normal}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}} t\+\_\+bound\+\_\+\+::normal}
+
+\mbox{\Hypertarget{structt__bound___ababb6bbe8150d1878106c18e32109f00}\label{structt__bound___ababb6bbe8150d1878106c18e32109f00}} 
+\index{t\_bound\_@{t\_bound\_}!phi@{phi}}
+\index{phi@{phi}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{phi}{phi}}
+{\footnotesize\ttfamily double$\ast$$\ast$ t\+\_\+bound\+\_\+\+::phi}
+
+\mbox{\Hypertarget{structt__bound___a90f2518df59892b1bf7665bf7ff518e6}\label{structt__bound___a90f2518df59892b1bf7665bf7ff518e6}} 
+\index{t\_bound\_@{t\_bound\_}!q@{q}}
+\index{q@{q}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{q}{q}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+bound\+\_\+\+::q}
+
+\mbox{\Hypertarget{structt__bound___a12c59d0e850464a297bad4aa1dfa4e7a}\label{structt__bound___a12c59d0e850464a297bad4aa1dfa4e7a}} 
+\index{t\_bound\_@{t\_bound\_}!qDischarge@{qDischarge}}
+\index{qDischarge@{qDischarge}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{qDischarge}{qDischarge}}
+{\footnotesize\ttfamily double t\+\_\+bound\+\_\+\+::q\+Discharge}
+
+\mbox{\Hypertarget{structt__bound___aead11716e3106307dff8d0afc30d0bdd}\label{structt__bound___aead11716e3106307dff8d0afc30d0bdd}} 
+\index{t\_bound\_@{t\_bound\_}!qliquid@{qliquid}}
+\index{qliquid@{qliquid}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{qliquid}{qliquid}}
+{\footnotesize\ttfamily double t\+\_\+bound\+\_\+\+::qliquid}
+
+\mbox{\Hypertarget{structt__bound___a1946d12dd15aff624fdc8e8658d7c673}\label{structt__bound___a1946d12dd15aff624fdc8e8658d7c673}} 
+\index{t\_bound\_@{t\_bound\_}!qMass@{qMass}}
+\index{qMass@{qMass}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{qMass}{qMass}}
+{\footnotesize\ttfamily double t\+\_\+bound\+\_\+\+::q\+Mass}
+
+\mbox{\Hypertarget{structt__bound___a7832c95d2dd0ed580746d37cc3d8d25d}\label{structt__bound___a7832c95d2dd0ed580746d37cc3d8d25d}} 
+\index{t\_bound\_@{t\_bound\_}!qsolid@{qsolid}}
+\index{qsolid@{qsolid}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{qsolid}{qsolid}}
+{\footnotesize\ttfamily double t\+\_\+bound\+\_\+\+::qsolid}
+
+\mbox{\Hypertarget{structt__bound___aeff25989a30839dec0e8bb555f6b4b17}\label{structt__bound___aeff25989a30839dec0e8bb555f6b4b17}} 
+\index{t\_bound\_@{t\_bound\_}!t@{t}}
+\index{t@{t}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{t}{t}}
+{\footnotesize\ttfamily double$\ast$ t\+\_\+bound\+\_\+\+::t}
+
+\mbox{\Hypertarget{structt__bound___a6b8a5a38b291fe8b0c9b8da7c39e1bf3}\label{structt__bound___a6b8a5a38b291fe8b0c9b8da7c39e1bf3}} 
+\index{t\_bound\_@{t\_bound\_}!totalArea@{totalArea}}
+\index{totalArea@{totalArea}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{totalArea}{totalArea}}
+{\footnotesize\ttfamily double t\+\_\+bound\+\_\+\+::total\+Area}
+
+total\+Area is the area (in plant view) of the boundary \mbox{\Hypertarget{structt__bound___acb3107d73ac4a1c77c0120a48164ee0e}\label{structt__bound___acb3107d73ac4a1c77c0120a48164ee0e}} 
+\index{t\_bound\_@{t\_bound\_}!totalLength@{totalLength}}
+\index{totalLength@{totalLength}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{totalLength}{totalLength}}
+{\footnotesize\ttfamily double t\+\_\+bound\+\_\+\+::total\+Length}
+
+total\+Length is the length of the boundary \mbox{\Hypertarget{structt__bound___ad2e9581e0ca22cad242200a2ed42d36c}\label{structt__bound___ad2e9581e0ca22cad242200a2ed42d36c}} 
+\index{t\_bound\_@{t\_bound\_}!type@{type}}
+\index{type@{type}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{type}{type}}
+{\footnotesize\ttfamily int t\+\_\+bound\+\_\+\+::type}
+
+Hydraulic boundary type \mbox{\Hypertarget{structt__bound___ab3ce04ab2e6b501f651953d913458846}\label{structt__bound___ab3ce04ab2e6b501f651953d913458846}} 
+\index{t\_bound\_@{t\_bound\_}!wallBound@{wallBound}}
+\index{wallBound@{wallBound}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{wallBound}{wallBound}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs_8h_ac83b68e6fb9c9f59420d5757cb6b2f28}{t\+\_\+wall}}$\ast$$\ast$ t\+\_\+bound\+\_\+\+::wall\+Bound}
+
+Array of pointers to boundary walls (of size ncells\+Bound) \mbox{\Hypertarget{structt__bound___a6f260e39dac7675655fea68738fa7e11}\label{structt__bound___a6f260e39dac7675655fea68738fa7e11}} 
+\index{t\_bound\_@{t\_bound\_}!zmin@{zmin}}
+\index{zmin@{zmin}!t\_bound\_@{t\_bound\_}}
+\doxysubsubsection{\texorpdfstring{zmin}{zmin}}
+{\footnotesize\ttfamily double t\+\_\+bound\+\_\+\+::zmin}
+
+zmin is the minimum value of z along the boundary 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+src/\mbox{\hyperlink{structs_8h}{structs.\+h}}\end{DoxyCompactItemize}

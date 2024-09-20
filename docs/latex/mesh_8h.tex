@@ -1,0 +1,195 @@
+\hypertarget{mesh_8h}{}\doxysection{src/mesh.h File Reference}
+\label{mesh_8h}\index{src/mesh.h@{src/mesh.h}}
+{\ttfamily \#include $<$search.\+h$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}omp.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}define.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}structs.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}write\+In\+Out.\+cuh\char`\"{}}\newline
+Include dependency graph for mesh.\+h\+:
+% FIG 0
+This graph shows which files directly or indirectly include this file\+:
+% FIG 1
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structt__pair__}{t\+\_\+pair\+\_\+}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \mbox{\hyperlink{mesh_8h_a773dab46d05703e68d9693aba823f9e9}{i\+\_\+mesh\+\_\+}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef struct \mbox{\hyperlink{structt__pair__}{t\+\_\+pair\+\_\+}} \mbox{\hyperlink{mesh_8h_ab803d31cdee8470f4b9e471ea5cbb210}{t\+\_\+pair}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{mesh_8h_abfe752d1031116ef94643fe772a2ac5a}{new\+\_\+lg\+\_\+cells}} (\mbox{\hyperlink{structs_8h_ab293a29663c38b92988064e72f296149}{l\+\_\+g\+\_\+cells}} $\ast$lcells, int n)
+\item 
+int \mbox{\hyperlink{mesh_8h_a56091c83f5d9d2d3cf9275a22fba526b}{new\+\_\+lc\+\_\+cells}} (\mbox{\hyperlink{structs_8h_a605f026b066b0be451b9d09e2034ecc9}{l\+\_\+c\+\_\+cells}} $\ast$lcells, int n)
+\item 
+int \mbox{\hyperlink{mesh_8h_a2c743afb6896194c2271c58bf312d647}{new\+\_\+g\+\_\+cell}} (\mbox{\hyperlink{structs_8h_add1452f40ef8e0d26f5f82c3445c36c6}{t\+\_\+g\+\_\+cell}} $\ast$cell, int id)
+\item 
+int \mbox{\hyperlink{mesh_8h_a1dde522bf6d7552304a031464981c846}{new\+\_\+c\+\_\+cell}} (\mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}} $\ast$cell, int id)
+\item 
+int \mbox{\hyperlink{mesh_8h_ab158da2d54274f6851ff61b758ae93dd}{add\+\_\+g\+\_\+cell}} (\mbox{\hyperlink{structs_8h_add1452f40ef8e0d26f5f82c3445c36c6}{t\+\_\+g\+\_\+cell}} $\ast$cell, \mbox{\hyperlink{structs_8h_ab293a29663c38b92988064e72f296149}{l\+\_\+g\+\_\+cells}} $\ast$lcells)
+\item 
+int \mbox{\hyperlink{mesh_8h_af2748dd8b0704bcc068025133fe84856}{add\+\_\+c\+\_\+cell}} (\mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}} $\ast$cell, \mbox{\hyperlink{structs_8h_a605f026b066b0be451b9d09e2034ecc9}{l\+\_\+c\+\_\+cells}} $\ast$lcells)
+\item 
+int \mbox{\hyperlink{mesh_8h_a2a91f4749a764d2545118d5b050b3ba6}{new\+\_\+lnodes}} (\mbox{\hyperlink{structs_8h_a3a813738220807125ebb4fa987414975}{l\+\_\+nodes}} $\ast$lnodes, int n)
+\item 
+int \mbox{\hyperlink{mesh_8h_ab577acc1d8753b26689f8aa810159372}{new\+\_\+node}} (\mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}} $\ast$node, int id)
+\item 
+int \mbox{\hyperlink{mesh_8h_a8aa8019c35a26c0305f50d30bdc905d2}{add\+\_\+node}} (\mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}} $\ast$node, \mbox{\hyperlink{structs_8h_a3a813738220807125ebb4fa987414975}{l\+\_\+nodes}} $\ast$lnodes)
+\item 
+int \mbox{\hyperlink{mesh_8h_a9d9b09785b1c7050f6a7b74a3b3bc305}{new\+\_\+lwalls}} (\mbox{\hyperlink{structs_8h_a2cddb0041c81ed38dcbdba4e55968fac}{l\+\_\+wall}} $\ast$lwalls, int n)
+\item 
+int \mbox{\hyperlink{mesh_8h_a2e0f492c8507cf51f83368c8b6a3325a}{calc\+\_\+norm}} (\mbox{\hyperlink{structs_8h_ab293a29663c38b92988064e72f296149}{l\+\_\+g\+\_\+cells}} $\ast$lcells, \mbox{\hyperlink{structs_8h_a605f026b066b0be451b9d09e2034ecc9}{l\+\_\+c\+\_\+cells}} $\ast$lccells, int nwall, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+int \mbox{\hyperlink{mesh_8h_a16645d60ae275deb8afb786e0e67320a}{cons\+\_\+lpocells\+\_\+qsort}} (\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+int \mbox{\hyperlink{mesh_8h_a80b9b4af0b64cb992537364bc6f48d68}{cmpp}} (const void $\ast$id1, const void $\ast$id2)
+\item 
+int \mbox{\hyperlink{mesh_8h_a51442af2e72f35dd80ec8bd438d2eae5}{check\+\_\+angle}} (\mbox{\hyperlink{structs_8h_ab293a29663c38b92988064e72f296149}{l\+\_\+g\+\_\+cells}} $\ast$lcells, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+int \mbox{\hyperlink{mesh_8h_a34860978efd7ac4d5f63be13b3291480}{build\+\_\+wall\+\_\+inlet}} (\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structs_8h_ab5840194cc4798303c043650e98cf5fd}{t\+\_\+bound}} $\ast$iinn, \mbox{\hyperlink{structs_8h_ac83b68e6fb9c9f59420d5757cb6b2f28}{t\+\_\+wall}} $\ast$w, int i, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+int \mbox{\hyperlink{mesh_8h_a02b5d97f2c693abd5d4bd0fd0cf29851}{build\+\_\+inner\+\_\+inlet}} (\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structs_8h_ab5840194cc4798303c043650e98cf5fd}{t\+\_\+bound}} $\ast$iinn, int i, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+int \mbox{\hyperlink{mesh_8h_a829e473c97a1f00e91da4c952b3bbc32}{build\+\_\+wall\+\_\+outlet}} (\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structs_8h_ab5840194cc4798303c043650e98cf5fd}{t\+\_\+bound}} $\ast$outt, \mbox{\hyperlink{structs_8h_ac83b68e6fb9c9f59420d5757cb6b2f28}{t\+\_\+wall}} $\ast$w, int i, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+int \mbox{\hyperlink{mesh_8h_a1f7abcc16597b79ba0ac6c0d7e0d27d4}{build\+\_\+inner\+\_\+outlet}} (\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structs_8h_ab5840194cc4798303c043650e98cf5fd}{t\+\_\+bound}} $\ast$outt, int i, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Macro Definition Documentation}
+\mbox{\Hypertarget{mesh_8h_a773dab46d05703e68d9693aba823f9e9}\label{mesh_8h_a773dab46d05703e68d9693aba823f9e9}} 
+\index{mesh.h@{mesh.h}!i\_mesh\_@{i\_mesh\_}}
+\index{i\_mesh\_@{i\_mesh\_}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{i\_mesh\_}{i\_mesh\_}}
+{\footnotesize\ttfamily \#define i\+\_\+mesh\+\_\+}
+
+
+
+\doxysubsection{Typedef Documentation}
+\mbox{\Hypertarget{mesh_8h_ab803d31cdee8470f4b9e471ea5cbb210}\label{mesh_8h_ab803d31cdee8470f4b9e471ea5cbb210}} 
+\index{mesh.h@{mesh.h}!t\_pair@{t\_pair}}
+\index{t\_pair@{t\_pair}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{t\_pair}{t\_pair}}
+{\footnotesize\ttfamily typedef struct \mbox{\hyperlink{structt__pair__}{t\+\_\+pair\+\_\+}} \mbox{\hyperlink{mesh_8h_ab803d31cdee8470f4b9e471ea5cbb210}{t\+\_\+pair}}}
+
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{mesh_8h_af2748dd8b0704bcc068025133fe84856}\label{mesh_8h_af2748dd8b0704bcc068025133fe84856}} 
+\index{mesh.h@{mesh.h}!add\_c\_cell@{add\_c\_cell}}
+\index{add\_c\_cell@{add\_c\_cell}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{add\_c\_cell()}{add\_c\_cell()}}
+{\footnotesize\ttfamily int add\+\_\+c\+\_\+cell (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}} $\ast$}]{cell,  }\item[{\mbox{\hyperlink{structs_8h_a605f026b066b0be451b9d09e2034ecc9}{l\+\_\+c\+\_\+cells}} $\ast$}]{lcells }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_ab158da2d54274f6851ff61b758ae93dd}\label{mesh_8h_ab158da2d54274f6851ff61b758ae93dd}} 
+\index{mesh.h@{mesh.h}!add\_g\_cell@{add\_g\_cell}}
+\index{add\_g\_cell@{add\_g\_cell}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{add\_g\_cell()}{add\_g\_cell()}}
+{\footnotesize\ttfamily int add\+\_\+g\+\_\+cell (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_add1452f40ef8e0d26f5f82c3445c36c6}{t\+\_\+g\+\_\+cell}} $\ast$}]{cell,  }\item[{\mbox{\hyperlink{structs_8h_ab293a29663c38b92988064e72f296149}{l\+\_\+g\+\_\+cells}} $\ast$}]{lcells }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a8aa8019c35a26c0305f50d30bdc905d2}\label{mesh_8h_a8aa8019c35a26c0305f50d30bdc905d2}} 
+\index{mesh.h@{mesh.h}!add\_node@{add\_node}}
+\index{add\_node@{add\_node}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{add\_node()}{add\_node()}}
+{\footnotesize\ttfamily int add\+\_\+node (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}} $\ast$}]{node,  }\item[{\mbox{\hyperlink{structs_8h_a3a813738220807125ebb4fa987414975}{l\+\_\+nodes}} $\ast$}]{lnodes }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a02b5d97f2c693abd5d4bd0fd0cf29851}\label{mesh_8h_a02b5d97f2c693abd5d4bd0fd0cf29851}} 
+\index{mesh.h@{mesh.h}!build\_inner\_inlet@{build\_inner\_inlet}}
+\index{build\_inner\_inlet@{build\_inner\_inlet}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{build\_inner\_inlet()}{build\_inner\_inlet()}}
+{\footnotesize\ttfamily int build\+\_\+inner\+\_\+inlet (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structs_8h_ab5840194cc4798303c043650e98cf5fd}{t\+\_\+bound}} $\ast$}]{iinn,  }\item[{int}]{i,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a1f7abcc16597b79ba0ac6c0d7e0d27d4}\label{mesh_8h_a1f7abcc16597b79ba0ac6c0d7e0d27d4}} 
+\index{mesh.h@{mesh.h}!build\_inner\_outlet@{build\_inner\_outlet}}
+\index{build\_inner\_outlet@{build\_inner\_outlet}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{build\_inner\_outlet()}{build\_inner\_outlet()}}
+{\footnotesize\ttfamily int build\+\_\+inner\+\_\+outlet (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structs_8h_ab5840194cc4798303c043650e98cf5fd}{t\+\_\+bound}} $\ast$}]{outt,  }\item[{int}]{i,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a34860978efd7ac4d5f63be13b3291480}\label{mesh_8h_a34860978efd7ac4d5f63be13b3291480}} 
+\index{mesh.h@{mesh.h}!build\_wall\_inlet@{build\_wall\_inlet}}
+\index{build\_wall\_inlet@{build\_wall\_inlet}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{build\_wall\_inlet()}{build\_wall\_inlet()}}
+{\footnotesize\ttfamily int build\+\_\+wall\+\_\+inlet (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structs_8h_ab5840194cc4798303c043650e98cf5fd}{t\+\_\+bound}} $\ast$}]{iinn,  }\item[{\mbox{\hyperlink{structs_8h_ac83b68e6fb9c9f59420d5757cb6b2f28}{t\+\_\+wall}} $\ast$}]{w,  }\item[{int}]{i,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a829e473c97a1f00e91da4c952b3bbc32}\label{mesh_8h_a829e473c97a1f00e91da4c952b3bbc32}} 
+\index{mesh.h@{mesh.h}!build\_wall\_outlet@{build\_wall\_outlet}}
+\index{build\_wall\_outlet@{build\_wall\_outlet}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{build\_wall\_outlet()}{build\_wall\_outlet()}}
+{\footnotesize\ttfamily int build\+\_\+wall\+\_\+outlet (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structs_8h_ab5840194cc4798303c043650e98cf5fd}{t\+\_\+bound}} $\ast$}]{outt,  }\item[{\mbox{\hyperlink{structs_8h_ac83b68e6fb9c9f59420d5757cb6b2f28}{t\+\_\+wall}} $\ast$}]{w,  }\item[{int}]{i,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a2e0f492c8507cf51f83368c8b6a3325a}\label{mesh_8h_a2e0f492c8507cf51f83368c8b6a3325a}} 
+\index{mesh.h@{mesh.h}!calc\_norm@{calc\_norm}}
+\index{calc\_norm@{calc\_norm}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{calc\_norm()}{calc\_norm()}}
+{\footnotesize\ttfamily int calc\+\_\+norm (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_ab293a29663c38b92988064e72f296149}{l\+\_\+g\+\_\+cells}} $\ast$}]{lcells,  }\item[{\mbox{\hyperlink{structs_8h_a605f026b066b0be451b9d09e2034ecc9}{l\+\_\+c\+\_\+cells}} $\ast$}]{lccells,  }\item[{int}]{nwall,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a51442af2e72f35dd80ec8bd438d2eae5}\label{mesh_8h_a51442af2e72f35dd80ec8bd438d2eae5}} 
+\index{mesh.h@{mesh.h}!check\_angle@{check\_angle}}
+\index{check\_angle@{check\_angle}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{check\_angle()}{check\_angle()}}
+{\footnotesize\ttfamily int check\+\_\+angle (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_ab293a29663c38b92988064e72f296149}{l\+\_\+g\+\_\+cells}} $\ast$}]{lcells,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a80b9b4af0b64cb992537364bc6f48d68}\label{mesh_8h_a80b9b4af0b64cb992537364bc6f48d68}} 
+\index{mesh.h@{mesh.h}!cmpp@{cmpp}}
+\index{cmpp@{cmpp}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{cmpp()}{cmpp()}}
+{\footnotesize\ttfamily int cmpp (\begin{DoxyParamCaption}\item[{const void $\ast$}]{id1,  }\item[{const void $\ast$}]{id2 }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a16645d60ae275deb8afb786e0e67320a}\label{mesh_8h_a16645d60ae275deb8afb786e0e67320a}} 
+\index{mesh.h@{mesh.h}!cons\_lpocells\_qsort@{cons\_lpocells\_qsort}}
+\index{cons\_lpocells\_qsort@{cons\_lpocells\_qsort}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{cons\_lpocells\_qsort()}{cons\_lpocells\_qsort()}}
+{\footnotesize\ttfamily int cons\+\_\+lpocells\+\_\+qsort (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a1dde522bf6d7552304a031464981c846}\label{mesh_8h_a1dde522bf6d7552304a031464981c846}} 
+\index{mesh.h@{mesh.h}!new\_c\_cell@{new\_c\_cell}}
+\index{new\_c\_cell@{new\_c\_cell}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{new\_c\_cell()}{new\_c\_cell()}}
+{\footnotesize\ttfamily int new\+\_\+c\+\_\+cell (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a7eba230f54bf82094a420fe0f772a266}{t\+\_\+c\+\_\+cell}} $\ast$}]{cell,  }\item[{int}]{id }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a2c743afb6896194c2271c58bf312d647}\label{mesh_8h_a2c743afb6896194c2271c58bf312d647}} 
+\index{mesh.h@{mesh.h}!new\_g\_cell@{new\_g\_cell}}
+\index{new\_g\_cell@{new\_g\_cell}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{new\_g\_cell()}{new\_g\_cell()}}
+{\footnotesize\ttfamily int new\+\_\+g\+\_\+cell (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_add1452f40ef8e0d26f5f82c3445c36c6}{t\+\_\+g\+\_\+cell}} $\ast$}]{cell,  }\item[{int}]{id }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a56091c83f5d9d2d3cf9275a22fba526b}\label{mesh_8h_a56091c83f5d9d2d3cf9275a22fba526b}} 
+\index{mesh.h@{mesh.h}!new\_lc\_cells@{new\_lc\_cells}}
+\index{new\_lc\_cells@{new\_lc\_cells}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{new\_lc\_cells()}{new\_lc\_cells()}}
+{\footnotesize\ttfamily int new\+\_\+lc\+\_\+cells (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a605f026b066b0be451b9d09e2034ecc9}{l\+\_\+c\+\_\+cells}} $\ast$}]{lcells,  }\item[{int}]{n }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_abfe752d1031116ef94643fe772a2ac5a}\label{mesh_8h_abfe752d1031116ef94643fe772a2ac5a}} 
+\index{mesh.h@{mesh.h}!new\_lg\_cells@{new\_lg\_cells}}
+\index{new\_lg\_cells@{new\_lg\_cells}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{new\_lg\_cells()}{new\_lg\_cells()}}
+{\footnotesize\ttfamily int new\+\_\+lg\+\_\+cells (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_ab293a29663c38b92988064e72f296149}{l\+\_\+g\+\_\+cells}} $\ast$}]{lcells,  }\item[{int}]{n }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a2a91f4749a764d2545118d5b050b3ba6}\label{mesh_8h_a2a91f4749a764d2545118d5b050b3ba6}} 
+\index{mesh.h@{mesh.h}!new\_lnodes@{new\_lnodes}}
+\index{new\_lnodes@{new\_lnodes}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{new\_lnodes()}{new\_lnodes()}}
+{\footnotesize\ttfamily int new\+\_\+lnodes (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a3a813738220807125ebb4fa987414975}{l\+\_\+nodes}} $\ast$}]{lnodes,  }\item[{int}]{n }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_a9d9b09785b1c7050f6a7b74a3b3bc305}\label{mesh_8h_a9d9b09785b1c7050f6a7b74a3b3bc305}} 
+\index{mesh.h@{mesh.h}!new\_lwalls@{new\_lwalls}}
+\index{new\_lwalls@{new\_lwalls}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{new\_lwalls()}{new\_lwalls()}}
+{\footnotesize\ttfamily int new\+\_\+lwalls (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a2cddb0041c81ed38dcbdba4e55968fac}{l\+\_\+wall}} $\ast$}]{lwalls,  }\item[{int}]{n }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{mesh_8h_ab577acc1d8753b26689f8aa810159372}\label{mesh_8h_ab577acc1d8753b26689f8aa810159372}} 
+\index{mesh.h@{mesh.h}!new\_node@{new\_node}}
+\index{new\_node@{new\_node}!mesh.h@{mesh.h}}
+\doxysubsubsection{\texorpdfstring{new\_node()}{new\_node()}}
+{\footnotesize\ttfamily int new\+\_\+node (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_ade9079e0c33716b2e248f4d5fac4e294}{t\+\_\+node}} $\ast$}]{node,  }\item[{int}]{id }\end{DoxyParamCaption})}
+

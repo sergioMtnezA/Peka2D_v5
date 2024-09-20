@@ -1,0 +1,45 @@
+digraph "src/writeInOut.cuh"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="src/writeInOut.cuh",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node2 [label="src/calculate.cuh",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$calculate_8cuh.html",tooltip=" "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node3 [label="src/calculate.cu",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$calculate_8cu.html",tooltip=" "];
+  Node2 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node4 [label="src/mainKernel.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$mainKernel_8h.html",tooltip=" "];
+  Node4 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node5 [label="peka2d.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$peka2d_8cpp.html",tooltip=" "];
+  Node4 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node6 [label="src/mainKernel.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$mainKernel_8cpp.html",tooltip=" "];
+  Node1 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node7 [label="src/loadData.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$loadData_8h.html",tooltip=" "];
+  Node7 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node7 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node8 [label="src/calculate.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$calculate_8h.html",tooltip=" "];
+  Node8 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node9 [label="src/calculate.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$calculate_8cpp.html",tooltip=" "];
+  Node7 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node10 [label="src/initialize.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$initialize_8h.html",tooltip=" "];
+  Node10 -> Node11 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node11 [label="src/initialize.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$initialize_8cpp.html",tooltip=" "];
+  Node10 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node7 -> Node12 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node12 [label="src/loadData.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$loadData_8cpp.html",tooltip=" "];
+  Node7 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node7 -> Node13 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node13 [label="src/memoryManage.cuh",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$memoryManage_8cuh.html",tooltip=" "];
+  Node13 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node13 -> Node14 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node14 [label="src/memoryManage.cu",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$memoryManage_8cu.html",tooltip=" "];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node1 -> Node15 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node15 [label="src/mesh.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$mesh_8h.html",tooltip=" "];
+  Node15 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node15 -> Node16 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node16 [label="src/mesh.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$mesh_8cpp.html",tooltip=" "];
+  Node1 -> Node17 [dir="back",color="midnightblue",fontsize="10",style="solid"];
+  Node17 [label="src/writeInOut.cu",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$writeInOut_8cu.html",tooltip=" "];
+}

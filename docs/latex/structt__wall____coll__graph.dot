@@ -1,0 +1,18 @@
+digraph "t_wall_"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="t_wall_",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Wall characteristics for computation."];
+  Node2 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" ccells" ];
+  Node2 [label="t_c_cell_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__c__cell__.html",tooltip="Calculus cells: flow variables in cells."];
+  Node3 -> Node2 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" geom" ];
+  Node3 [label="t_g_cell_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__g__cell__.html",tooltip="Geometry cells: mesh characteristics in cells."];
+  Node2 -> Node3 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" neigcell" ];
+  Node4 -> Node3 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" wall" ];
+  Node4 [label="t_edge_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__edge__.html",tooltip="Geometrical edges for mesh topology construction."];
+  Node1 -> Node3 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" neigwall" ];
+  Node5 -> Node3 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" nodes" ];
+  Node5 [label="t_node_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__node__.html",tooltip="Geometry mesh node."];
+  Node3 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" gcells" ];
+}

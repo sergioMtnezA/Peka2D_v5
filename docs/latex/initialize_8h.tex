@@ -1,0 +1,44 @@
+\hypertarget{initialize_8h}{}\doxysection{src/initialize.h File Reference}
+\label{initialize_8h}\index{src/initialize.h@{src/initialize.h}}
+{\ttfamily \#include $<$time.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$omp.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}define.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}structs.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}load\+Data.\+h\char`\"{}}\newline
+Include dependency graph for initialize.\+h\+:
+% FIG 0
+This graph shows which files directly or indirectly include this file\+:
+% FIG 1
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int \mbox{\hyperlink{initialize_8h_a9664cdb1efefb7972f343da2ef022997}{allocate\+Arrays\+Memory}} (\mbox{\hyperlink{structs_8h_a3388c02add71e0bb2abcd1bdcccadd06}{t\+\_\+parameters}} \mbox{\hyperlink{mainKernel_8h_af1f171d758e20467ed00c8832ad5b974}{spar}}, \mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$carrays, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+\mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int \mbox{\hyperlink{initialize_8h_abccebe0d2e3ee737e22fafb5464965ef}{initilize\+Control\+Arrays}} (\mbox{\hyperlink{structs_8h_a3388c02add71e0bb2abcd1bdcccadd06}{t\+\_\+parameters}} \mbox{\hyperlink{mainKernel_8h_af1f171d758e20467ed00c8832ad5b974}{spar}}, \mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$carrays, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+\mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int \mbox{\hyperlink{initialize_8h_a9b1bbbf99d312f7d8b05887a15fc83a6}{initilize\+Mesh\+Arrays}} (\mbox{\hyperlink{structs_8h_a3388c02add71e0bb2abcd1bdcccadd06}{t\+\_\+parameters}} \mbox{\hyperlink{mainKernel_8h_af1f171d758e20467ed00c8832ad5b974}{spar}}, \mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$carrays, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{initialize_8h_a9664cdb1efefb7972f343da2ef022997}\label{initialize_8h_a9664cdb1efefb7972f343da2ef022997}} 
+\index{initialize.h@{initialize.h}!allocateArraysMemory@{allocateArraysMemory}}
+\index{allocateArraysMemory@{allocateArraysMemory}!initialize.h@{initialize.h}}
+\doxysubsubsection{\texorpdfstring{allocateArraysMemory()}{allocateArraysMemory()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int allocate\+Arrays\+Memory (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a3388c02add71e0bb2abcd1bdcccadd06}{t\+\_\+parameters}}}]{spar,  }\item[{\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$}]{carrays,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{initialize_8h_abccebe0d2e3ee737e22fafb5464965ef}\label{initialize_8h_abccebe0d2e3ee737e22fafb5464965ef}} 
+\index{initialize.h@{initialize.h}!initilizeControlArrays@{initilizeControlArrays}}
+\index{initilizeControlArrays@{initilizeControlArrays}!initialize.h@{initialize.h}}
+\doxysubsubsection{\texorpdfstring{initilizeControlArrays()}{initilizeControlArrays()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int initilize\+Control\+Arrays (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a3388c02add71e0bb2abcd1bdcccadd06}{t\+\_\+parameters}}}]{spar,  }\item[{\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$}]{carrays,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{initialize_8h_a9b1bbbf99d312f7d8b05887a15fc83a6}\label{initialize_8h_a9b1bbbf99d312f7d8b05887a15fc83a6}} 
+\index{initialize.h@{initialize.h}!initilizeMeshArrays@{initilizeMeshArrays}}
+\index{initilizeMeshArrays@{initilizeMeshArrays}!initialize.h@{initialize.h}}
+\doxysubsubsection{\texorpdfstring{initilizeMeshArrays()}{initilizeMeshArrays()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int initilize\+Mesh\+Arrays (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a3388c02add71e0bb2abcd1bdcccadd06}{t\+\_\+parameters}}}]{spar,  }\item[{\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$}]{carrays,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+

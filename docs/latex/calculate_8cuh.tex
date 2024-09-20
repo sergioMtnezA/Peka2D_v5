@@ -1,0 +1,51 @@
+\hypertarget{calculate_8cuh}{}\doxysection{src/calculate.cuh File Reference}
+\label{calculate_8cuh}\index{src/calculate.cuh@{src/calculate.cuh}}
+{\ttfamily \#include $<$time.\+h$>$}\newline
+{\ttfamily \#include $<$stdlib.\+h$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$omp.\+h$>$}\newline
+{\ttfamily \#include \char`\"{}cuda.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}cuda\+\_\+runtime.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}cublas\+\_\+v2.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}define.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}structs.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}load\+Data.\+h\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}write\+In\+Out.\+cuh\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}memory\+Manage.\+cuh\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}water.\+cuh\char`\"{}}\newline
+{\ttfamily \#include \char`\"{}cu\+Tilities.\+cuh\char`\"{}}\newline
+Include dependency graph for calculate.\+cuh\+:
+% FIG 0
+This graph shows which files directly or indirectly include this file\+:
+% FIG 1
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int \mbox{\hyperlink{calculate_8cuh_aa65c47fee5af3a7bf9ca56fb5b5b83f2}{compute\+Simulation}} (\mbox{\hyperlink{structs_8h_a3388c02add71e0bb2abcd1bdcccadd06}{t\+\_\+parameters}} \mbox{\hyperlink{mainKernel_8h_af1f171d758e20467ed00c8832ad5b974}{spar}}, \mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$\mbox{\hyperlink{mainKernel_8h_a8b5bf4d0dbdb1445ca2bd0c599576a72}{mesh}}, \mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$carrays, \mbox{\hyperlink{structs_8h_a2c869ac31b997c2019986f328a9eef35}{t\+\_\+timers}} $\ast$timers, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+\mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int \mbox{\hyperlink{calculate_8cuh_a151d12e24bd6fa0cbffa7d87aded5aa5}{compute\+Initial\+Mass\+Balance}} (\mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$carrays, \mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$garrays, \mbox{\hyperlink{structs_8h_ab5731fab00959a50bd4fc31636b9bff9}{t\+\_\+cu\+Ptr}} $\ast$cu\+Ptr, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\item 
+\mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} void \mbox{\hyperlink{calculate_8cuh_a84ddc288c14c5d7ae94f6f92a84c174f}{generate\+Time\+Step}} (double $\ast$t, \mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$carrays, \mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$garrays, \mbox{\hyperlink{structs_8h_ab5731fab00959a50bd4fc31636b9bff9}{t\+\_\+cu\+Ptr}} $\ast$cu\+Ptr, \mbox{\hyperlink{structs_8h_a2c869ac31b997c2019986f328a9eef35}{t\+\_\+timers}} $\ast$timers, \mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$\mbox{\hyperlink{mainKernel_8h_a5ab3c9854403162e08921a5048dffecd}{msg}})
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Function Documentation}
+\mbox{\Hypertarget{calculate_8cuh_a151d12e24bd6fa0cbffa7d87aded5aa5}\label{calculate_8cuh_a151d12e24bd6fa0cbffa7d87aded5aa5}} 
+\index{calculate.cuh@{calculate.cuh}!computeInitialMassBalance@{computeInitialMassBalance}}
+\index{computeInitialMassBalance@{computeInitialMassBalance}!calculate.cuh@{calculate.cuh}}
+\doxysubsubsection{\texorpdfstring{computeInitialMassBalance()}{computeInitialMassBalance()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int compute\+Initial\+Mass\+Balance (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$}]{carrays,  }\item[{\mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$}]{garrays,  }\item[{\mbox{\hyperlink{structs_8h_ab5731fab00959a50bd4fc31636b9bff9}{t\+\_\+cu\+Ptr}} $\ast$}]{cu\+Ptr,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{calculate_8cuh_aa65c47fee5af3a7bf9ca56fb5b5b83f2}\label{calculate_8cuh_aa65c47fee5af3a7bf9ca56fb5b5b83f2}} 
+\index{calculate.cuh@{calculate.cuh}!computeSimulation@{computeSimulation}}
+\index{computeSimulation@{computeSimulation}!calculate.cuh@{calculate.cuh}}
+\doxysubsubsection{\texorpdfstring{computeSimulation()}{computeSimulation()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} int compute\+Simulation (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structs_8h_a3388c02add71e0bb2abcd1bdcccadd06}{t\+\_\+parameters}}}]{spar,  }\item[{\mbox{\hyperlink{structs_8h_a89dadbdb01600ea7795180a359d43544}{t\+\_\+mesh}} $\ast$}]{mesh,  }\item[{\mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$}]{carrays,  }\item[{\mbox{\hyperlink{structs_8h_a2c869ac31b997c2019986f328a9eef35}{t\+\_\+timers}} $\ast$}]{timers,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{calculate_8cuh_a84ddc288c14c5d7ae94f6f92a84c174f}\label{calculate_8cuh_a84ddc288c14c5d7ae94f6f92a84c174f}} 
+\index{calculate.cuh@{calculate.cuh}!generateTimeStep@{generateTimeStep}}
+\index{generateTimeStep@{generateTimeStep}!calculate.cuh@{calculate.cuh}}
+\doxysubsubsection{\texorpdfstring{generateTimeStep()}{generateTimeStep()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{define_8h_a779136663193567a853b1b8d3e8bd6b5}{EXPORT\+\_\+\+DLL}} void generate\+Time\+Step (\begin{DoxyParamCaption}\item[{double $\ast$}]{t,  }\item[{\mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$}]{carrays,  }\item[{\mbox{\hyperlink{structs_8h_a35d362804d71cc7cb2c7f57fe532a938}{t\+\_\+arrays}} $\ast$}]{garrays,  }\item[{\mbox{\hyperlink{structs_8h_ab5731fab00959a50bd4fc31636b9bff9}{t\+\_\+cu\+Ptr}} $\ast$}]{cu\+Ptr,  }\item[{\mbox{\hyperlink{structs_8h_a2c869ac31b997c2019986f328a9eef35}{t\+\_\+timers}} $\ast$}]{timers,  }\item[{\mbox{\hyperlink{structs_8h_aff3cce4aea978a27e1be30fb4eebc46d}{t\+\_\+message}} $\ast$}]{msg }\end{DoxyParamCaption})}
+
