@@ -19,7 +19,10 @@ jobs:
     - name: Clean previous build
       run: |
         make clean
-
+        
+    - name: cuda-toolkit
+      uses: Jimver/cuda-toolkit@v0.2.16
+          
     - name: Build project CPU
       run: |
         make
