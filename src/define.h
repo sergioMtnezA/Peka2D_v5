@@ -6,7 +6,7 @@
 #include <time.h>
 #include <omp.h>
 
-#define LINUX_COMPILATION 0
+#define LINUX_COMPILATION 1
 
 #if LINUX_COMPILATION==0
 
@@ -22,7 +22,7 @@
 	 * 1 Enabled
 	*/
 	#ifndef SET_SIMGPU
-		#define SET_SIMGPU 1
+		#define SET_SIMGPU 0
 	#endif	
 
 	#if SET_SIMGPU
