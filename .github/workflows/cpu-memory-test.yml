@@ -1,0 +1,31 @@
+name: C++ Build and Test Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Clean previous build
+      run: |
+        make clean
+
+    - name: Build project CPU
+      run: |
+        make
+
+    - name: Run CPU memory check with Valgrind
+      run: |
+        cd build
+        valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_square
+        valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_triangle
