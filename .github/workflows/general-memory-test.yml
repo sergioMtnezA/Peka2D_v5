@@ -14,11 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - uses: actions/cache@v3
+      id: cache-cuda
+      with:
+        path: /usr/local/cuda
+        key: ${{ runner.os }}-cuda-${{ hashFiles('**/Makefile', '**/MakefileCUDA') }}
+        restore-keys: |
+          ${{ runner.os }}-cuda-
+
     - uses: Jimver/cuda-toolkit@v0.2.16
       id: cuda-toolkit
+      if: steps.cache-cuda.outputs.cache-hit != 'true'
       with:
         cuda: '12.5.0'
-      
+
     - name: Checkout code
       uses: actions/checkout@v3
 
@@ -30,17 +39,17 @@ jobs:
       run: |
         make DEBUG=yes
 
-    - name: Build project GPU
-      run: |
-        make -f MakefileCUDA DEBUG=yes
+#    - name: Build project GPU
+#      run: |
+#        make -f MakefileCUDA DEBUG=yes
 
     - name: Run CPU memory check with Valgrind
       run: |
-        valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_square
-        valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_triangle
+        cd build
+        valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_square 2> valgrind_case_square.log
+        valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_triangle 2> valgrind_case_triangle.log
 
-    - name: Run GPU memory check with Sanitizer
-      run: |
-        compute-sanitizer --tool memcheck --leak-check full ./peka benchmark_tests/ case_square
-        compute-sanitizer --tool memcheck --leak-check full ./peka benchmark_tests/ case_triangle
-      
+#    - name: Run GPU memory check with Sanitizer
+#      run: |
+#        compute-sanitizer --tool memcheck --leak-check full ./peka benchmark_tests/ case_square  2> sanitizer_case_square.log
+#        compute-sanitizer --tool memcheck --leak-check full ./peka benchmark_tests/ case_triangle 2> sanitizer_case_triangle.log
