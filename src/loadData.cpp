@@ -272,7 +272,7 @@ EXPORT_DLL int loadMeshData(
 	//lccells->cells = (t_c_cell*) malloc( Ncell * sizeof(t_c_cell));
 	new_lc_cells(lccells,Ncell);
 
-	// Create/initialize new cells and its correpound!
+	// Create/initialize new cells and its correspound!
 	for (i=0; i<Ncell; i++) {
 		myc_Cell=(t_c_cell*)malloc(sizeof(t_c_cell));
 		myg_Cell=(t_g_cell*)malloc(sizeof(t_g_cell));
