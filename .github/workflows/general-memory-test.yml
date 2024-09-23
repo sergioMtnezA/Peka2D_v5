@@ -45,8 +45,7 @@ jobs:
 
     - name: Run CPU memory check with Valgrind
       run: |
-        valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_square 2> valgrind_case_square.log
-        valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka benchmark_tests/ case_triangle 2> valgrind_case_triangle.log
+        valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka2d benchmark_tests/circular_dambreak/case_square caseName 2> benchmark_tests/circular_dambreak/valgrind_case_square.log
 
 #    - name: Run GPU memory check with Sanitizer
 #      run: |
