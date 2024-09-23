@@ -2,10 +2,7 @@ name: C++ Build and Test Workflow
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
+    branches-ignore:
       - main
 
 jobs:
