@@ -557,6 +557,7 @@ int setInitialState(
 
     FILE *fp;
     int i;
+    // Here, c1 is defined as a local pointer
     t_c_cell *c1;
 
     double aux1, wse;
@@ -570,6 +571,7 @@ int setInitialState(
     mesh->maxZ=-1e6;    
 
 	for(i=0;i<mesh->ncells;i++){
+        // Here, c1 is pointed to the memory position of the i-th cell contained in mesh.
 		c1=&(mesh->c_cells->cells[i]);
 
         //Initial bed level

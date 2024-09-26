@@ -115,6 +115,9 @@ struct Peka2D_Setup_{
 
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function loads control parameters.
+ */
 EXPORT_DLL int loadControlParameters(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
@@ -123,6 +126,11 @@ EXPORT_DLL int loadControlParameters(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function reads control parameters from file .DAT.
+ * @param filename This variable passes the name of the data file to read in this the function.
+ * @param pksetup This variable gets the information file in this function.
+ */
 EXPORT_DLL int readControlDataFile(
     char *filename,
     Peka2D_Setup *pksetup,
@@ -130,6 +138,10 @@ EXPORT_DLL int readControlDataFile(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function passes the simulation execution paramenters from pksetup to spar.
+ * @param spar This variable gets the simulation execution paramenters passed from pksetup in this function.
+ */
 EXPORT_DLL int setControlParameters(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
@@ -137,6 +149,10 @@ EXPORT_DLL int setControlParameters(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function creates the mesh data structure into variable mesh.
+ * @param mesh This variable is created to contain the structure variables of the computational mesh.
+ */
 EXPORT_DLL int loadMeshData(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
@@ -145,12 +161,21 @@ EXPORT_DLL int loadMeshData(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function checks if the mesh is properly allocated.
+ * @param e This variable notifies if the mesh is not properly allocated.
+ */
 int IsMeshAllocated(
     t_mesh *mesh, 
     t_message *e);
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function reads the mesh data from file and stores it in variable mesh.
+ * @param filename This variable passes the name of the data file to read in this the function.
+ * @param mesh This variable receives the mesh data read from file.
+ */
 int readMeshFile(
     char *filename,
     Peka2D_Setup *pksetup,
@@ -159,6 +184,10 @@ int readMeshFile(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function initializes all the computational variables (water depth, water discharge, etc.) in variable mesh.
+ * @param mesh In this function, variable mesh receives the initialization of the computational variables.
+ */
 int setInitialState(
     Peka2D_Setup *pksetup,
     t_parameters *spar,
@@ -167,6 +196,9 @@ int setInitialState(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function loads the general setting of the boundary conditions.
+ */
 int loadBoundaryConditions(
     Peka2D_Setup *pksetup, 
     t_parameters *spar,    
@@ -175,6 +207,10 @@ int loadBoundaryConditions(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function reads the number of open boundary nodes.
+ * @param filename This variable passes the name of the file to read the open boundary conditions in this the function.
+ */
 int readOpenBoundaryNodes(
     char *filename,
     int nnodes,
@@ -183,6 +219,12 @@ int readOpenBoundaryNodes(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function creates the inlet/outlet structure of the open boundaries.
+ * @param nbc This structure variable contains all the information of the boundary nodes.
+ * @param IOBC This variable contains the information of the inlet open boundary walls.
+ * @param OOBC This variable contains the information of the inlet open boundary walls.
+ */
 int createOpenBounds(
     Peka2D_NodeBoundary *nbc,
     Peka2D_OBCWalls *IOBC,
@@ -193,6 +235,10 @@ int createOpenBounds(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
+/**
+ * @brief This function reads the data of the inlet and outlet open boundaries (hydrographs) from external files and stores it in mesh.
+ * @param filename This variable passes the name of the file from which the open boundary data is read.
+ */
 int readOpenBoundaryFile(
     char *filename,
     Peka2D_NodeBoundary *nbc,

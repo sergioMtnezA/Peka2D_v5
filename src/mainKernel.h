@@ -36,6 +36,9 @@ extern t_message *msg;
 
 int runMainKernel (int argc, char * argv[]);
 
+/**
+ * @brief This function reads raster files and stores the information in the struct-type variable called msg.
+ */
 int loadSimulationDomain(
 	Peka2D_Setup *pksetup, 
 	t_parameters *spar, 
@@ -43,6 +46,9 @@ int loadSimulationDomain(
 	t_timers *timers,
 	t_message *msg);
 
+/**
+ * @brief This function loads mesh-type structures to array-type structures.
+ */
 int initializeComputationArrays(
 	t_parameters spar, 
 	t_mesh *mesh,
