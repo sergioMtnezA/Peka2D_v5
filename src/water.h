@@ -1,16 +1,42 @@
 #include "define.h"
 #include "structs.h"
 
+/**
+ * @brief This function recounts and stores the total mass of all active cells.
+ * @param nTasks This integer variable passes the number of times the computation needs to be done.
+ * @param arrays This pointer variable passes the arrays structure.
+ */
 EXPORT_DLL void c_compute_cell_mass(int nTasks, t_arrays *arrays);
 
+/**
+ * @brief This function initializes the variation of conserved variables in the arrays structure to 0.0 and the array solidWallByCell to 0.
+ * @param nTasks This integer variable passes the number of times the computation needs to be done.
+ * @param arrays This pointer variable passes the arrays structure.
+ */
 EXPORT_DLL void c_initialize_delta(int nTasks, t_arrays *arrays);
 
+/**
+ * @brief This function computes the variation of conserved variables (dh, dhu, dhv) using the ARoe method at active walls. It includes source terms (bed slope and bed friction), positivity, entropy and wet/dry fixes. Additionally, it updates aux arrays and the list of active cells.
+ * @param nTasks This integer variable passes the number of times the computation needs to be done.
+ * @param arrays This pointer variable passes the arrays structure.
+ */
 EXPORT_DLL void c_wall_rotated_calculus(int nTasks, t_arrays *arrays);
 
 //EXPORT_DLL void c_bound_calculus
 
+
+/**
+ * @brief This function finds the minimum time step out of the vector localDt. If the whole domain is dry, it is set to 1.0 seconds.
+ * @param nTasks This integer variable passes the number of times the computation needs to be done.
+ * @param arrays This pointer variable passes the arrays structure. arrays->dt is modifed.
+ */
 EXPORT_DLL void c_get_dtmin(int nTasks, t_arrays *arrays);
 
+/**
+ * @brief This function finds the minimum time step out of the vector localDt. If the whole domain is dry, it is set to 1.0 seconds.
+ * @param nTasks This integer variable passes the number of times the computation needs to be done.
+ * @param arrays This pointer variable passes the arrays structure. arrays->dt is modifed.
+ */
 EXPORT_DLL void c_update_contributions(int nTasks, t_arrays *arrays);
 
 EXPORT_DLL void c_checkpos_h(int nTasks, t_arrays *arrays, int *check);

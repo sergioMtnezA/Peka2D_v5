@@ -1,0 +1,23 @@
+ __ii__ Log file benchmark_tests/circular_dambreak/case_triangle/caseName.log created
+ [WARN] Number of CPU cores set by user: 1
+ [_OK_] Reading control file completed
+ [_OK_] Set control parameters completed
+ [_OK_] Control data loading completed
+ [_OK_] Mesh memory allocation completed
+ __ii__ Nodes read 251001
+ __ii__ Cells read 500000
+ [_OK_] Mesh file reading completed
+ [_OK_] Mesh geometry calculation completed
+ __ii__ Number of internal walls: 749000
+ __ii__ Number of boundary walls: 2000
+ [_OK_] Created new neighbouring-cells list
+ [_OK_] Set initial state completed
+ [_OK_] Mesh data loading completed
+ __ii__ Number of open boundaries defined 0
+ __ii__ Found 2000/2000 closed boundary walls
+ [WARN] No inlet OBC defined
+ [WARN] No outlet OBC defined
+ [_OK_] Boundaries ready
+ [_OK_] Mesh data loading completed
+ __ii__ Mesh VTK file written
+ [_OK_] Loading simulation completed
