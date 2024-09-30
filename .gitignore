@@ -1,0 +1,30 @@
+# Compilation files
+*.so
+*.o
+*.exe
+*.out
+*.app
+
+# logs
+*.log
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+*.asv
+.vscode
+.error
+
+# txt test files
+*.pdf 
+*.png 
+*.xlsx
+*.xls
+*.eps
+*.errors
+
+# ignore directories
+.pytest_cache/
+__pycache__/
