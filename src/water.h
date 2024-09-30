@@ -86,17 +86,27 @@ EXPORT_DLL void c_update_wetdry_cells(int nTasks, t_arrays *arrays);
 //EXPORT_DLL void c_update_boundaries
 
 /**
- * @brief This function corrects the wet/dry fronts found in function c_check_wetdry.
- * @param nTasks This integer variable passes the number of times the computation needs to be done.
+ * @brief This function computes the mass error of the current state with respect to the previous one (in %).
  * @param arrays This pointer variable passes the arrays structure.
  */
 EXPORT_DLL void c_compute_mass_error(t_arrays *arrays);
 
+/**
+ * @brief This function computes the mass error of the current state with respect to the previous one (in %).
+ * @param arrays This pointer variable passes the arrays structure.
+ */
 EXPORT_DLL void c_reconstruct_active_elements(int nTasks, t_arrays *arrays);
 
+/**
+ * @brief This function adds the newly wetted cells to the active cells set.
+ * @param arrays This pointer variable passes the arrays structure.
+ * @param id This integer variable passes the index of the wetted cell.
+ */
 EXPORT_DLL void c_add_active_cells(t_arrays *arrays, int id);
 
+/**
+ * @brief This function adds wall identified by index id to the active walls set.
+ * @param arrays This pointer variable passes the arrays structure.
+ * @param id This integer variable passes the index of the wetted cell.
+ */
 EXPORT_DLL void c_add_active_walls(t_arrays *arrays, int id);
-
-
-
