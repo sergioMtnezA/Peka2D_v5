@@ -32,7 +32,7 @@ EXPORT_DLL void c_wall_rotated_calculus(int nTasks, t_arrays *arrays);
 EXPORT_DLL void c_get_dtmin(int nTasks, t_arrays *arrays);
 
 /**
- * @brief This function finds the minimum time step out of the vector localDt. If the whole domain is dry, it is set to 1.0 seconds.
+ * @brief This function computes the right-hand side of the equations to update each physical variable.
  * @param nTasks This integer variable passes the number of times the computation needs to be done.
  * @param arrays This pointer variable passes the arrays structure. arrays->dt is modifed.
  */
