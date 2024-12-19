@@ -8,7 +8,7 @@
 
 #define LINUX_COMPILATION 1
 
-#if LINUX_COMPILATION==0
+#if LINUX_COMPILATION==1
 
 	/** Selection of the solver
 	 *  1 SWE-Roe 
@@ -22,7 +22,7 @@
 	 * 1 Enabled
 	*/
 	#ifndef SET_SIMGPU
-		#define SET_SIMGPU 0
+		#define SET_SIMGPU 1
 	#endif	
 
 	#if SET_SIMGPU
@@ -34,6 +34,14 @@
 		 */
 		#define SET_OPENMP 4		
 	#endif
+
+	/** Enables solutes computation 
+	 * 0 Disabled
+	 * 1 Enabled
+	*/
+	#ifndef SET_SOLUTE
+		#define SET_SOLUTE 1
+	#endif		
 
 #endif
 

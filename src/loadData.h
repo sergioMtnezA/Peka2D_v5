@@ -27,7 +27,7 @@
 #define STR_SIZE 1024
 
 // BOUNDARY CONDITIONS
-#define HYD_N_OBT 200
+#define HYD_N_OBT 20
 #define HYD_N_OBC_TYPES 12
 
 //Boundary labels
@@ -48,6 +48,8 @@ typedef struct Peka2D_Setup_ Peka2D_Setup;
 typedef struct Peka2D_Run_ Peka2D_Run;
 typedef struct Peka2D_NodeBoundary_ Peka2D_NodeBoundary;
 typedef struct Peka2D_OBCWalls_ Peka2D_OBCWalls;
+typedef struct Peka2D_SoluteGroup_ Peka2D_SoluteGroup;
+typedef struct Peka2D_Solute_ Peka2D_Solute;
 
 
 struct Peka2D_Run_{
@@ -60,6 +62,7 @@ struct Peka2D_Run_{
     int sources;      /**< 1 if there are source/sink terms*/
     int dambreach;    /**< 1 if there are dambreach*/
     int wind;
+    int solutes;    /**< 1 if there are solutes*/
 
     //controls
     int writeMass;
@@ -106,11 +109,26 @@ struct Peka2D_OBCWalls_{
       int n;
 };
 
+struct Peka2D_Solute_{
+    char name[STR_SIZE];
+    int typeDiff;
+    double k_xx,k_yy;
+    double maxConc;
+};
+
+struct Peka2D_SoluteGroup_{
+    int nSolutes;
+    int flagDiffussion;
+    char initialFile[STR_SIZE];
+    Peka2D_Solute *solute;
+};
+
 struct Peka2D_Setup_{
     Peka2D_Run pkrun;
     Peka2D_NodeBoundary *pknode;
     Peka2D_OBCWalls *IOBC;
-    Peka2D_OBCWalls *OOBC;    
+    Peka2D_OBCWalls *OOBC;  
+    Peka2D_SoluteGroup *soluteGroup;  
 };
 
 
@@ -145,6 +163,7 @@ EXPORT_DLL int readControlDataFile(
 EXPORT_DLL int setControlParameters(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
+    t_mesh *mesh,
     t_message *msg);
 /*----------------------------*/
 
@@ -248,6 +267,40 @@ int readOpenBoundaryFile(
     t_mesh *mesh,
     t_message *e);
 /*----------------------------*/
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int loadSoluteData(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh, 
+    t_message *msg);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+int readSoluteFile(
+    char *filename,
+    Peka2D_SoluteGroup *soluteGroup,   
+    t_message *e);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+int createSoluteStructures(
+    Peka2D_SoluteGroup *soluteGroup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+int setInitialSoluteState(
+    Peka2D_SoluteGroup *soluteGroup,
+    t_parameters *spar,
+    t_mesh *mesh, 
+    t_message *e);
+/*----------------------------*/
+#endif
 
 
 #endif //end #ifndef hy_mesh_

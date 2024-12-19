@@ -24,31 +24,33 @@ int runMainKernel (int argc, char * argv[]) {
 
 	clock_t start0=clock();
 
-	loadSimulationDomain(
+	if(!loadSimulationDomain(
         pksetup, 
         (&spar), 
         mesh,
 		&(timers), 
-        msg);
+        msg)
+	) return 0;
 
     getchar();    
 
-    initializeComputationArrays(
+    if(!initializeComputationArrays(
         spar, 
         mesh, 
         carrays,
 		&(timers), 
-        msg);
+        msg)
+	) return 0;
 
 	getchar(); 	
 
-    computeSimulation(
+    if(!computeSimulation(
         spar,
         mesh, 
         carrays,
 		&(timers),
-		msg);
-
+		msg)
+	) return 0;
 
 	clock_t end0=clock();
 	double dtime=double(end0-start0)/CLOCKS_PER_SEC;
@@ -115,11 +117,13 @@ int loadSimulationDomain(
 	//Start loading time .....................................
 	clock_t start0=clock();
 
+
 	//Read run control data
 	if(loadControlParameters(pksetup, spar, mesh, msg)){
 		sprintf(temp,"Control data loading completed");
 		Notify(temp,MSG_L1,msg);		
 	}
+
 
 	//Load mesh data
 	if(msg->error){
@@ -131,15 +135,30 @@ int loadSimulationDomain(
 		}        
 	}
 
+
+    //Load solute data
+	#if SET_SOLUTE
+	if(msg->error){
+		return 0;
+	}else{
+		if(loadSoluteData(pksetup, spar, mesh, msg)){
+			sprintf(temp,"Solute loading completed");
+			Notify(temp,MSG_L1,msg);		
+		}        
+	} 
+	#endif	
+
+
     //Load boundary conditions
 	if(msg->error){
 		return 0;
 	}else{
-		 if(loadBoundaryConditions(pksetup, spar, mesh, msg)){
-			sprintf(temp,"Mesh data loading completed");
+		if(loadBoundaryConditions(pksetup, spar, mesh, msg)){
+			sprintf(temp,"Boundary data loading completed");
 			Notify(temp,MSG_L1,msg);		
 		}        
 	} 
+
 
     // Write mesh file
     if(msg->error){
@@ -180,14 +199,21 @@ int initializeComputationArrays(
 	//Start initialization time .....................................
 	clock_t start0=clock();
 
-    //Create control arrays
+    //Create computation arrays
 	if(msg->error){
 		return 0;
 	}else{
 		if(allocateArraysMemory(spar, mesh, carrays, msg)){
 			sprintf(temp,"Arrays memory allocation completed");
 			Notify(temp,MSG_L2,msg);		
-		}        
+		}
+
+		#if SET_SOLUTE
+		if(allocateArraysSoluteMemory(spar, mesh, carrays, msg)){
+			sprintf(temp,"Solute arrays memory allocation completed");
+			Notify(temp,MSG_L2,msg);		
+		}
+		#endif        		
 	}    
 
     //Create control arrays
@@ -197,7 +223,14 @@ int initializeComputationArrays(
 		if(initilizeControlArrays(spar, mesh, carrays, msg)){
 			sprintf(temp,"Initialize control arrays completed");
 			Notify(temp,MSG_L2,msg);		
-		}        
+		} 
+
+		#if SET_SOLUTE
+		if(initilizeControlSoluteArrays(spar, mesh, carrays, msg)){
+			sprintf(temp,"Initialize solute control arrays completed");
+			Notify(temp,MSG_L2,msg);		
+		}
+		#endif       		       
 	}
 
     //Create communication arrays
@@ -210,15 +243,22 @@ int initializeComputationArrays(
 	// 	}        
 	// }     	
 
-    //Create mesh arrays
+    //Initialize arrays
 	if(msg->error){
 		return 0;
 	}else{
 		if(initilizeMeshArrays(spar, mesh, carrays, msg)){
 			sprintf(temp,"Initialize mesh arrays completed");
 			Notify(temp,MSG_L2,msg);		
-		}        
-	}     
+		}  
+
+		#if SET_SOLUTE
+		if(initilizeSoluteArrays(spar, mesh, carrays, msg)){
+			sprintf(temp,"Initialize solute mesh arrays completed");
+			Notify(temp,MSG_L2,msg);		
+		} 
+		#endif         
+	} 
 
     //Create boundary arrays
 	/*if(msg->error){

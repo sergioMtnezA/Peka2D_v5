@@ -98,3 +98,53 @@ __global__ void assignGArraysToCudaMem(t_arrays *garrays,
 EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr);
 /*----------------------------*/
 
+
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateArraysSolutesCudaMem(
+    int nSolutes, 
+    int NCwall, int ncells, int nWallCell, int nwc, int nwb, 
+    t_cuPtr *cuPtr);
+/*----------------------------*/
+
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int copyControlArraysSolutesCudaMem(
+    int nSolutes,
+    t_arrays *carrays,
+    t_arrays *garrays,
+    t_cuPtr *cuPtr);
+/*----------------------------*/
+
+
+////////////////////////////////////////////////////////////////
+int copyMeshArraysSolutesCudaMem(
+    int nSolutes,
+    t_arrays *carrays,
+    t_arrays *garrays,
+    t_cuPtr *cuPtr);
+/*----------------------------*/
+
+
+
+////////////////////////////////////////////////////////////////
+__global__ void assignGArraysSolutesToCudaMem(int nSolutes, t_arrays *garrays,
+	//------------------------solutes
+	int *typeDiff,
+	double *k_xx,
+	double *k_yy,
+	//------------------------solutes*cells
+	double *hcsol,
+	double *csol,
+	//------------------------solutes*cells*NCwalls
+	double *dhcsol);
+/*----------------------------*/
+
+EXPORT_DLL int freeSolutesCudaMemory(
+	int nSolutes, 
+	t_cuPtr *cuPtr);
+/*----------------------------*/
+#endif
+

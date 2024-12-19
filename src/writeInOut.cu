@@ -203,6 +203,13 @@ EXPORT_DLL int create_computation_files(char *path, t_message *msg){
 	fp=fopen(filename,"w");
 	fclose(fp);
 
+	//solute mass balance file
+	#if SET_SOLUTE
+	sprintf(filename,"%ssoluteMassBalance.out",path);
+	fp=fopen(filename,"w");
+	fclose(fp);
+	#endif
+
 	return 1;
 }
 
@@ -298,6 +305,7 @@ EXPORT_DLL int write_vtk_state(char *filename, t_mesh *mesh, t_arrays *arrays, t
 	double auxd1,auxd2,auxd3;
 	int auxi;
     char temp[1024];
+	int idx;
 
     FILE *fp;
 	fp = fopen (filename,"w");
@@ -360,7 +368,20 @@ EXPORT_DLL int write_vtk_state(char *filename, t_mesh *mesh, t_arrays *arrays, t
 	// fprintf (fp, "LOOKUP_TABLE default\n");
 	// for(i=0;i<arrays->ncells;i++){
 	// 	write_Iscalar_in_vtk(fp, arrays->activeC[i]);
-	// }           
+	// } 
+
+	#if SET_SOLUTE
+	if(arrays->nSolutes){
+		for(j=0;j<arrays->nSolutes;j++){
+			fprintf (fp, "SCALARS phi%d double\n",j);
+			fprintf (fp, "LOOKUP_TABLE default\n");
+			for(i=0;i<arrays->ncells;i++){
+				idx = j*arrays->ncells+i;
+				write_Dscalar_in_vtk(fp, arrays->csol[idx]);
+			}
+		}		
+	}
+	#endif	          
 
     fclose(fp);
 

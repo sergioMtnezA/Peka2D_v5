@@ -3,6 +3,8 @@
 #ifndef s_mesh_
 #define s_mesh_
 
+#define STR_SIZE 1024
+
 typedef struct t_message_ t_message;
 
 typedef struct t_parameters_ t_parameters;
@@ -24,6 +26,9 @@ typedef struct t_edge_ t_edge;
 typedef struct l_edges_ l_edges;
 
 typedef struct t_bound_ t_bound;
+
+typedef struct t_solute_ t_solute;
+typedef struct l_solutes_ l_solutes;
 
 typedef struct t_arrays_ t_arrays;
 typedef struct t_cuPtr_ t_cuPtr;
@@ -100,6 +105,11 @@ struct t_mesh_{
 	t_bound *out;
 
     double minZ, maxZ;
+
+	//solutes
+	int nSolutes;
+	l_solutes *solutes;
+
 };
 
 
@@ -116,15 +126,16 @@ struct t_c_cell_{
 	double v;
 	double modulou;
 
-	double *hphi;
-	double *phi;
-
 	double hini;
     double zini;
 
 	double nMan;
 
 	t_g_cell *geom;
+
+	//Advection-Diffusion Transport 
+	double *hphi;
+	double *phi;
 };
 
 
@@ -296,6 +307,28 @@ struct t_bound_{
 
 
 /**
+ * @brief Passive solute
+*/
+struct t_solute_{
+	char name[STR_SIZE]; /**< @brief Solute name*/
+	int typeDiff; /**< @brief Diffusion model*/
+	double k_xx,k_yy; /**< @brief Longitudinal and transversal diffusion coefficients*/
+	double maxConc;
+};
+
+
+/**
+ * @brief List of passive solutes
+*/
+struct l_solutes_{
+	int n;
+	int flagDiffussion; //flag to determine if it is necessary to go inside diffusion subroutines
+	t_solute *solute;
+};
+
+
+
+/**
  * @brief Arrange all the domain parameters, run controls and data arrays required for computation
 */
 struct t_arrays_{
@@ -343,7 +376,10 @@ struct t_arrays_{
 	double qTotalIn; /**< @brief Run-control inflow discharge inegrated for all the inlet boundaries*/
 	double qTotalOut; /**< @brief Run-control outflow discharge inegrated for all the outlet boundaries*/
 
+	//solute controls
+	int nSolutes; /**< @brief Number of solutes */
 
+	
 	//ARRAY DE CELDA
     int nActCells; /**< @brief Run-control number of active cells*/
     int *actCells; /**< @brief [NCELLS] Active cell indexes*/
@@ -361,7 +397,6 @@ struct t_arrays_{
     double *modulou; /**< @brief [NCELLS] Velocity modulus in cells*/
 	double *sqrh; /**< @brief [NCELLS] Square depth of flow depth in cells*/
 
-    
 	double *area; /**< @brief [NCELLS] Cell area*/
 	double *nman; /**< @brief [NCELLS] Manning roughness coefficient nMan [s m^(-1/3)] in cells*/
     double *SOX; /**< @brief [NCELLS] X-direction bed slope*/
@@ -413,6 +448,23 @@ struct t_arrays_{
     double *qnormalL; /**< @brief [NWCALC] Upwind-left volume rate for the calculus wall*/
 	double *localDt; /**< @brief [NWCALC] Local time step limitation for the calculus wall*/
 
+
+	// SOLUTE ARRAYS ///////////////////////////	
+	#if SET_SOLUTE
+		int flagDiffusion; /**< @brief Solute diffusion activation flag */
+
+		//solute data
+		int *typeDiff; //nsol
+		double *k_xx, *k_yy; //nsol	
+
+		//solute conservative
+		double *hcsol; /**< @brief [NSOL x NCELLS] Solute mass in cells*/
+		double *csol; /**< @brief [NSOL x NCELLS] Solute concentration in cells*/	
+
+		//solute contributions
+		double *dhcsol;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute mass*/
+	#endif
+
 };
 
 
@@ -438,7 +490,6 @@ struct t_cuPtr_{
 
 	double *qTotalIn, *qTotalOut;	
 
-
 	// GPU COMPUTATION ARRAYS ////////////////////////////////////////////
     //cells
 	int *cidx, *nneig;
@@ -462,6 +513,20 @@ struct t_cuPtr_{
 	double *qnormalL, *localDt;
 
     //boundaries
+
+
+	// SOLUTE ARRAYS ///////////////////////////
+	#if SET_SOLUTE
+		//solutes
+		int *typeDiff;
+		double *k_xx, *k_yy; 
+
+		//nsolutes*cells
+		double *hcsol, *csol;
+
+		//nsolutes*cells*NCwall
+		double *dhcsol; 
+	#endif
 
 };
 

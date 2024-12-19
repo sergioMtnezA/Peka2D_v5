@@ -195,6 +195,9 @@ EXPORT_DLL int computeSimulation(
     Notify(temp,MSG_L1,msg);
 
     // Free CUDA memory
+    #if SET_SOLUTE
+    freeSolutesCudaMemory(carrays->nSolutes,&(cuPtr));
+    #endif
     freeCudaMemory(&(cuPtr));
     cudaFree(garrays);
     cublasDestroy(cuHandle);
@@ -245,6 +248,7 @@ EXPORT_DLL void generateTimeStep(
 	int checkpos;
     int ncells=carrays->ncells;
     int nwc=carrays->nw_calc;
+    int nSolutes=carrays->nSolutes;
 
     int nTasks, blocksPerGrid;
 
@@ -267,10 +271,19 @@ EXPORT_DLL void generateTimeStep(
 	g_initialize_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
 
 
+    //laure
+    //#if solutes
+    //g_initialize_solute_delta
+
+
     nTasks=carrays->nActWalls;
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_wall_rotated_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
     cudaMemcpy(&(carrays->nActCells), &(garrays->nActCells), sizeof(int), cudaMemcpyDeviceToHost );
+
+    //laure
+    //#if solutes
+    //g_wall_solutes_calculus
 
 
     //g_bound_calculus
@@ -284,6 +297,10 @@ EXPORT_DLL void generateTimeStep(
     nTasks=carrays->nActCells;
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_update_contributions <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+
+    //laure
+    //#if solutes
+    //g_update_solute_contributions
 
 	stime2=clock();
 	timers->wallCalculus += double(stime2-stime1)/CLOCKS_PER_SEC;
@@ -329,6 +346,10 @@ EXPORT_DLL void generateTimeStep(
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
 	g_update_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     cudaMemcpy(&(carrays->nActWalls), &(garrays->nActWalls), sizeof(int), cudaMemcpyDeviceToHost );
+
+   //laure
+    //#if solutes
+    //g_update_solute_cells
 
     stime2=clock();
 	timers->cellUpdating += double(stime2-stime1)/CLOCKS_PER_SEC;
@@ -377,7 +398,7 @@ EXPORT_DLL void generateTimeStep(
 
 
     if(carrays->dumpComponent || carrays->dumpState){
-        // Transfer arrays from GPU to CPU
+        // Transfer flow arrays from GPU to CPU 
         //cudaMemcpy((carrays->z), (cuPtr->z), ncells*sizeof(double), cudaMemcpyDeviceToHost );
         cudaMemcpy((carrays->h), (cuPtr->h), ncells*sizeof(double), cudaMemcpyDeviceToHost );
         //cudaMemcpy((carrays->hu), (cuPtr->hu), ncells*sizeof(double), cudaMemcpyDeviceToHost );
@@ -385,7 +406,17 @@ EXPORT_DLL void generateTimeStep(
         cudaMemcpy((carrays->u), (cuPtr->u), ncells*sizeof(double), cudaMemcpyDeviceToHost );
         cudaMemcpy((carrays->v), (cuPtr->v), ncells*sizeof(double), cudaMemcpyDeviceToHost );
         cudaMemcpy((carrays->modulou), (cuPtr->modulou), ncells*sizeof(double), cudaMemcpyDeviceToHost );          
+
+        
+        #if SET_SOLUTE
+        // Transfer solute arrays from GPU to CPU 
+        if(carrays->nSolutes){
+            cudaMemcpy((carrays->csol), (cuPtr->csol), nSolutes*ncells*sizeof(double), cudaMemcpyDeviceToHost );
+        }
+        #endif
     }
+
+
 
     stime2=clock();
 	timers->memoryTransfer += double(stime2-stime1)/CLOCKS_PER_SEC;

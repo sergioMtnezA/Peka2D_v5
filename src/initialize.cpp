@@ -22,8 +22,6 @@ EXPORT_DLL int allocateArraysMemory(
 	nwc=mesh->nw_calc;
 	nwb=mesh->nw_bound;
 
-    // COMPUTATION CONTROLS ////////////////////////////////////////////
-
 
     // COMPUTATION ARRAYS ////////////////////////////////////////////
     //cells
@@ -95,6 +93,7 @@ EXPORT_DLL int allocateArraysMemory(
 
 
 
+
     return 1;
 
 }
@@ -160,6 +159,10 @@ EXPORT_DLL int initilizeControlArrays(
     carrays->massOut=0.0;
     carrays->qTotalIn=0.0;
     carrays->qTotalOut=0.0; 
+
+
+    //solute permanent flag to switch on/off memory & computation
+	carrays->nSolutes = mesh->nSolutes;
 
 
     return 1;
@@ -231,7 +234,6 @@ EXPORT_DLL int initilizeMeshArrays(
 /*----------------------------*/
 
 	int i,j;
-    int cidx;
 	int NCwall,ncells,nwc,nwb,nWallCell;
     int nActCells, nActWalls;
 
@@ -396,4 +398,146 @@ EXPORT_DLL int initilizeMeshArrays(
     return 1;
 
 }
+
+
+
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateArraysSoluteMemory(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg){
+/*----------------------------*/
+
+	int i,j;
+    int NCwall;
+	int ncells,nwc,nwb;
+    int nWallCell;
+    int nSolutes;
+
+	size_t free_mem, total_mem;
+
+	//Local variables just for allocation
+    NCwall=mesh->NCwall;	//walls per cell
+	ncells=mesh->ncells;
+    nWallCell=NCwall*ncells;
+	nwc=mesh->nw_calc;
+	nwb=mesh->nw_bound;
+    nSolutes=mesh->nSolutes;
+
+    //solutes
+    if(mesh->nSolutes){
+        //solute arrays
+        carrays->typeDiff=(int*)malloc(nSolutes*sizeof(int));
+        carrays->k_xx=(double*)malloc(nSolutes*sizeof(double)); 
+        carrays->k_yy=(double*)malloc(nSolutes*sizeof(double));  
+
+        //cell arrarys
+        carrays->hcsol=(double*)malloc(nSolutes*ncells*sizeof(double));
+        carrays->csol=(double*)malloc(nSolutes*ncells*sizeof(double)); 
+
+        //nWallCell arrays
+        carrays->dhcsol=(double*)malloc(nSolutes*nWallCell*sizeof(double));    
+    }
+
+    return 1;
+
+}
+
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int initilizeControlSoluteArrays(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg){
+/*----------------------------*/
+
+    int j;
+    int nSolutes;
+
+    nSolutes=mesh->nSolutes;
+
+    if(mesh->nSolutes){
+        carrays->flagDiffusion=mesh->solutes->flagDiffussion;
+
+        //solute arrays
+        for(j=0;j<nSolutes;j++){  
+            carrays->typeDiff[j] = mesh->solutes->solute[j].typeDiff;
+            carrays->k_xx[j] = mesh->solutes->solute[j].k_xx; 
+            carrays->k_yy[j] = mesh->solutes->solute[j].k_yy;          
+        }
+
+    } 
+
+
+    return 1;
+ 
+}
+
+
+
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int initilizeSoluteArrays(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,   
+    t_message *msg){
+/*----------------------------*/
+
+	int i,j;
+	int NCwall,ncells,nwc,nwb,nWallCell;
+    int nActCells, nActWalls;
+    int nSolutes;
+    int idx;
+
+
+    double daux;
+
+    t_c_cell *c1,*c2;
+    t_g_cell *g1;
+    t_wall *w1;
+
+    size_t free_mem, total_mem;
+	
+	//Local variables just for the function
+    NCwall=mesh->NCwall;
+	ncells=mesh->ncells;
+    nWallCell=carrays->nWallCell;
+    nwc=mesh->nw_calc;
+    nwb=mesh->nw_bound;
+    nSolutes=mesh->nSolutes;
+
+    if(mesh->nSolutes){
+        //soltute*cell arrays
+        for(j=0;j<nSolutes;j++){        
+            for(i=0;i<ncells;i++){
+                idx = j*ncells+i;
+                c1=&(mesh->c_cells->cells[i]);
+
+                carrays->hcsol[idx]=c1->hphi[j];
+                carrays->csol[idx]=c1->hphi[j];  
+                //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
+            }
+        }
+
+        //solute*cell*NCwall arrays
+        for(i=0;i<nSolutes*nWallCell;i++){
+		    carrays->dhcsol[i]=0.0;
+	    }
+      
+    } 
+
+    return 1;
+
+}
+
+
+#endif
+
+
 

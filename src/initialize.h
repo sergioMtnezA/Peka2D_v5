@@ -40,3 +40,30 @@ EXPORT_DLL int initilizeMeshArrays(
     t_arrays *carrays,
     t_message *msg);
 /*----------------------------*/
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateArraysSoluteMemory(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int initilizeControlSoluteArrays(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int initilizeSoluteArrays(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,   
+    t_message *msg);
+/*----------------------------*/
+#endif

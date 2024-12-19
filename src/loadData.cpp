@@ -17,7 +17,7 @@ EXPORT_DLL int loadControlParameters(
 		Notify(temp,MSG_L1,msg);		
 	}
 
-	if(setControlParameters(pksetup, spar, msg)){
+	if(setControlParameters(pksetup, spar, mesh, msg)){
 		sprintf(temp,"Set control parameters completed");
 		Notify(temp,MSG_L1,msg);		
 	}    
@@ -138,7 +138,7 @@ EXPORT_DLL int readControlDataFile(
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Line 14: Pollutant transport model switch
-	fscanf(fp,"%d",&run->itrash);
+	fscanf(fp,"%d",&run->solutes);
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Line 15: Wind stress switch
@@ -190,6 +190,7 @@ EXPORT_DLL int readControlDataFile(
 EXPORT_DLL int setControlParameters(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
+    t_mesh *mesh, 
     t_message *msg){
 /*----------------------------*/
 
@@ -198,6 +199,7 @@ EXPORT_DLL int setControlParameters(
     //Assign local pointer to pksetup structure
 	run = &(pksetup->pkrun);
 
+    //run parameters
 	spar->ncores=run->ncores;
     spar->gpuid=run->gdevice;
 
@@ -214,6 +216,9 @@ EXPORT_DLL int setControlParameters(
 	spar->dtDump=run->dtDump;
 
 	spar->minh=run->hMin;
+
+    //initialize configuration parameters
+    mesh->nSolutes=0;
 
     return 1;
 
@@ -659,6 +664,7 @@ int loadBoundaryConditions(
         return 0;
     }      
     pksetup->pknode=nbc;
+
  
     //CLOSED BOUNDARY WALLS
     listClosedBC = (int*) malloc(mesh->w_bound->n*sizeof(int));
@@ -679,13 +685,13 @@ int loadBoundaryConditions(
 
         // If one of the nodes is a CLOSED BOUNDARY (type 0), the wall is assumed to be type 0.
         // This is already considered by the earlier conditional, but we will warn the user
-        if(nbc->type[n1] != HYD_CLOSED || nbc->type[n2] > HYD_CLOSED){
+        if(nbc->type[n1] != HYD_CLOSED || nbc->type[n2] != HYD_CLOSED){
             if(nbc->type[n1] == HYD_CLOSED){
-                sprintf(temp,"Node %d (open boundary ID %d) is not assigned to boundary wall with node %d",n2,nbc->type[n2],n1);
+                sprintf(temp,"Boundary ID %d: Nodes %d-%d are set to closed bound wall",nbc->type[n2],n2,n1);
                 Notify(temp,MSG_WARN,e);
             }
             if(nbc->type[n2] == HYD_CLOSED){
-                sprintf(temp,"Node %d (open boundary ID %d) is not assigned to boundary wall with node %d",n1,nbc->type[n1],n2);
+                sprintf(temp,"Boundary ID %d: Nodes %d-%d are set to closed bound wall",nbc->type[n1],n1,n2);
                 Notify(temp,MSG_WARN,e);
             }
         }
@@ -724,18 +730,23 @@ int loadBoundaryConditions(
         n2 = mesh->w_bound->wall[i].node2;
 
         //If both nodes of the wall share the same boundary type, the wall is a single boundary
-        if(nbc->type[n1] != HYD_CLOSED && nbc->type[n2] != HYD_CLOSED && nbc->type[n1] == nbc->type[n2]){
+        if( (nbc->type[n1] != HYD_CLOSED) && 
+            (nbc->type[n2] != HYD_CLOSED) && 
+            (nbc->type[n1] == nbc->type[n2]) ){
+
             if(nbc->type[n1] < 0){
-                k = abs(nbc->type[n1]);
+                k = abs(nbc->type[n1])-1;
                 j = OOBC[k].n;
                 OOBC[k].wall[j] = i;      // Store in position j the boundary wall index i
                 OOBC[k].n++;
+
+            }else if(nbc->type[n1] > 0){
+                k = abs(nbc->type[n1])-1;
+                j = IOBC[k].n;
+                IOBC[k].wall[j] = i;      // Store in position j the boundary wall index i
+                IOBC[k].n++;
             }
-            if(nbc->type[n1] > 0){
-                j = IOBC[abs(nbc->type[n1])].n;
-                IOBC[nbc->type[n1]].wall[j] = i;      // Store in position j the boundary wall index i
-                IOBC[nbc->type[n1]].n++;
-            }
+
         }
     }
     pksetup->IOBC=IOBC;
@@ -748,13 +759,13 @@ int loadBoundaryConditions(
     for(i=0; i<HYD_N_OBT; i++){
         // INLETS
         if(IOBC[i].n > 0){
-            sprintf(temp,"Found %d/%d inlet boundary walls with label %d",IOBC[i].n,mesh->nw_bound,i);
+            sprintf(temp,"Found %d/%d open boundary walls in inlet %d",IOBC[i].n,mesh->nw_bound,i);
             Notify(temp,MSG_L0,e);
             mesh->nInlet++;
         }
         // OUTLETS
         if(OOBC[i].n > 0){
-            sprintf(temp,"Found %d/%d outlet boundary walls with label %d",OOBC[i].n,mesh->nw_bound,i);
+            sprintf(temp,"Found %d/%d open boundary walls in outlet %d",OOBC[i].n,mesh->nw_bound,i);
             Notify(temp,MSG_L0,e);
             mesh->nOutlet++;
         }
@@ -834,7 +845,7 @@ int readOpenBoundaryNodes(
     //initialize boundary nodes
     nbc->n=0;
     for(idn=0;idn<nnodes;idn++){
-        nbc->type[idn]=0;
+        nbc->type[idn]=HYD_CLOSED;
         nbc->obcId[idn]=-1;
     }
 
@@ -847,6 +858,12 @@ int readOpenBoundaryNodes(
 	}    
 
     fscanf(f,"%d",&release);
+    if(release!=202407){
+        sprintf(temp,"The Solute file version should be 202407. Current version: %d",release);
+        Notify(temp,MSG_ERROR,e);
+        return(0);
+    }
+
     fscanf(f,"%d",&nb);
     sprintf(temp,"Number of open boundaries defined %d",nb);
     Notify(temp,MSG_L0,e);
@@ -940,13 +957,15 @@ int createOpenBounds(
         mesh->in[i].zmin = 1E6;
         mesh->in[i].maxFroude=0.9;
 
-        for(j=0; j < IOBC[i+1].n; j++){
-            k = IOBC[i+1].wall[j];
+        for(j=0; j < IOBC[i].n; j++){
+            k = IOBC[i].wall[j];
+
             if(!build_wall_inlet(mesh, &mesh->in[i], &mesh->w_bound->wall[k], i, e)){
                 sprintf(temp,"Build inlet walls failed");
                 Notify(temp,MSG_ERROR,e);
                 return 0;
             }
+
         }
         sprintf(temp,"Boundary cells assigned to ID %d inlet: %d",i,mesh->in[i].ncellsBound);
         Notify(temp,MSG_L0,e);          
@@ -997,12 +1016,14 @@ int createOpenBounds(
         mesh->out[i].maxFroude=0.9;
 
         //bound cells
-        for(j=0; j < OOBC[i+1].n; j++){
-            k = OOBC[i+1].wall[j];
+        for(j=0; j < OOBC[i].n; j++){
+            k = OOBC[i].wall[j];
+
             if(!build_wall_outlet(mesh, &mesh->out[i], &mesh->w_bound->wall[k], i, e)){
                 sprintf(temp,"Build outlet walls failed");
                 Notify(temp,MSG_ERROR,e);
             }
+
         }
         sprintf(temp,"Boundary cells assigned to ID %d outlet: %d",i,mesh->out[i].ncellsBound);
         Notify(temp,MSG_L0,e);   
@@ -1258,3 +1279,254 @@ int readOpenBoundaryFile(
     return 1;
 }
 
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int loadSoluteData(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh, 
+    t_message *msg){
+/*----------------------------*/
+
+    char filename[1024], temp[1024];
+    int solute_enabled_by_run=0;
+
+    Peka2D_SoluteGroup *soluteGroup;
+    soluteGroup = (Peka2D_SoluteGroup*) malloc(sizeof(Peka2D_SoluteGroup));
+
+    //initialize default
+    soluteGroup->nSolutes=0;
+    sprintf(soluteGroup->initialFile,"%s%s.SOLINITIAL",spar->dir,spar->proj);
+
+    //Load solutes if activated
+    solute_enabled_by_run = pksetup->pkrun.solutes;
+    if(solute_enabled_by_run){
+
+        //Read solute file
+        sprintf(filename,"%s%s.SOLUTES",spar->dir,spar->proj);
+        if(readSoluteFile(filename, soluteGroup, msg)){
+            sprintf(temp,"Reading solute file completed");
+            Notify(temp,MSG_L1,msg);		
+        }
+
+        //associted soluteGroup to pksetup
+        pksetup->soluteGroup = soluteGroup; 
+
+        //Create solute structures
+        if(createSoluteStructures(soluteGroup, spar, mesh, msg)){
+            sprintf(temp,"Solute structures completed");
+            Notify(temp,MSG_L1,msg);		
+        }
+
+        //Initialize solute concentration
+        if(setInitialSoluteState(soluteGroup, spar, mesh, msg)){
+            sprintf(temp,"Set initial solute state completed");
+            Notify(temp,MSG_L1,msg);		
+        }  
+
+    }
+
+	return 1;
+	
+}
+
+
+////////////////////////////////////////////////////////////////
+int readSoluteFile(
+    char *filename,
+    Peka2D_SoluteGroup *soluteGroup,   
+    t_message *e){
+/*----------------------------*/
+
+    int i;
+    FILE *fp;
+    char temp[1024];
+    int nSolutes=0;
+    int release=0;
+
+
+    fp = fopen(filename,"r");
+    if(!fp){
+        sprintf(temp,"%s file not found",filename);
+        Notify(temp,MSG_ERROR,e);
+        return 0;
+    }
+
+    fscanf(fp,"%d",&release); //line 1
+    if(release!=202407){
+        sprintf(temp,"The Solute file version should be 202407. Current version: %d",release);
+        Notify(temp,MSG_ERROR,e);
+        return(0);
+    }    
+
+    fscanf(fp,"%d",&nSolutes); //line 2
+
+    if(nSolutes>0){
+
+        soluteGroup->nSolutes=nSolutes;
+        soluteGroup->solute = (Peka2D_Solute*) malloc(nSolutes*sizeof(Peka2D_Solute));
+
+        fscanf(fp,"%d",&soluteGroup->flagDiffussion); //line 3 
+
+        for(i=0;i<nSolutes;i++){ //line 4
+            fscanf(fp,"%d",&soluteGroup->solute[i].typeDiff);
+        }
+
+        for(i=0;i<nSolutes;i++){ //line 5 to +nSolutes
+            fscanf(fp,"%lf %lf",
+                &soluteGroup->solute[i].k_xx,
+                &soluteGroup->solute[i].k_yy);
+        }
+
+        for(i=0;i<nSolutes;i++){ //line 6 to +nSolutes
+            fscanf(fp,"%s",&soluteGroup->solute[i].name);
+            //printf("Cname %s\n",soluteGroup->solute[i].name);
+        }
+
+        for(i=0;i<nSolutes;i++){ //line 7 to +nSolutes - skip
+            for(i=0;i<nSolutes;i++){
+                fscanf(fp,"%*f");
+            }
+        }
+
+        for(i=0;i<nSolutes;i++){ //line 8
+            fscanf(fp,"%lf",&soluteGroup->solute[i].maxConc);
+            //printf("Cmax %lf\n",soluteGroup->solute[i].maxConc);
+        }
+
+    }else{
+        sprintf(temp,"Solutes are not defined in file %s - Runing simulation without solutes",filename);
+        Notify(temp,MSG_WARN,e);
+        return(0);
+    }
+
+	fclose(fp);
+    
+    return(1);
+
+}
+
+
+
+
+
+////////////////////////////////////////////////////////////////
+int createSoluteStructures(
+    Peka2D_SoluteGroup *soluteGroup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e){
+/*----------------------------*/
+
+    int i,j;
+    int nSolutes = soluteGroup->nSolutes;
+    t_c_cell *c1;
+
+    //solute flag in mesh
+    mesh->nSolutes = nSolutes;
+
+    if(mesh->nSolutes){
+        
+        //solute data in mesh
+        mesh->solutes = (l_solutes*) malloc(sizeof(l_solutes));
+
+        mesh->solutes->n = nSolutes;
+        mesh->solutes->flagDiffussion = soluteGroup->flagDiffussion;
+        //printf("flagDiffusion %d\n",mesh->solutes->flagDiffussion);
+
+        mesh->solutes->solute=(t_solute*) malloc(nSolutes*sizeof(t_solute));
+        for(j=0;j<nSolutes;j++){
+            sprintf(mesh->solutes->solute[j].name,"%s",soluteGroup->solute[j].name);
+            //printf("Cname %s\n",mesh->solutes->solute[j].name);
+
+            mesh->solutes->solute[j].typeDiff=soluteGroup->solute[j].typeDiff;
+
+            mesh->solutes->solute[j].k_xx = soluteGroup->solute[j].k_xx;
+            mesh->solutes->solute[j].k_yy = soluteGroup->solute[j].k_yy;
+
+            mesh->solutes->solute[j].maxConc=soluteGroup->solute[j].maxConc;
+            //printf("Cmax %lf\n",mesh->solutes->solute[j].maxConc);
+            
+        }
+
+        //solute variables in c_cells
+        for(i=0;i<mesh->ncells;i++){
+            c1=&(mesh->c_cells->cells[i]);
+            c1->hphi=(double*) malloc(nSolutes*sizeof(double));
+            c1->phi=(double*) malloc(nSolutes*sizeof(double));
+        }
+    
+    }
+
+	return 1;
+	
+}
+
+
+
+
+////////////////////////////////////////////////////////////////
+int setInitialSoluteState(
+    Peka2D_SoluteGroup *soluteGroup,
+    t_parameters *spar,
+    t_mesh *mesh, 
+    t_message *e){
+/*----------------------------*/
+
+    FILE *fp;
+    int i,j;
+
+    // Here, c1 is defined as a local pointer
+    t_c_cell *c1;
+
+    double aux1, dataSolute;
+    char temp[1024];
+
+    int nSolutes = soluteGroup->nSolutes;
+
+    fp=NULL;
+    fp=fopen(soluteGroup->initialFile,"r");
+    if(fp){
+
+        for(i=0;i<mesh->ncells;i++){
+            c1=&(mesh->c_cells->cells[i]);
+
+            for(j=0;j<nSolutes;j++){  
+                fscanf(fp,"%lf",&dataSolute);         
+
+                if(c1->h > TOL12){
+                    c1->phi[j] = MAX(0.0,dataSolute);
+                    c1->hphi[j] = c1->h * c1->phi[j];
+                }else{
+                    c1->phi[j] = 0.0;
+                    c1->hphi[j] = 0.0;
+                }
+            
+            } 
+
+        } // end cell loop
+        fclose(fp);
+
+        sprintf(temp,"Solute initial concentration set from file %s",soluteGroup->initialFile);
+        Notify(temp,MSG_L1,e);
+    }else{
+
+        for(i=0;i<mesh->ncells;i++){
+            c1=&(mesh->c_cells->cells[i]);
+
+            for(j=0;j<nSolutes;j++){  
+                c1->phi[j] = 0.0;
+                c1->hphi[j] = 0.0;
+            } 
+
+        } // end cell loop        
+        sprintf(temp,"File %s not found - Initial concentration set to 0.0",soluteGroup->initialFile);
+        Notify(temp,MSG_WARN,e);
+    }        
+
+    return 1;
+
+}
+#endif
