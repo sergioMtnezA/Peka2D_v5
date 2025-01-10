@@ -1,6 +1,0 @@
-var searchData=
-[
-  ['setcontrolparameters_656',['setControlParameters',['../loadData_8cpp.html#a29e89e39b281495ce2e88b78900f4a1c',1,'setControlParameters(Peka2D_Setup *pksetup, t_parameters *spar, t_message *msg):&#160;loadData.cpp'],['../loadData_8h.html#a29e89e39b281495ce2e88b78900f4a1c',1,'setControlParameters(Peka2D_Setup *pksetup, t_parameters *spar, t_message *msg):&#160;loadData.cpp']]],
-  ['setinitialstate_657',['setInitialState',['../loadData_8cpp.html#a899de4c53e270baf070249080eadb2eb',1,'setInitialState(Peka2D_Setup *pksetup, t_parameters *spar, t_mesh *mesh, t_message *e):&#160;loadData.cpp'],['../loadData_8h.html#a899de4c53e270baf070249080eadb2eb',1,'setInitialState(Peka2D_Setup *pksetup, t_parameters *spar, t_mesh *mesh, t_message *e):&#160;loadData.cpp']]],
-  ['swapendian_658',['SwapEndian',['../cuTilities_8cu.html#a39d7cebfe233ff4f6832064fe2b9ce18',1,'SwapEndian(void *Addr, const int Nb):&#160;cuTilities.cu'],['../cuTilities_8cuh.html#a39d7cebfe233ff4f6832064fe2b9ce18',1,'SwapEndian(void *Addr, const int Nb):&#160;cuTilities.cu'],['../utilities_8cpp.html#a39d7cebfe233ff4f6832064fe2b9ce18',1,'SwapEndian(void *Addr, const int Nb):&#160;utilities.cpp'],['../utilities_8h.html#a39d7cebfe233ff4f6832064fe2b9ce18',1,'SwapEndian(void *Addr, const int Nb):&#160;cuTilities.cu']]]
-];
