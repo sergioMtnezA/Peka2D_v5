@@ -1,8 +1,10 @@
-## Mode PeKa2D-v5.0 for hydro-morphodynamical surface flows
-Open docs/html/index.html in any web-browser (Firefox, Chrome, Edge, etc)
+## PeKa2D-v5.0 model for hydro-morphodynamical surface flows 
+
+## Documentation
+Code documentation for developers can be found [online](https://sergiomtneza.github.io/Peka2D_v5/) or within the local [docs](./docs/index.html)
 
 ## Numerical method
-Find a detailed explanation on the numerical method implemented [here](./water_Riemann_solver.pdf).
+Find a detailed explanation on the numerical method implemented [here](./docs/water_Riemann_solver.pdf).
 
 ## CPU compilation
 Set SET_SIMGPU=0 in define.h

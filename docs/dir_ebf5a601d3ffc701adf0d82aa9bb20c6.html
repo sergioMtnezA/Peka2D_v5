@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Peka2D_v5: PeKa2D-v5.0 model for hydro-morphodynamical surface flows</title>
+<title>Peka2D_v5: docs_dev Directory Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -46,7 +46,6 @@ $(function() {
 });
 /* @license-end */</script>
 <div id="main-nav"></div>
-</div><!-- top -->
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -61,41 +60,16 @@ $(function() {
 </iframe>
 </div>
 
-<div class="PageDoc"><div class="header">
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_ebf5a601d3ffc701adf0d82aa9bb20c6.html">docs_dev</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div class="header">
   <div class="headertitle">
-<div class="title">PeKa2D-v5.0 model for hydro-morphodynamical surface flows </div>  </div>
+<div class="title">docs_dev Directory Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="md_README_docs"></a> </p>
-<h1><a class="anchor" id="autotoc_md1"></a>
-Code repository</h1>
-<p>Last released version of PeKa2D-v5.0 is available in <a href="https://github.com/sergioMtnezA/Peka2D_v5">GitHub</a></p>
-<h1><a class="anchor" id="autotoc_md2"></a>
-Documentation</h1>
-<p>Code documentation for developers can be found <a href="https://sergiomtneza.github.io/Peka2D_v5/">online</a> or within the local <a href="./index.html">docs</a></p>
-<h1><a class="anchor" id="autotoc_md3"></a>
-Numerical method</h1>
-<p>Find a detailed explanation on the numerical method implemented <a href="./water_Riemann_solver.pdf">here</a>.</p>
-<h1><a class="anchor" id="autotoc_md4"></a>
-CPU compilation</h1>
-<p>Set SET_SIMGPU=0 in <a class="el" href="define_8h.html">define.h</a></p>
-<p><code>make</code></p>
-<p><code>./peka pathFolder/ caseName</code></p>
-<p><b>DEBUG mode</b></p>
-<p><code>make DEBUG=yes</code></p>
-<p><code>valgrind --tool=memcheck --leak-check=full --track-origins=yes --show-reachable=yes ./peka pathFolder/ caseName</code></p>
-<p><b>Parallelzed OMP</b></p>
-<p>Set the number of CPU cores SET_OPENMP in <a class="el" href="define_8h.html">define.h</a></p>
-<p><code>make OMP=yes</code></p>
-<h1><a class="anchor" id="autotoc_md5"></a>
-GPU compilation</h1>
-<p>Set SET_SIMGPU=1 in <a class="el" href="define_8h.html">define.h</a></p>
-<p><code>make -f MakefileCUDA</code></p>
-<p><code>./gpeka pathFolder/ caseName</code></p>
-<p><b>DEBUG mode</b></p>
-<p><code>make -f MakefileCUDA DEBUG=yes</code></p>
-<p><code>compute-sanitizer --tool memcheck --leak-check full ./peka pathFolder/ caseName</code> </p>
-</div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
