@@ -88,9 +88,6 @@ struct t_mesh_{
 	int nw_calc;
 	int nw_bound;
 
-    int nInlet;
-    int nOutlet;
-
     //mesh structure
 	l_c_cells *c_cells;
 	l_g_cells *g_cells;
@@ -101,7 +98,11 @@ struct t_mesh_{
 	
     l_c_cells *b_cells; // Only the boundary Cells
 
+	int nInlet;
+	int nTotalCellsIn;
 	t_bound *in;
+	int nOutlet;
+	int nTotalCellsOut;
 	t_bound *out;
 
     double minZ, maxZ;
@@ -155,7 +156,11 @@ struct l_c_cells_{
 */
 struct t_g_cell_{
 	int id;
-    int isBound;//isBound is and identifier to know if a cell is bound or not. 0->normal cell, negative=inlet cell, positive->outletcell
+    int isBound; 	// type cell identifier 
+					// 0 = inner cell
+					// 99 = closed boundary cell
+					// negative = inlet cell (- ID inlet)
+					// positive = outlet cell (+ ID outlet)
 	double area;
 	double center[3];
     int nneig; //número de vecinas, descontando los contornos
@@ -227,14 +232,11 @@ struct t_wall_{
     t_g_cell *gcells[2];
 
     int idBound; 
-    int typeOfBound;
-    // 1 si es esquina (velocidad 0)
-    // 0 si es pared (qx o qy =0) Incluye normal
-    // 2 si es celda de entrada
-    // 3 si es celda de salida
-    // 4 si es celda de contorno interna
-    // 5 si es puente
-
+    int typeOfBound;	//type wall identifier
+						//-1 = inner wall
+						// 0 = closed bound wall
+						// 2 = inlet bound wall
+						// 3 = outlet bound wall
 };
 
 
@@ -449,6 +451,21 @@ struct t_arrays_{
 	double *localDt; /**< @brief [NWCALC] Local time step limitation for the calculus wall*/
 
 
+	// BOUNDARY ARRAYS ///////////////////////////	
+	double *normalXIn, *normalYlIn;
+	double *normalXOut, *normalYOut;	
+
+	int nTotalCellsIn;	
+	int *cidxIn;
+	int *idBoundIn;	
+	double *lengthwallIn;
+
+	int nTotalCellsOut;	
+	int *cidxOut;
+	int *idBoundOut;
+	double *lengthwallOut;		
+
+
 	// SOLUTE ARRAYS ///////////////////////////	
 	#if SET_SOLUTE
 		int flagDiffusion; /**< @brief Solute diffusion activation flag */
@@ -512,7 +529,17 @@ struct t_cuPtr_{
 	int *typeOfBound, *solidWall;
 	double *qnormalL, *localDt;
 
-    //boundaries
+
+	// BOUNDARY ARRAYS ///////////////////////////	
+	int *cidxIn;
+	int *idBoundIn;	
+	double *normalXwallIn, *normalYwallIn;
+	double *lengthwallIn;
+
+	int *cidxOut;
+	int *idBoundOut;
+	double *normalXwallOut, *normalYwallOut;
+	double *lengthwallOut;		
 
 
 	// SOLUTE ARRAYS ///////////////////////////

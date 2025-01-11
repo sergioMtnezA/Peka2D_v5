@@ -711,7 +711,7 @@ int build_wall_inlet(t_mesh *mesh, t_bound *iinn, t_wall *w, int i, t_message *m
 		k=0;
 		found=0;
 		while(k<ncellsInlet){
-			if(iinn->wallBound[k]->ccells[0]->id==w->ccells[0]->id){// Ya la habiamos incluido antes
+			if(iinn->wallBound[k]->ccells[0]->id == w->ccells[0]->id){// Ya la habiamos incluido antes
 				found++;
 				k=ncellsInlet;
 			}
@@ -880,26 +880,34 @@ int build_inner_inlet(t_mesh *mesh, t_bound *iinn, int i, t_message *msg){
 		g1=w->gcells[0];
 		iinn->cellBound[iinn->ncellsBound]=c1;
 		iinn->ncellsBound++;
-		for(k=0;k<g1->nneig;k++){
-			cAux=g1->neigcell[k];
-			// Celda vecina de la celda de entrada
-			if(g1->neigwall[k]->id==g1->id||g1->neigwall[k]->id2==g1->id){
-				for(l=0;l<nfound;l++){
-					if(cAux->id==founded[l]){
-						found=1;
+
+		if(mesh->NCwall==3){
+			for(k=0;k<g1->nneig;k++){ // Celda vecina de la celda de entrada
+				cAux=g1->neigcell[k];
+
+				if(g1->neigwall[k]->id==g1->id || g1->neigwall[k]->id2==g1->id){
+					for(l=0;l<nfound;l++){
+						if(cAux->id==founded[l]){
+							found=1;
+						}
 					}
+					if(	!found &&
+						(cAux->geom->nneig==mesh->NCwall || 
+						(cAux->geom->nneig!=mesh->NCwall && cAux->geom->isBound==0) )){
+
+						cAux->geom->isBound = -1*(i);
+
+						iinn->cellInner=(t_c_cell**)realloc(iinn->cellInner,sizeof(t_c_cell**)*(nfound+1));
+						iinn->cellInner[nfound]=cAux;
+						founded[nfound]=cAux->id;
+						nfound++;
+						iinn->ncellsInner=nfound;
+					}
+					found=0;
 				}
-				if(!found&&(cAux->geom->nneig==mesh->NCwall||(cAux->geom->nneig!=mesh->NCwall&&cAux->geom->isBound==0))){
-					cAux->geom->isBound = -1*(i+1);
-                    iinn->cellInner=(t_c_cell**)realloc(iinn->cellInner,sizeof(t_c_cell**)*(nfound+1));
-					iinn->cellInner[nfound]=cAux;
-					founded[nfound]=cAux->id;
-					nfound++;
-					iinn->ncellsInner=nfound;
-				}
-				found=0;
 			}
 		}
+
 	}
 	free(founded);
 
@@ -939,7 +947,7 @@ int build_wall_outlet(t_mesh *mesh, t_bound *outt, t_wall *w, int i,t_message *m
 
         outt->wallBound=(t_wall**)realloc(outt->wallBound,ncellsOutlet*sizeof(t_wall**));
         outt->wallBound[ncellsOutlet-1]=w;
-        w->ccells[0]->geom->isBound=i+1;
+        w->ccells[0]->geom->isBound= i+1;
 
         #if DEBUG_READ_BOUNDS
         sprintf(temp,"Outlet boundary cell %d assigned to open boundary ID %d",w->ccells[0]->id, w->idBound);
@@ -1115,29 +1123,37 @@ int build_inner_outlet(t_mesh *mesh,t_bound *outt, int i, t_message *msg){
     outt->ncellsBound = 0;
 
 	for(j=0; j<ncellsOutlet ;j++){
+
 		w=outt->wallBound[j];
 		c1=w->ccells[0];
 		g1=w->gcells[0];
 		outt->cellBound[outt->ncellsBound]=c1;
 		outt->ncellsBound++;
-		for(k=0;k<g1->nneig;k++){
-			cAux=g1->neigcell[k];
-			// Celda vecina de la celda de entrada
-			if(g1->neigwall[k]->id==g1->id||g1->neigwall[k]->id2==g1->id){
-				for(l=0;l<nfound;l++){
-					if(cAux->id==founded[l]){
-						found=1;
+		
+		if(mesh->NCwall==3){
+			for(k=0;k<g1->nneig;k++){
+				cAux=g1->neigcell[k];
+
+				if(g1->neigwall[k]->id==g1->id||g1->neigwall[k]->id2==g1->id){
+					for(l=0;l<nfound;l++){
+						if(cAux->id==founded[l]){
+							found=1;
+						}
 					}
+					if(	!found &&
+						(cAux->geom->nneig==mesh->NCwall ||
+						(cAux->geom->nneig!=mesh->NCwall&&cAux->geom->isBound==0) )){
+
+						cAux->geom->isBound=i+1;
+						
+						outt->cellInner=(t_c_cell**)realloc(outt->cellInner,sizeof(t_c_cell**)*(nfound+1));
+						outt->cellInner[nfound]=cAux;
+						founded[nfound]=cAux->id;
+						nfound++;
+						outt->ncellsInner=nfound;
+					}
+					found=0;
 				}
-				if(!found&&(cAux->geom->nneig==mesh->NCwall||(cAux->geom->nneig!=mesh->NCwall&&cAux->geom->isBound==0))){
-					cAux->geom->isBound=i+1;
-                    outt->cellInner=(t_c_cell**)realloc(outt->cellInner,sizeof(t_c_cell**)*(nfound+1));
-					outt->cellInner[nfound]=cAux;
-					founded[nfound]=cAux->id;
-					nfound++;
-					outt->ncellsInner=nfound;
-				}
-				found=0;
 			}
 		}
 	}

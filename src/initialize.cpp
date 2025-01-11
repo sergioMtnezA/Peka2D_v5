@@ -100,6 +100,60 @@ EXPORT_DLL int allocateArraysMemory(
 
 
 
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateBoundaryArraysMemory(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg){
+/*----------------------------*/
+
+	int i,j;
+    int NCwall;
+    int nInlet, nOutlet;
+    int nTotalCellsIn, nTotalCellsOut;
+	int nwb;
+
+
+	size_t free_mem, total_mem;
+
+	//Local variables just for allocation
+    NCwall=mesh->NCwall;	//walls per cell
+    nInlet=mesh->nInlet;
+    nOutlet=mesh->nOutlet;
+    nTotalCellsIn=mesh->nTotalCellsIn;
+    nTotalCellsOut=mesh->nTotalCellsOut;
+	nwb=mesh->nw_bound;
+
+
+    //bounds
+    carrays->normalXIn=(double*)malloc(nInlet*sizeof(double));
+    carrays->normalYIn=(double*)malloc(nInlet*sizeof(double));
+
+    carrays->normalXOut=(double*)malloc(nOutlet*sizeof(double));
+    carrays->normalYOut=(double*)malloc(nOutlet*sizeof(double));
+
+
+    //cells
+    carrays->cidxIn=(int*)malloc(nTotalCellsIn*sizeof(int));
+    carrays->idBoundIn=(int*)malloc(nTotalCellsIn*sizeof(int));
+
+    carrays->cidxOut=(int*)malloc(nTotalCellsOut*sizeof(int));
+    carrays->idBoundOut=(int*)malloc(nTotalCellsOut*sizeof(int));    
+	
+    //bound walls
+    carrays->lengthwallIn=(double*)malloc(nTotalCellsIn*sizeof(double));
+
+    carrays->lengthwallOut=(double*)malloc(nTotalCellsOut*sizeof(double));
+
+    return 1;
+
+}
+
+
+
+
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int initilizeControlArrays(
     t_parameters spar, 
@@ -519,8 +573,8 @@ EXPORT_DLL int initilizeSoluteArrays(
                 idx = j*ncells+i;
                 c1=&(mesh->c_cells->cells[i]);
 
-                carrays->hcsol[idx]=c1->hphi[j];
-                carrays->csol[idx]=c1->hphi[j];  
+                carrays->hcsol[idx] = c1->hphi[j];
+                carrays->csol[idx] = c1->phi[j];  
                 //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
             }
         }

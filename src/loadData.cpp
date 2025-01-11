@@ -798,6 +798,8 @@ int loadBoundaryConditions(
     }
 
     //OPEN BOUNDARY CONDITIONS
+    mesh->nTotalCellsIn=0;  
+    mesh->nTotalCellsOut=0;    
     if(mesh->nInlet+mesh->nOutlet>0){
 
         //create open bounds structures
@@ -946,8 +948,11 @@ int createOpenBounds(
     double nx,ny;
     double module;
 
+    int nTotalCellsIn, nTotalCellsOut;
+
     //create inlets structure
     mesh->in=(t_bound*) malloc(mesh->nInlet*sizeof(t_bound));
+    nTotalCellsIn=0;
     for(i=0; i<mesh->nInlet; i++){
         mesh->in[i].wallBound=(t_wall**) malloc(sizeof(t_wall*));
         mesh->in[i].ncellsBound = 0;
@@ -967,6 +972,7 @@ int createOpenBounds(
             }
 
         }
+        nTotalCellsIn+=mesh->in[i].ncellsBound;
         sprintf(temp,"Boundary cells assigned to ID %d inlet: %d",i,mesh->in[i].ncellsBound);
         Notify(temp,MSG_L0,e);          
 
@@ -1000,12 +1006,14 @@ int createOpenBounds(
         mesh->in[i].normal.y=ny;         
 
     }
+    mesh->nTotalCellsIn=nTotalCellsIn;
     sprintf(temp,"Inlet boundary cell structures completed");
     Notify(temp,MSG_L1,e);       
 
 
     // Outlets
     mesh->out=(t_bound*) malloc(mesh->nOutlet*sizeof(t_bound));
+    nTotalCellsOut=0;
     for(i=0; i<mesh->nOutlet; i++){
         mesh->out[i].wallBound=(t_wall**) malloc(sizeof(t_wall*));
         mesh->out[i].ncellsBound = 0;
@@ -1025,6 +1033,7 @@ int createOpenBounds(
             }
 
         }
+        nTotalCellsOut+=mesh->out[i].ncellsBound;
         sprintf(temp,"Boundary cells assigned to ID %d outlet: %d",i,mesh->out[i].ncellsBound);
         Notify(temp,MSG_L0,e);   
 
@@ -1057,6 +1066,7 @@ int createOpenBounds(
         mesh->out[i].normal.y=ny;
 
     }
+    mesh->nTotalCellsOut=nTotalCellsOut;
     sprintf(temp,"Outlet boundary cell structures completed");
     Notify(temp,MSG_L1,e); 
 
