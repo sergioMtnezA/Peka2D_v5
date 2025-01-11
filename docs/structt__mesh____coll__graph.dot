@@ -1,0 +1,40 @@
+digraph "t_mesh_"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="t_mesh_",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip="Geometrical mesh and flow data."];
+  Node2 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" in\nout" ,fontname="Helvetica"];
+  Node2 [label="t_bound_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__bound__.html",tooltip="Open boundary geometry and flow conditions."];
+  Node3 -> Node2 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" cellBound\ncellInner\ncellzMin" ,fontname="Helvetica"];
+  Node3 [label="t_c_cell_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__c__cell__.html",tooltip="Calculus cells: flow variables in cells."];
+  Node4 -> Node3 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" geom" ,fontname="Helvetica"];
+  Node4 [label="t_g_cell_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__g__cell__.html",tooltip="Geometry cells: mesh characteristics in cells."];
+  Node3 -> Node4 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" neigcell" ,fontname="Helvetica"];
+  Node5 -> Node4 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" wall" ,fontname="Helvetica"];
+  Node5 [label="t_edge_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__edge__.html",tooltip="Geometrical edges for mesh topology construction."];
+  Node6 -> Node4 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" neigwall" ,fontname="Helvetica"];
+  Node6 [label="t_wall_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__wall__.html",tooltip="Wall characteristics for computation."];
+  Node3 -> Node6 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" ccells" ,fontname="Helvetica"];
+  Node4 -> Node6 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" gcells" ,fontname="Helvetica"];
+  Node7 -> Node4 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" nodes" ,fontname="Helvetica"];
+  Node7 [label="t_node_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__node__.html",tooltip="Geometry mesh node."];
+  Node6 -> Node2 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" wallBound" ,fontname="Helvetica"];
+  Node7 -> Node2 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" node\nnormal" ,fontname="Helvetica"];
+  Node8 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" g_cells" ,fontname="Helvetica"];
+  Node8 [label="l_g_cells_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structl__g__cells__.html",tooltip="List of geometry cells t_g_cell_."];
+  Node4 -> Node8 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" cells" ,fontname="Helvetica"];
+  Node9 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" b_cells\nc_cells" ,fontname="Helvetica"];
+  Node9 [label="l_c_cells_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structl__c__cells__.html",tooltip="List of calculus cells t_c_cell_."];
+  Node3 -> Node9 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" cells\npcells" ,fontname="Helvetica"];
+  Node10 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" solutes" ,fontname="Helvetica"];
+  Node10 [label="l_solutes_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structl__solutes__.html",tooltip="List of passive solutes."];
+  Node11 -> Node10 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" solute" ,fontname="Helvetica"];
+  Node11 [label="t_solute_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structt__solute__.html",tooltip="Passive solute."];
+  Node12 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" nodes" ,fontname="Helvetica"];
+  Node12 [label="l_nodes_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structl__nodes__.html",tooltip="List of geometry nodes t_node_."];
+  Node7 -> Node12 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" nodes" ,fontname="Helvetica"];
+  Node13 -> Node1 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" w_bound\nw_calc" ,fontname="Helvetica"];
+  Node13 [label="l_wall_",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structl__wall__.html",tooltip="List of walls for computation t_wall_."];
+  Node6 -> Node13 [dir="back",color="darkorchid3",fontsize="10",style="dashed",label=" wall" ,fontname="Helvetica"];
+}

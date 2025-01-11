@@ -2,7 +2,7 @@
 Open docs/html/index.html in any web-browser (Firefox, Chrome, Edge, etc)
 
 ## Numerical method
-Find a detailed explanation on the numerical method implemented [here](../water_Riemann_solver.pdf).
+Find a detailed explanation on the numerical method implemented [here](./water_Riemann_solver.pdf).
 
 ## CPU compilation
 Set SET_SIMGPU=0 in define.h
