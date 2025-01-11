@@ -1,0 +1,15 @@
+rm *.vtk
+rm *.out
+rm *.log
+rm *.time
+rm *.error
+#rm *.walls
+rm *.probeData
+rm *.frontData
+rm *.massBalance
+rm hotstart.*
+rm *.WEIRI
+rm *.WEIRE
+rm *.ROUT
+rm *.HOTSTART
+rm *_modified.dat
