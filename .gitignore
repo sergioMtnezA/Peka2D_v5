@@ -20,7 +20,7 @@ gpeka2D
 .error
 
 # txt test files
-*.pdf 
+#*.pdf 
 *.png 
 *.xlsx
 *.xls
