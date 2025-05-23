@@ -220,6 +220,9 @@ EXPORT_DLL int computeSimulation(
     }    
 
     // Free CUDA memory
+    #if SET_SOLUTE
+    freeSoluteCudaMemory(carrays->nSolutes,&(cuPtr));
+    #endif
     freeBoundaCudaMemory(carrays->nOBC, carrays->nInlet, carrays->nOutlet,
         carrays->nTotalBoundCells, carrays->nTotalInnerCells, 
         carrays->nTotalPointSeries,
@@ -271,6 +274,9 @@ EXPORT_DLL int computeInitialBoundaryConditions(
         nTasks=carrays->nTotalBoundCells;
         obcPerGrid = carrays->nOBC; 
         memPerOBC = 4*carrays->nMaxBoundCells*sizeof(double);
+        #if SET_SOLUTE
+        memPerOBC += carrays->nSolutes*sizeof(double);
+        #endif
         sprintf(temp,"Shared memory: nMaxBoundCells %d - Reserved %zu KB",carrays->nMaxBoundCells,(memPerOBC/1024));
         Notify(temp,MSG_L0,msg);
 
@@ -362,6 +368,7 @@ EXPORT_DLL void generateTimeStep(
 	int checkpos;
     int ncells=carrays->ncells;
     int nwc=carrays->nw_calc;
+    int nSolutes=carrays->nSolutes;
     int nSteps;
     double dtDifR, dtAux;
 
@@ -390,10 +397,32 @@ EXPORT_DLL void generateTimeStep(
 	g_initialize_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
 
 
+    #if SET_SOLUTE
+    nTasks=carrays->nWallCell*carrays->nSolutes;
+    blocksPerGrid = nTasks/threadsPerBlock + 1; 
+    g_initialize_solute_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    #endif
+
+
     nTasks=carrays->nActWalls;
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_wall_rotated_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
     cudaMemcpy(&(carrays->nActCells), &(garrays->nActCells), sizeof(int), cudaMemcpyDeviceToHost );
+
+
+    #if SET_SOLUTE
+    //nTasks=carrays->nActWalls; //compact 
+    nTasks=carrays->nActWalls*carrays->nSolutes;
+    blocksPerGrid = nTasks/threadsPerBlock + 1; 
+    g_wall_solute_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
+
+    if(carrays->nOBC){
+        //nTasks=carrays->nTotalBoundCells;
+        nTasks=carrays->nTotalBoundCells*carrays->nSolutes;
+        blocksPerGrid = nTasks/threadsPerBlock + 1; 
+        g_bound_solute_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    }
+    #endif
   
     
     nTasks=carrays->nw_calc;
@@ -405,6 +434,13 @@ EXPORT_DLL void generateTimeStep(
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_update_contributions <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
 
+
+    #if SET_SOLUTE
+    //nTasks=carrays->nActCells; //compact
+    nTasks=carrays->nActCells*carrays->nSolutes;
+    blocksPerGrid = nTasks/threadsPerBlock + 1; 
+    g_update_solute_contributions <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    #endif
 
     // Sincronizar la CPU con la GPU
     cudaDeviceSynchronize();
@@ -448,6 +484,13 @@ EXPORT_DLL void generateTimeStep(
 	g_update_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     cudaMemcpy(&(carrays->nActWalls), &(garrays->nActWalls), sizeof(int), cudaMemcpyDeviceToHost );
 
+    #if SET_SOLUTE
+    //nTasks=carrays->nActCells;
+    nTasks=carrays->nActCells*carrays->nSolutes;
+    blocksPerGrid = nTasks/threadsPerBlock + 1; 
+    g_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    #endif
+
     // Sincronizar la CPU con la GPU
     cudaDeviceSynchronize();
 
@@ -474,6 +517,53 @@ EXPORT_DLL void generateTimeStep(
     stime2=clock();
 	timers->wetDryFix += double(stime2-stime1)/CLOCKS_PER_SEC;
     //End wetDryFix time .....................................    
+
+
+
+    #if SET_SOLUTE
+    //Start diffusion time .....................................
+    stime1=clock();
+    if(carrays->flagDiffusion){
+
+        nTasks=carrays->ncells*carrays->nSolutes;
+        blocksPerGrid = nTasks/threadsPerBlock + 1; 
+        g_initialize_solute_diffusion_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+
+        nTasks=carrays->nActWalls*carrays->nSolutes;
+        blocksPerGrid = nTasks/threadsPerBlock + 1; 
+        g_wall_solute_diffusion_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+
+        nTasks=carrays->nActCells*carrays->nSolutes;
+        blocksPerGrid = nTasks/threadsPerBlock + 1; 
+        g_update_solute_diffusion_contributions <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays,cuPtr->localDtd);
+
+        nTasks=carrays->ncells*carrays->nSolutes;
+        cublasIdamin(cuHandle, nTasks, cuPtr->localDtd, 1, cuPtr->index);
+        g_get_solute_diffusion_dtmin <<<1,1>>> (garrays, cuPtr->localDtd, cuPtr->index); //update dtd in arrays 
+        cudaMemcpy(&(carrays->Dtd), &(garrays->Dtd), sizeof(double), cudaMemcpyDeviceToHost);
+        //printf("dt %lf Dtd %lf\n",carrays->dt, carrays->Dtd);
+        
+        nSteps=(int)(carrays->dt/carrays->Dtd);
+        for(i=0;i<(nSteps+1);i++){
+            dtDifR = carrays->dt - i*carrays->Dtd;
+            dtAux = MIN(carrays->Dtd , dtDifR);
+            cudaMemcpy((cuPtr->dtAux), &(dtAux), sizeof(double), cudaMemcpyHostToDevice );
+            //printf("iter %d dtDifR %lf dtAux %lf\n",i, dtDifR, dtAux);
+
+            nTasks=carrays->nActCells*carrays->nSolutes;
+            blocksPerGrid = nTasks/threadsPerBlock + 1;                 
+            g_update_solute_diffusion_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->dtAux);            
+        }   
+
+    }
+
+    // Sincronizar la CPU con la GPU
+    cudaDeviceSynchronize();
+    stime2=clock();
+	timers->diffusion += double(stime2-stime1)/CLOCKS_PER_SEC;
+    //End diffusion time .....................................    
+    #endif
+
 
 
 
@@ -505,6 +595,9 @@ EXPORT_DLL void generateTimeStep(
         nTasks=carrays->nTotalBoundCells;
         obcPerGrid = carrays->nOBC; 
         memPerOBC = 4*carrays->nMaxBoundCells*sizeof(double);
+        #if SET_SOLUTE
+        memPerOBC += carrays->nSolutes*sizeof(double);
+        #endif
         cudaFuncSetCacheConfig(g_update_open_boundary, cudaFuncCachePreferShared);
         g_update_open_boundary <<<obcPerGrid,threadsPerOBC,memPerOBC>>> (nTasks, garrays, 
             cuPtr->qBoundByCell, cuPtr->mBoundByCell, cuPtr->mInnerByCell,
@@ -571,6 +664,14 @@ EXPORT_DLL void generateTimeStep(
         cudaMemcpy((carrays->u), (cuPtr->u), ncells*sizeof(double), cudaMemcpyDeviceToHost );
         cudaMemcpy((carrays->v), (cuPtr->v), ncells*sizeof(double), cudaMemcpyDeviceToHost );
         cudaMemcpy((carrays->modulou), (cuPtr->modulou), ncells*sizeof(double), cudaMemcpyDeviceToHost );          
+
+        
+        #if SET_SOLUTE
+        // Transfer solute arrays from GPU to CPU 
+        if(carrays->nSolutes){
+            cudaMemcpy((carrays->phi), (cuPtr->phi), nSolutes*ncells*sizeof(double), cudaMemcpyDeviceToHost );
+        }
+        #endif
     }
 
     // Sincronizar la CPU con la GPU

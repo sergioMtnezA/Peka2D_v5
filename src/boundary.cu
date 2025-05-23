@@ -220,6 +220,7 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
     __shared__ double tempDa2[threadsPerOBC];	
 
 	__shared__ int ncells;
+	__shared__ int nSolutes;
 
     __shared__ int idb;
 	__shared__ int nbc,i0;
@@ -257,6 +258,12 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
     
     double aux1,aux2,aux3,aux4,aux5;
 
+	#if SET_SOLUTE
+		//extern __shared__ double localhphi[1024];
+		double phit;
+	#endif
+
+
     int i = threadIdx.x+(blockIdx.x*blockDim.x); 
     int ithread = threadIdx.x; 
     int iblock = blockIdx.x;
@@ -265,6 +272,7 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
     if(ithread==0){ //only master thread per block
 
 		ncells = arrays->ncells;
+		nSolutes = arrays->nSolutes;
 
         //Bound index
         idb=arrays->idBoundOBC[iblock]; //bound ID: (-id) inlet  (+id) outlet
@@ -308,6 +316,9 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 	double *localhu = &localh[nbc];
 	double *localhv = &localhu[nbc];
 	double *localz = &localhv[nbc];		
+	#if SET_SOLUTE
+	double *phiIn = &localz[nbc];
+	#endif
 
 
     //Generate shared memory arrays per block 
@@ -325,7 +336,12 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
         mBoundByCell[idx] = 0.0; 
     }
     __syncthreads(); 
-   
+
+	#if SET_SOLUTE
+	if(ithread<nSolutes){
+		phiIn[ithread]=0.0;
+	}
+	#endif	   
 
 
 
@@ -955,6 +971,65 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 	}
 
 
+    // Solute inflow update ///////////////////////////////////////////////////////////
+	#if SET_SOLUTE
+	if(nSolutes){
+	if(flagInitialized==1){
+		if(idb<0){	
+			if(typebc==HYD_INFLOW_Q){
+
+				//interpolate time series value
+				if(ithread<nSolutes){
+					tidx = d_get_index(arrays->t, npts, ip0, arrays->tSeriesOBC);
+					phit = d_interpolate_matrix(arrays->t, ithread, arrays->nTotalPointSeries, 
+						npts, ip0, 
+						tidx, 
+						arrays->tSeriesOBC, arrays->phiSeriesOBC);
+					
+					if(phit<0.0) phit=0.0;
+					phiIn[ithread]=phit;
+                    //printf("sol %d tidx %d phit %lf phiIn %lf\n",ithread,tidx,phit,phiIn[ithread]);
+				}
+				__syncthreads();
+				
+
+				//impose solute concentration at cells
+				if(ithread<nbc){	
+					if(localh[ithread] > TOL12){
+						for(j=0;j<nSolutes;j++){				
+							arrays->phi[j*ncells+cidx] = phiIn[j];
+						}
+					}else{
+						for(j=0;j<nSolutes;j++){
+							arrays->phi[j*ncells+cidx] = 0.0;
+						}
+					}
+				}			
+				__syncthreads(); 
+
+			}
+		}
+
+		//update solute at cells (always)
+		if(ithread<nbc){	
+			if(localh[ithread] > TOL12){
+				for(j=0;j<nSolutes;j++){				
+					arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
+				}
+			}else{
+				for(j=0;j<nSolutes;j++){
+					arrays->hphi[j*ncells+cidx] = 0.0;
+				}
+			}
+		}			
+		__syncthreads(); 
+
+	}
+	}		
+	#endif	  
+
+
+
 }
 
 
@@ -1014,4 +1089,36 @@ __device__ double d_interpolate_vector(double valor,
 }
 
 
+
+////////////////////////////////////////////////////
+__device__ double d_interpolate_matrix(double valor, 
+	int line, int nPointsLine,
+	int n, int idx0,
+	int tidx, 
+	double *x, 
+	double *y){
+/*----------------------------*/
+	
+	double x0, y0;
+	double x1, y1; 
+	double data;
+
+	if(tidx==idx0+n-1){
+		data=y[line*nPointsLine+tidx];
+	}else{
+		x0=x[tidx];
+		x1=x[tidx+1];
+		y0=y[line*nPointsLine+tidx];
+		y1=y[line*nPointsLine+tidx+1];
+		if(fabs(x1-x0)<=TOL6)
+			data = y1;
+		else 
+			data = y0+(y1-y0)*(valor-x0)/(x1-x0);
+	}	
+
+    //printf("ithred %d phit %lf\n",line,data);
+
+	return data;
+
+}
 

@@ -27,6 +27,9 @@ typedef struct l_edges_ l_edges;
 
 typedef struct t_bound_ t_bound;
 
+typedef struct t_solute_ t_solute;
+typedef struct l_solutes_ l_solutes;
+
 typedef struct t_arrays_ t_arrays;
 typedef struct t_cuPtr_ t_cuPtr;
 
@@ -110,6 +113,7 @@ struct t_mesh_{
 
 	//solutes
 	int nSolutes;
+	l_solutes *solutes;
 
 };
 
@@ -308,6 +312,27 @@ struct t_bound_{
 };
 
 
+/**
+ * @brief Passive solute
+*/
+struct t_solute_{
+	char name[STR_SIZE]; /**< @brief Solute name*/
+	int typeDiff; /**< @brief Diffusion model*/
+	double k_xx,k_yy; /**< @brief Longitudinal and transversal diffusion coefficients*/
+	double iniConc;
+};
+
+
+/**
+ * @brief List of passive solutes
+*/
+struct l_solutes_{
+	int n;
+	int flagDiffussion; //flag to determine if it is necessary to go inside diffusion subroutines
+	t_solute *solute;
+};
+
+
 
 /**
  * @brief Arrange all the domain parameters, run controls and data arrays required for computation
@@ -474,6 +499,29 @@ struct t_arrays_{
 	double massTotalOut; /**< @brief Run-control total outflow volume accumulated during the simulation*/ 
     ////////////////////////////////////////////	    
 
+
+	// SOLUTE ARRAYS ///////////////////////////	
+	#if SET_SOLUTE
+		int flagDiffusion; /**< @brief Solute diffusion activation flag */
+		double Dtd; /**< @brief Solute global dt*/
+
+		//solute data
+		int *typeDiff; //nsol
+		double *k_xx, *k_yy; //nsol	
+
+		//solute conservative
+		double *hphi; /**< @brief [NSOL x NCELLS] Solute mass in cells*/
+		double *phi; /**< @brief [NSOL x NCELLS] Solute concentration in cells*/
+		double *localDtd; /**< @brief [NSOL x NCELLS] Solute local dt in cells*/
+		double *BTcell;/**< @brief [NSOL x NCELLS] Solute coefficient in cells*/
+		
+
+		//solute contributions
+		double *dhphi;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute mass*/
+		double *Bwall;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute coefficient*/
+	
+	#endif
+
 };
 
 
@@ -555,7 +603,28 @@ struct t_cuPtr_{
 	double *qTotalIn, *qTotalOut;
 	double *mTotalIn, *mTotalOut;
 
+
     double *massTotalIn, *massTotalOut;	    	
+
+	// SOLUTE ARRAYS ///////////////////////////
+	#if SET_SOLUTE
+
+		double *Dtd,*dtAux;
+
+		//solutes
+		int *typeDiff;
+		double *k_xx, *k_yy; 
+
+		//nsolutes*cells
+		double *hphi, *phi;
+		double *localDtd;
+		double *BTcell;
+
+		//nsolutes*cells*NCwall
+		double *dhphi;  
+		double *Bwall;
+
+	#endif
 
 };
 

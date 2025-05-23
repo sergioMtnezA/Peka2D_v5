@@ -40,7 +40,8 @@
 	 * 1 Enabled
 	*/
 	#ifndef SET_SOLUTE
-		#define SET_SOLUTE 0
+		#define SET_SOLUTE 1
+		#define SET_MULTILAYER 0
 	#endif		
 
 #endif

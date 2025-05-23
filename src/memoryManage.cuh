@@ -102,7 +102,8 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr);
 EXPORT_DLL int allocateBoundArraysCudaMem(
     int nOBC, int nInlet, int nOutlet, 
     int nTotalBoundCells, int nTotalInnerCells,
-    int nTotalPointSeries,
+    int nTotalPointSeries, 
+    int nSolutes,
     t_cuPtr *cuPtr);
 /*----------------------------*/
 
@@ -170,4 +171,47 @@ EXPORT_DLL int freeBoundaCudaMemory(
     int nTotalPointSeries,
     t_cuPtr *cuPtr);
 /*----------------------------*/
+
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateSoluteArraysCudaMem(
+    int nSolutes, 
+    int NCwall, int ncells, int nWallCell, int nwc, int nwb, 
+    t_cuPtr *cuPtr);
+/*----------------------------*/
+
+
+////////////////////////////////////////////////////////////////
+int copySoluteArraysCudaMem(
+    int nSolutes,
+    t_arrays *carrays,
+    t_arrays *garrays,
+    t_cuPtr *cuPtr);
+/*----------------------------*/
+
+
+
+////////////////////////////////////////////////////////////////
+__global__ void assignSoluteArraysToCudaMem(int nSolutes, t_arrays *garrays,
+	//------------------------solutes
+	int *typeDiff,
+	double *k_xx,
+	double *k_yy,
+	//------------------------solutes*cells
+	double *hphi,
+	double *phi,
+    double *localDtd,
+	double *BTcell,
+	//------------------------solutes*cells*NCwalls
+	double *dhphi,
+    double *Bwall);
+/*----------------------------*/
+
+EXPORT_DLL int freeSoluteCudaMemory(
+	int nSolutes, 
+	t_cuPtr *cuPtr);
+/*----------------------------*/
+#endif
 

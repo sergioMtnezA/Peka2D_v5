@@ -251,7 +251,7 @@ EXPORT_DLL int loadMeshData(
 	FILE *fp,*fp1;
 	char temp[1024];
     char filename[1024];
-    int i,index;
+    int i,index,nsolutes,nseds,nSolutesMax;
     int flag;
 
     // Read mesh size
@@ -1337,12 +1337,29 @@ int readOpenBoundaryFile(
                     nTotalSeriesIn += mesh->in[countInlet].n;
 
                     mesh->in[countInlet].t=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
-                    mesh->in[countInlet].q=(double*) malloc(mesh->in[countInlet].n*sizeof(double));                   
+                    mesh->in[countInlet].q=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+
+                    #if SET_SOLUTE
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nSolutes*sizeof(double*));
+                    for(k=0;k<mesh->nSolutes;k++){
+                        mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                    }
+                    #endif
+
+                   
 
                     for(j=0;j<mesh->in[countInlet].n;j++){
                         fscanf(fdata,"%lf %lf",&(mesh->in[countInlet].t[j]),&(mesh->in[countInlet].q[j]));
 
                         mesh->in[countInlet].t[j] *= 3600.0;
+
+                        #if SET_SOLUTE
+                        for(k=0;k<mesh->nSolutes;k++){
+                            fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
+                            //printf("file id %d sol %d phi %lf \n",countInlet,k,mesh->in[countInlet].phi[k][j]);
+                        }
+                        #endif
+
                     }
 
                     fclose(fdata);
@@ -1355,10 +1372,23 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].t=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     mesh->in[countInlet].hZ=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
+                    #if SET_SOLUTE
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nSolutes*sizeof(double*));
+                    for(k=0;k<mesh->nSolutes;k++){
+                        mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                    }
+                    #endif
+
                     for(j=0;j<mesh->in[countInlet].n;j++){
                         fscanf(fdata,"%lf %lf",&(mesh->in[countInlet].t[j]),&(mesh->in[countInlet].hZ[j]));
                         
                         mesh->in[countInlet].t[j] *= 3600.0;
+
+                        #if SET_SOLUTE
+                        for(k=0;k<mesh->nSolutes;k++){
+                            fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
+                        }
+                        #endif
                     }
                     fclose(fdata);
                     break;
@@ -1371,10 +1401,23 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].q=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     mesh->in[countInlet].hZ=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
+                    #if SET_SOLUTE
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nSolutes*sizeof(double*));
+                    for(k=0;k<mesh->nSolutes;k++){
+                        mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                    }
+                    #endif
+
                     for(j=0;j<mesh->in[countInlet].n;j++){
                         fscanf(fdata,"%lf %lf %lf",&(mesh->in[countInlet].t[j]),&(mesh->in[countInlet].q[j]),&(mesh->in[countInlet].hZ[j]));
                         
                         mesh->in[countInlet].t[j] *= 3600.0;
+
+                        #if SET_SOLUTE
+                        for(k=0;k<mesh->nSolutes;k++){
+                            fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
+                        }
+                        #endif
                     }
                     fclose(fdata);
                     break;
@@ -1475,3 +1518,332 @@ int readOpenBoundaryFile(
 }
 
 
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int loadSoluteData(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh, 
+    t_message *msg){
+/*----------------------------*/
+
+    char filename[1024], temp[1024];
+    int solute_enabled_by_run=0;
+
+    Peka2D_SoluteGroup *soluteGroup;
+    soluteGroup = (Peka2D_SoluteGroup*) malloc(sizeof(Peka2D_SoluteGroup));
+
+    //initialize default
+    soluteGroup->nSolutes=0;
+    sprintf(soluteGroup->initialFile,"%s%s.SOLINITIAL",spar->dir,spar->proj);
+
+    //Load solutes if activated
+    solute_enabled_by_run = pksetup->pkrun.solutes;
+    if(solute_enabled_by_run){
+
+        //Read solute file
+        sprintf(filename,"%s%s.SOLUTES",spar->dir,spar->proj);
+        if(readSoluteFile(filename, soluteGroup, msg)){
+            sprintf(temp,"Reading solute file completed");
+            Notify(temp,MSG_L1,msg);		
+        }
+
+        //associted soluteGroup to pksetup
+        pksetup->soluteGroup = soluteGroup; 
+
+        //Create solute structures
+        if(createSoluteStructures(pksetup, spar, mesh, msg)){
+            sprintf(temp,"Solute structures completed");
+            Notify(temp,MSG_L1,msg);		
+        }
+
+        //Initialize solute concentration
+        if(setInitialSoluteState(pksetup, spar, mesh, msg)){
+            sprintf(temp,"Set initial solute state completed");
+            Notify(temp,MSG_L1,msg);		
+        }  
+
+    }
+
+	return 1;
+	
+}
+
+
+////////////////////////////////////////////////////////////////
+int readSoluteFile(
+    char *filename,
+    Peka2D_SoluteGroup *soluteGroup,   
+    t_message *e){
+/*----------------------------*/
+
+    int i,j;
+    FILE *fp;
+    char temp[1024];
+    int nSolutes=0;
+    int release=0;
+
+
+    fp = fopen(filename,"r");
+    if(!fp){
+        sprintf(temp,"%s file not found",filename);
+        Notify(temp,MSG_ERROR,e);
+        return 0;
+    }
+
+    fscanf(fp,"%d",&release); //line 1
+    if(release!=202407){
+        sprintf(temp,"The Solute file version should be 202407. Current version: %d",release);
+        Notify(temp,MSG_ERROR,e);
+        return(0);
+    }    
+
+    fscanf(fp,"%d",&nSolutes); //line 2
+    //printf("nsol %d\n",nSolutes);
+
+    if(nSolutes>0){
+
+        soluteGroup->nSolutes=nSolutes;
+        soluteGroup->solute = (Peka2D_Solute*) malloc(nSolutes*sizeof(Peka2D_Solute));
+
+        fscanf(fp,"%d",&soluteGroup->flagDiffussion); //line 3 
+
+        for(i=0;i<nSolutes;i++){ //line 4
+            fscanf(fp,"%d",&soluteGroup->solute[i].typeDiff);
+        }
+
+        for(i=0;i<nSolutes;i++){ //line 5 to +nSolutes
+            fscanf(fp,"%lf %lf",
+                &soluteGroup->solute[i].k_xx,
+                &soluteGroup->solute[i].k_yy);
+        }
+
+        for(i=0;i<nSolutes;i++){ //line 6 to +nSolutes
+            fscanf(fp,"%s",&soluteGroup->solute[i].name);
+            //printf("Cname %s\n",soluteGroup->solute[i].name);
+        }
+
+        for(i=0;i<nSolutes*nSolutes;i++){ //line 7 to +nSolutes - skip
+            fscanf(fp,"%*f");
+        }
+
+        for(i=0;i<nSolutes;i++){ //line 8
+            fscanf(fp,"%lf",&soluteGroup->solute[i].iniConc);
+            //printf("Cini %lf\n",soluteGroup->solute[i].iniConc);
+        }
+
+    }else{
+        sprintf(temp,"Solutes are not defined in file %s - Runing simulation without solutes",filename);
+        Notify(temp,MSG_WARN,e);
+        return(0);
+    }
+
+	fclose(fp);
+    
+    return(1);
+
+}
+
+
+////////////////////////////////////////////////////////////////
+int createSoluteStructures(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e){
+/*----------------------------*/
+
+    int i,j;
+    Peka2D_SoluteGroup *soluteGroup;
+    soluteGroup = pksetup->soluteGroup;
+
+    int nSolutes = soluteGroup->nSolutes;
+    t_c_cell *c1;
+
+    //solute flag in mesh
+    mesh->nSolutes = nSolutes;
+
+    if(mesh->nSolutes){
+        
+        //solute data in mesh
+        mesh->solutes = (l_solutes*) malloc(sizeof(l_solutes));
+
+        mesh->solutes->n = nSolutes;
+        mesh->solutes->flagDiffussion = soluteGroup->flagDiffussion;
+        //printf("flagDiffusion %d\n",mesh->solutes->flagDiffussion);
+
+        mesh->solutes->solute=(t_solute*) malloc(nSolutes*sizeof(t_solute));
+        for(j=0;j<nSolutes;j++){
+            sprintf(mesh->solutes->solute[j].name,"%s",soluteGroup->solute[j].name);
+            //printf("Cname %s\n",mesh->solutes->solute[j].name);
+
+            mesh->solutes->solute[j].typeDiff=soluteGroup->solute[j].typeDiff;
+
+            mesh->solutes->solute[j].k_xx = soluteGroup->solute[j].k_xx;
+            mesh->solutes->solute[j].k_yy = soluteGroup->solute[j].k_yy;
+
+            mesh->solutes->solute[j].iniConc=soluteGroup->solute[j].iniConc;            
+        }
+
+        //solute variables in c_cells
+        for(i=0;i<mesh->ncells;i++){
+            c1=&(mesh->c_cells->cells[i]);
+            c1->hphi=(double*) malloc(nSolutes*sizeof(double));
+            c1->phi=(double*) malloc(nSolutes*sizeof(double));
+        }
+    
+    }
+
+	return 1;
+	
+}
+
+
+////////////////////////////////////////////////////////////////
+int setInitialSoluteState(
+    Peka2D_Setup *pksetup,
+    t_parameters *spar,
+    t_mesh *mesh, 
+    t_message *e){
+/*----------------------------*/
+
+    int i,j;
+    Peka2D_SoluteGroup *soluteGroup;
+    soluteGroup = pksetup->soluteGroup;
+
+    int nSolutes = soluteGroup->nSolutes;
+
+    t_c_cell *c1;
+    char filename[1024],temp[1024];
+    FILE *fp;
+
+    double aux1, dataSolute;
+
+    if(pksetup->pkrun.hotStart){ //hotstart initialization
+
+        sprintf(filename,"%s%s.HOTSTART",spar->dir,spar->proj);
+        if(!readHotstartSoluteState(filename, mesh, nSolutes, e)){
+            sprintf(temp,"Hotstart solute initialization failed");
+		    Notify(temp,MSG_ERROR,e);
+		    return 0;
+        }
+
+    }else{ //user initialization    
+
+        fp=NULL;
+        fp=fopen(soluteGroup->initialFile,"r");
+        if(fp){
+
+            for(i=0;i<mesh->ncells;i++){
+                c1=&(mesh->c_cells->cells[i]);
+
+                for(j=0;j<nSolutes;j++){  
+                    fscanf(fp,"%lf",&dataSolute);         
+
+                    if(c1->h > TOL12){
+                        c1->phi[j] = MAX(0.0,dataSolute);
+                        c1->hphi[j] = c1->h * c1->phi[j];
+                    }else{
+                        c1->phi[j] = 0.0;
+                        c1->hphi[j] = 0.0;
+                    }
+                
+                } 
+
+            } // end cell loop
+            fclose(fp);
+            sprintf(temp,"Solute initial concentration set from file %s",soluteGroup->initialFile);
+            Notify(temp,MSG_L1,e);
+
+        }else{
+
+            for(i=0;i<mesh->ncells;i++){
+                c1=&(mesh->c_cells->cells[i]);
+
+                for(j=0;j<nSolutes;j++){  
+                    if(c1->h > TOL12){
+                        c1->phi[j] = mesh->solutes->solute[j].iniConc;
+                        c1->hphi[j] = c1->h * c1->phi[j];
+                    }else{
+                        c1->phi[j] = 0.0;
+                        c1->hphi[j] = 0.0;
+                    }
+                } 
+
+            } // end cell loop        
+            sprintf(temp,"Solute initial concentration set uniform");
+            Notify(temp,MSG_L1,e);
+        } 
+
+    }       
+
+    return 1;
+
+}
+
+
+////////////////////////////////////////////////////////////////
+int readHotstartSoluteState(
+    char *filename,
+    t_mesh *mesh, 
+    int nSolutes,
+    t_message *e){
+/*----------------------------*/
+
+    FILE *fp;
+    int i,j;
+    t_c_cell *c1;
+
+    double aux1, dataSolute;
+    char temp[1024];
+
+    int nhydro, nsol;
+
+    fp = fopen(filename,"r");
+    if(!fp){
+        sprintf(temp,"%s file not found",filename);
+        Notify(temp,MSG_ERROR,e);
+        return 0;
+
+    }else{
+        //headers
+        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(nsol));  
+        if(nsol!=nSolutes){
+            fclose(fp);
+            sprintf(temp,"Unconsistent number of solute data in %s",filename);
+            Notify(temp,MSG_ERROR,e);
+            return 0;             
+        }
+
+        for(i=0;i<mesh->ncells;i++){
+            c1=&(mesh->c_cells->cells[i]);
+
+            //skip hydro data
+            fscanf(fp,"%*lf %*lf %*lf %*lf");
+
+            //read nsolutes data
+            for(j=0;j<nSolutes;j++){  
+                fscanf(fp,"%lf",&dataSolute);         
+
+                if(c1->h > TOL12){
+                    c1->phi[j] = MAX(0.0,dataSolute);
+                    c1->hphi[j] = c1->h * c1->phi[j];
+                }else{
+                    c1->phi[j] = 0.0;
+                    c1->hphi[j] = 0.0;
+                } 
+            }      
+
+        } // end cell loop
+    }
+    fclose(fp);
+
+    sprintf(temp,"Hotstart solute initialization completed");
+    Notify(temp,MSG_L1,e);
+    return(1);
+}
+
+
+#endif

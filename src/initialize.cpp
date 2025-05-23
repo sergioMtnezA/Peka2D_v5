@@ -351,6 +351,8 @@ EXPORT_DLL int allocateBoundaryArraysMem(
 
     int nOBC;
 
+    int nSolutes;
+
 	//Local variables just for allocation
     NCwall = mesh->NCwall;	//walls per cell
     
@@ -365,6 +367,7 @@ EXPORT_DLL int allocateBoundaryArraysMem(
 
     nTotalPointSeries = mesh->nTotalSeriesIn+mesh->nTotalSeriesOut;
 
+    nSolutes = carrays->nSolutes;
 
     //bound blocks
     nOBC=0;
@@ -423,6 +426,9 @@ EXPORT_DLL int allocateBoundaryArraysMem(
         carrays->qSeriesOBC=(double*)malloc(nTotalPointSeries*sizeof(double)); 
         carrays->hzSeriesOBC=(double*)malloc(nTotalPointSeries*sizeof(double));
         carrays->frSeriesOBC=(double*)malloc(nTotalPointSeries*sizeof(double)); 
+        #if SET_SOLUTE
+        carrays->phiSeriesOBC=(double*)malloc(nSolutes*nTotalPointSeries*sizeof(double)); 
+        #endif
 
         //mass balance arrays
         carrays->qBoundByCell=(double*)malloc(nTotalBoundCells*sizeof(double));
@@ -635,6 +641,16 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->hzSeriesOBC[idx] = 0.0;
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
+                        #if SET_SOLUTE
+                        for(l=0;l<mesh->nSolutes;l++){
+                            for(k=0;k<mesh->in[j].n;k++){
+                                idx = l*nTotalPointSeries + countIdx0 + k;
+                                carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
+                                //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
+
+                            }
+                        }
+                        #endif
                         break;
 
                     case HYD_INFLOW_HZ://h+z(t)
@@ -645,6 +661,16 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->hzSeriesOBC[idx] = mesh->in[j].hZ[k];
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
+                        #if SET_SOLUTE
+                        for(l=0;l<mesh->nSolutes;l++){
+                            for(k=0;k<mesh->in[j].n;k++){
+                                idx = l*nTotalPointSeries + countIdx0 + k;
+                                carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
+                                //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
+
+                            }
+                        }
+                        #endif
                         break;
 
                     case HYD_INFLOW_QHZ:
@@ -655,6 +681,16 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->hzSeriesOBC[idx] = mesh->in[j].hZ[k];
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
+                        #if SET_SOLUTE
+                        for(l=0;l<mesh->nSolutes;l++){
+                            for(k=0;k<mesh->in[j].n;k++){
+                                idx = l*nTotalPointSeries + countIdx0 + k;
+                                carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
+                                //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
+
+                            }
+                        }
+                        #endif
                         break;
                 }// End case
 
@@ -831,4 +867,131 @@ EXPORT_DLL int initilizeBoundaryMeshArrays(
     return 1;
  
 }
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateSoluteArraysMem(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg){
+/*----------------------------*/
+
+	int i,j;
+    int NCwall;
+	int ncells,nwc,nwb;
+    int nWallCell;
+    int nSolutes;
+
+	size_t free_mem, total_mem;
+
+	//Local variables just for allocation
+    NCwall=mesh->NCwall;	//walls per cell
+	ncells=mesh->ncells;
+    nWallCell=NCwall*ncells;
+	nwc=mesh->nw_calc;
+	nwb=mesh->nw_bound;
+    nSolutes=mesh->nSolutes;
+
+    //solutes
+    if(mesh->nSolutes){
+
+        //solute arrays
+        carrays->typeDiff=(int*)malloc(nSolutes*sizeof(int));
+        carrays->k_xx=(double*)malloc(nSolutes*sizeof(double)); 
+        carrays->k_yy=(double*)malloc(nSolutes*sizeof(double));  
+
+        //cell arrarys
+        carrays->hphi=(double*)malloc(nSolutes*ncells*sizeof(double));
+        carrays->phi=(double*)malloc(nSolutes*ncells*sizeof(double)); 
+        carrays->localDtd=(double*)malloc(nSolutes*ncells*sizeof(double));
+        carrays->BTcell=(double*)malloc(nSolutes*ncells*sizeof(double));
+
+        //nWallCell arrays
+        carrays->dhphi=(double*)malloc(nSolutes*nWallCell*sizeof(double));  
+        carrays->Bwall=(double*)malloc(nSolutes*nWallCell*sizeof(double));    
+    }
+
+    return 1;
+
+}
+
+
+
+
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int initilizeSoluteArrays(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,   
+    t_message *msg){
+/*----------------------------*/
+
+	int i,j;
+	int NCwall,ncells,nwc,nwb,nWallCell;
+    int nActCells, nActWalls;
+    int nSolutes;
+    int idx;
+
+
+    double daux;
+
+    t_c_cell *c1,*c2;
+    t_g_cell *g1;
+    t_wall *w1;
+
+    size_t free_mem, total_mem;
+	
+	//Local variables just for the function
+    NCwall=mesh->NCwall;
+	ncells=mesh->ncells;
+    nWallCell=carrays->nWallCell;
+    nwc=mesh->nw_calc;
+    nwb=mesh->nw_bound;
+    nSolutes=mesh->nSolutes;
+
+    if(mesh->nSolutes){
+
+        carrays->flagDiffusion=mesh->solutes->flagDiffussion;
+        carrays->Dtd = 0.0; 
+
+        //solute arrays
+        for(j=0;j<nSolutes;j++){  
+            carrays->typeDiff[j] = mesh->solutes->solute[j].typeDiff;
+            carrays->k_xx[j] = mesh->solutes->solute[j].k_xx; 
+            carrays->k_yy[j] = mesh->solutes->solute[j].k_yy;          
+        }        
+
+        
+        //soltute*cell arrays
+        for(j=0;j<nSolutes;j++){        
+            for(i=0;i<ncells;i++){
+                idx = j*ncells+i;
+                c1=&(mesh->c_cells->cells[i]);
+
+                carrays->hphi[idx] = c1->hphi[j];
+                carrays->phi[idx] = c1->phi[j];  
+                carrays->localDtd[idx]= 1e6;
+                carrays->BTcell[idx]=0.0;
+                //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
+            }
+        }
+
+        //solute*cell*NCwall arrays
+        for(i=0;i<nSolutes*nWallCell;i++){
+		    carrays->dhphi[i]=0.0;
+            carrays->Bwall[i]=0.0;
+	    }
+      
+    } 
+
+    return 1;
+
+}
+
+#endif
+
+
 

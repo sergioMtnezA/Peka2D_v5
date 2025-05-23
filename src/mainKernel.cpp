@@ -136,6 +136,19 @@ int loadSimulationDomain(
 	}
 
 
+    //Load solute data
+	#if SET_SOLUTE
+	if(msg->error){
+		return 0;
+	}else{
+		if(loadSoluteData(pksetup, spar, mesh, msg)){
+			sprintf(temp,"Solute loading completed");
+			Notify(temp,MSG_L1,msg);		
+		}        
+	} 
+	#endif	
+
+
     //Load boundary conditions
 	if(msg->error){
 		return 0;
@@ -238,6 +251,30 @@ int initializeComputationArrays(
 		}  						
      
 	} 
+
+
+
+	//Create solute CPU arrays
+	#if SET_SOLUTE
+	if(msg->error){
+		return 0;
+	}else{
+
+		//allocate RAM memory
+		if(allocateSoluteArraysMem(spar, mesh, carrays, msg)){
+			sprintf(temp,"Solute arrays memory allocation completed");
+			Notify(temp,MSG_L2,msg);		
+		}
+
+		//reconstruct mesh data
+		if(initilizeSoluteArrays(spar, mesh, carrays, msg)){
+			sprintf(temp,"Initialize solute mesh arrays completed");
+			Notify(temp,MSG_L2,msg);		
+		} 
+
+	} 	
+	#endif
+
 
 
 
