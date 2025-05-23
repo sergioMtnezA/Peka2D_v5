@@ -16,7 +16,7 @@ CC = g++
 NVCC = nvcc
 
 # Define C flags
-C_CUDA_FLAGS = -I/usr/local/cuda-12.1/include -L/usr/local/cuda-12.1/lib64 -lcuda -lcudart -lcublas -lrt -lm
+C_CUDA_FLAGS = -I/usr/local/cuda/include -L/usr/local/cuda/lib64 -lcuda -lcudart -lcublas -lrt -lm
 C_REQ_FLAGS =
 C_OPT_FLAGS = -O3 -w
 C_DEBUG_FLAGS = -g
@@ -25,9 +25,9 @@ C_PROFILE_FLAGS = -pg
 C_WARN_FLAGS = -Wall
 C_OMP_FLAGS = -fopenmp
 
-CULIB_REQ_FLAGS = --compiler-bindir=g++ -w -m64 -arch sm_60 -Xptxas -dlcm=ca --use_fast_math -lcuda -lcudart -lcublas -lrt -lm
+CULIB_REQ_FLAGS = --compiler-bindir=g++ -w -m64 -arch sm_86 -Xptxas -dlcm=ca --use_fast_math -lcuda -lcudart -lcublas -lrt -lm
 CULIB_OPT_FLAGS = -O3 -w
-CULIB_DEBUG_FLAGS = -G -g -Xcompiler -rdynamic
+CULIB_DEBUG_FLAGS = -O3 -G -g -Xcompiler -rdynamic
 #additional flags for cuda-memcheck: (release version) -Xcompiler -rdynamic -lineinfo   (debug version) -G -g -Xcompiler -rdynamic
 
 
@@ -59,7 +59,7 @@ ifeq ($(OMP),yes)
 endif
 
 
-OBJ = src/cuTilities.o src/water.o src/memoryManage.o src/calculate.o src/writeInOut.o src/initialize.o src/mesh.o src/loadData.o src/mainKernel.o gpeka2d.o
+OBJ = src/cuTilities.o src/boundary.o src/solute.o src/water.o src/memoryManage.o src/calculate.o src/writeInOut.o src/initialize.o src/mesh.o src/loadData.o src/mainKernel.o gpeka2d.o
 BIN = gpeka2d
 
 ## $@ Es el token de la izquierda de los :
@@ -100,6 +100,12 @@ src/memoryManage.o: src/memoryManage.cu
 
 src/water.o: src/water.cu
 	$(NVCC) $(CULIBFLAGS) $< -c -o $@
+
+src/solute.o: src/solute.cu
+	$(NVCC) $(CULIBFLAGS) $< -c -o $@	
+
+src/boundary.o: src/boundary.cu
+	$(NVCC) $(CULIBFLAGS) $< -c -o $@		
 
 src/cuTilities.o: src/cuTilities.cu
 	$(NVCC) $(CULIBFLAGS) $< -c -o $@	
