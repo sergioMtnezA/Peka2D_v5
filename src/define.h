@@ -40,7 +40,7 @@
 	 * 1 Enabled
 	*/
 	#ifndef SET_SOLUTE
-		#define SET_SOLUTE 1
+		#define SET_SOLUTE 0
 	#endif		
 
 #endif
@@ -51,7 +51,7 @@
  */
 #ifndef RECONSTRUC_ACTIVE
 	#define RECONSTRUC_ACTIVE 1
-	#define nIterArrangeActElem 200
+	#define nIterArrangeActElem 1000
 #endif
 
 /** Enables the generation of VTK files in binary codification
@@ -96,7 +96,8 @@
 //Program's config
 #define WRITE_STATE 1
 #define WRITE_MASS  1
-#define threadsPerBlock 128
+#define threadsPerBlock 256
+#define threadsPerOBC 256
 
 
 //Other definitions
@@ -148,6 +149,7 @@
 #define TOL4 1e-4
 #define TOL5 1e-5
 #define TOL6 1e-6
+#define TOL7 1e-7
 #define TOL9 1e-9
 #define TOL12 1e-12
 #define TOL14 1e-14

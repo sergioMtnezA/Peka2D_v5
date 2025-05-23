@@ -10,8 +10,6 @@ EXPORT_DLL int create_computation_files(char *path, t_message *msg);
 
 EXPORT_DLL int write_massBalance(char *path, t_arrays *arrays, t_message *msg);
 
-EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg);
-
 EXPORT_DLL void dump_screen_info(t_arrays *arrays, t_message *msg);
 
 EXPORT_DLL int write_vtk_state(char *filename, t_mesh *mesh, t_arrays *arrays, t_message *msg);
@@ -25,3 +23,7 @@ EXPORT_DLL void write_Dscalar_in_vtk(FILE *fp, double val);
 EXPORT_DLL void write_Iscalar_in_vtk(FILE *fp, int val);
 
 EXPORT_DLL void write_Dvector_in_vtk(FILE *fp, double val1, double val2);
+
+EXPORT_DLL int write_hotstart_file(char *filename, t_arrays *arrays, t_message *msg);
+
+EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg);

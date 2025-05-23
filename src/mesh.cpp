@@ -502,6 +502,9 @@ int cons_lpocells_qsort(t_mesh *mesh, t_message *msg){
             tpc->idWall = mesh->w_calc->n + mesh->w_bound->n;
             tpc->typeOfBound=0;
 
+			tpc->id=paredes[i].idC;
+			tpc->id2=-1;
+
 			c1=&mesh->g_cells->cells[paredes[i].idC];
 			cc1=&mesh->c_cells->cells[paredes[i].idC];
 			
@@ -535,17 +538,6 @@ int cons_lpocells_qsort(t_mesh *mesh, t_message *msg){
 	mesh->b_cells->pcells=(t_c_cell**)malloc(sizeof(t_c_cell*));
 	for(i=0;i<mesh->nw_bound;i++){
         tpc=&(mesh->w_bound->wall[i]);
-
-        //create typeOfBound flag for boundary cells
-        if(mesh->NCwall==3){
-            if(tpc->gcells[0]->nneig==1){ // corner!
-                tpc->typeOfBound=1;
-            }
-        }else{//NCwall==4
-            if(tpc->gcells[0]->nneig<=2){ // corner!
-                tpc->typeOfBound=1;
-            }
-        }
 
         //add boundary cell to list
         found=0;
@@ -701,17 +693,21 @@ int build_wall_inlet(t_mesh *mesh, t_bound *iinn, t_wall *w, int i, t_message *m
 		w->ccells[0]->geom->isBound = -1*(i+1);
 
         #if DEBUG_READ_BOUNDS
-        sprintf(temp,"Inlet boundary cell %d assigned to open boundary ID %d",w->ccells[0]->id, w->idBound);
-        Notify(temp,MSG_L0,msg);
+		printf("Inlet %d: wall %d-%d - nx %lf ny %lf - typeOfBound %d\n",
+			w->ccells[0]->geom->isBound,
+			w->node1,w->node2,
+			w->normal[0],w->normal[1],
+			w->typeOfBound);        
+		Notify(temp,MSG_L0,msg);
         #endif
 	
-	}else{
-		// Cuidado. Hay que incluir una. Solo una.
+	}else if(w->typeOfBound==1){ //corner within the bound
+		// Cuidado. Hay que incluir una celda.
 		// Verificamos primero si la celda no estaba incluida.
 		k=0;
 		found=0;
 		while(k<ncellsInlet){
-			if(iinn->wallBound[k]->ccells[0]->id==w->ccells[0]->id){// Ya la habiamos incluido antes
+			if(iinn->wallBound[k]->ccells[0]->id == w->ccells[0]->id){// Ya la habiamos incluido antes
 				found++;
 				k=ncellsInlet;
 			}
@@ -721,8 +717,14 @@ int build_wall_inlet(t_mesh *mesh, t_bound *iinn, t_wall *w, int i, t_message *m
 		if(found){ // Estaba ya incluida la celda
 			w->typeOfBound=-2; // se pone esto para saber que es de entrada y evitar
 								// que se hagan las correciones como si fuera de contorno
-								// estándar. Se cambia a -2 por solutos en GPU
-
+								// estándar.
+			#if DEBUG_READ_BOUNDS
+			printf("Inlet %d: wall %d-%d - typeOfBound %d\n",
+				w->ccells[0]->geom->isBound,
+				w->node1,w->node2,
+				w->typeOfBound);        
+			Notify(temp,MSG_L0,msg);
+			#endif
 		}else{
 			ncellsInlet++;
 			// Modificamos la longitud y normal de la pared para adaptarlo a NORMALXI y
@@ -741,6 +743,7 @@ int build_wall_inlet(t_mesh *mesh, t_bound *iinn, t_wall *w, int i, t_message *m
 				}
 			}else{
 				if(w->gcells[0]->nneig==1){// Es una celda saliente
+					w->length=w->gcells[0]->neigwall[0]->length;
 					// Necesitamos seleccionar la saliente. Para ello cambiamos el signo si
 					// es necesario.
 					if(w->ccells[0]->id==w->gcells[0]->neigwall[0]->gcells[0]->id){
@@ -750,7 +753,6 @@ int build_wall_inlet(t_mesh *mesh, t_bound *iinn, t_wall *w, int i, t_message *m
 						w->normal[_X_]=w->gcells[0]->neigwall[0]->normal[_X_];
 						w->normal[_Y_]=w->gcells[0]->neigwall[0]->normal[_Y_];
 					}
-					w->length=sqrt(3.0)*w->gcells[0]->neigwall[0]->length;
 				}else{ // Es una celda "picuda". Tiene dos vecinas
                         // Vamos a sacar dos vectores (v1 y v2) de tal forma que
                         // el vector que buscamos, es la suma de ambos normalizado
@@ -801,10 +803,6 @@ int build_wall_inlet(t_mesh *mesh, t_bound *iinn, t_wall *w, int i, t_message *m
 					w->length=sqrt(w1->length*w1->length + w2->length*w2->length);
 				}
 			}
-            #if DEBUG_READ_BOUNDS
-            sprintf(temp,"Modified boundary wall %d: New length %lf - New normal vector x(%lf) y(%lf)",w->ccells[0]->id, w->length,w->normal[_X_],w->normal[_Y_]);
-            Notify(temp,MSG_WARN,msg);
-            #endif
 
 			iinn->totalLength+=w->length;
 			iinn->totalArea+=w->gcells[0]->area;
@@ -815,10 +813,15 @@ int build_wall_inlet(t_mesh *mesh, t_bound *iinn, t_wall *w, int i, t_message *m
 			iinn->wallBound[ncellsInlet-1]=w;
 			w->ccells[0]->geom->isBound = -1*(i+1);
 
-            #if DEBUG_READ_BOUNDS
-            sprintf(temp,"Inlet boundary cell %d assigned to open boundary ID %d",w->ccells[0]->id, w->idBound);
-            Notify(temp,MSG_L0,msg);
-            #endif
+
+			#if DEBUG_READ_BOUNDS
+			printf("Inlet %d: wall %d-%d - nx %lf ny %lf - typeOfBound %d\n",
+				w->ccells[0]->geom->isBound,
+				w->node1,w->node2,
+				w->normal[0],w->normal[1],
+				w->typeOfBound);        
+			Notify(temp,MSG_L0,msg);
+			#endif
 
 		}
 
@@ -880,26 +883,34 @@ int build_inner_inlet(t_mesh *mesh, t_bound *iinn, int i, t_message *msg){
 		g1=w->gcells[0];
 		iinn->cellBound[iinn->ncellsBound]=c1;
 		iinn->ncellsBound++;
-		for(k=0;k<g1->nneig;k++){
-			cAux=g1->neigcell[k];
-			// Celda vecina de la celda de entrada
-			if(g1->neigwall[k]->id==g1->id||g1->neigwall[k]->id2==g1->id){
-				for(l=0;l<nfound;l++){
-					if(cAux->id==founded[l]){
-						found=1;
+
+		if(mesh->NCwall==3){
+			for(k=0;k<g1->nneig;k++){ // Celda vecina de la celda de entrada
+				cAux=g1->neigcell[k];
+
+				if(g1->neigwall[k]->id==g1->id || g1->neigwall[k]->id2==g1->id){
+					for(l=0;l<nfound;l++){
+						if(cAux->id==founded[l]){
+							found=1;
+						}
 					}
+					if(	!found &&
+						(cAux->geom->nneig==mesh->NCwall || 
+						(cAux->geom->nneig!=mesh->NCwall && cAux->geom->isBound==0) )){
+
+						cAux->geom->isBound = -1*(i);
+
+						iinn->cellInner=(t_c_cell**)realloc(iinn->cellInner,sizeof(t_c_cell**)*(nfound+1));
+						iinn->cellInner[nfound]=cAux;
+						founded[nfound]=cAux->id;
+						nfound++;
+						iinn->ncellsInner=nfound;
+					}
+					found=0;
 				}
-				if(!found&&(cAux->geom->nneig==mesh->NCwall||(cAux->geom->nneig!=mesh->NCwall&&cAux->geom->isBound==0))){
-					cAux->geom->isBound = -1*(i+1);
-                    iinn->cellInner=(t_c_cell**)realloc(iinn->cellInner,sizeof(t_c_cell**)*(nfound+1));
-					iinn->cellInner[nfound]=cAux;
-					founded[nfound]=cAux->id;
-					nfound++;
-					iinn->ncellsInner=nfound;
-				}
-				found=0;
 			}
 		}
+
 	}
 	free(founded);
 
@@ -939,11 +950,15 @@ int build_wall_outlet(t_mesh *mesh, t_bound *outt, t_wall *w, int i,t_message *m
 
         outt->wallBound=(t_wall**)realloc(outt->wallBound,ncellsOutlet*sizeof(t_wall**));
         outt->wallBound[ncellsOutlet-1]=w;
-        w->ccells[0]->geom->isBound=i+1;
+        w->ccells[0]->geom->isBound= i+1;
 
         #if DEBUG_READ_BOUNDS
-        sprintf(temp,"Outlet boundary cell %d assigned to open boundary ID %d",w->ccells[0]->id, w->idBound);
-        Notify(temp,MSG_L0,msg);
+		printf("Outlet %d: wall %d-%d - nx %lf ny %lf - typeOfBound %d\n",
+			w->ccells[0]->geom->isBound,
+			w->node1,w->node2,
+			w->normal[0],w->normal[1],
+			w->typeOfBound);        
+		Notify(temp,MSG_L0,msg);
         #endif
 
     }else{
@@ -963,6 +978,13 @@ int build_wall_outlet(t_mesh *mesh, t_bound *outt, t_wall *w, int i,t_message *m
             w->typeOfBound=-3; // se pone esto para saber que es de salida y evitar
                                 // que se hagan las correciones como si fuera de contorno
                                 // estándar. Se cambia a -3 por solutos en GPU
+        #if DEBUG_READ_BOUNDS
+		printf("Outlet %d: wall %d-%d - typeOfBound %d\n",
+			w->ccells[0]->geom->isBound,
+			w->node1,w->node2,
+			w->typeOfBound);        
+		Notify(temp,MSG_L0,msg);
+        #endif								
 
         }else{
             ncellsOutlet++;
@@ -982,6 +1004,7 @@ int build_wall_outlet(t_mesh *mesh, t_bound *outt, t_wall *w, int i,t_message *m
                         }
             }else{
                 if(w->gcells[0]->nneig==1){// Es una celda saliente
+					w->length=w->gcells[0]->neigwall[0]->length;
                     // Necesitamos seleccionar la saliente. Para ello cambiamos el signo si
                     // es necesario.
                     if(w->ccells[0]->id==w->gcells[0]->neigwall[0]->gcells[0]->id){
@@ -991,7 +1014,6 @@ int build_wall_outlet(t_mesh *mesh, t_bound *outt, t_wall *w, int i,t_message *m
                         w->normal[_X_]=w->gcells[0]->neigwall[0]->normal[_X_];
                         w->normal[_Y_]=w->gcells[0]->neigwall[0]->normal[_Y_];
                     }
-                    w->length=sqrt(3.0)*w->gcells[0]->neigwall[0]->length;
                 }else{ // Es una celda "picuda". Tiene dos vecinas
                         // Vamos a sacar dos vectores (v1 y v2) de tal forma que
                         // el vector que buscamos, es la suma de ambos normalizado
@@ -1043,10 +1065,6 @@ int build_wall_outlet(t_mesh *mesh, t_bound *outt, t_wall *w, int i,t_message *m
 
                 }
             }//endif mesh nWall
-            #if DEBUG_READ_BOUNDS
-            sprintf(temp,"Modified boundary wall %d: New length %lf - New normal vector x(%lf) y(%lf)",w->ccells[0]->id,w->length,w->normal[_X_],w->normal[_Y_]);
-            Notify(temp,MSG_WARN,msg);
-            #endif
 
             outt->totalLength+=w->length;
             outt->totalArea+=w->gcells[0]->area;
@@ -1057,10 +1075,15 @@ int build_wall_outlet(t_mesh *mesh, t_bound *outt, t_wall *w, int i,t_message *m
             outt->wallBound[ncellsOutlet-1]=w;
             w->ccells[0]->geom->isBound=i+1;
             
-            #if DEBUG_READ_BOUNDS
-            sprintf(temp,"Outlet boundary cell %d assigned to open boundary ID %d",w->ccells[0]->id, w->idBound);
-            Notify(temp,MSG_L0,msg);
-            #endif
+			#if DEBUG_READ_BOUNDS
+			printf("Outlet %d: wall %d-%d - nx %lf ny %lf - typeOfBound %d\n",
+				w->ccells[0]->geom->isBound,
+				w->node1,w->node2,
+				w->normal[0],w->normal[1],
+				w->typeOfBound);        
+			Notify(temp,MSG_L0,msg);
+			#endif
+
         }
 
         //we have to check that the other walls in tghe boundary cell having typeofBound=1
@@ -1115,29 +1138,37 @@ int build_inner_outlet(t_mesh *mesh,t_bound *outt, int i, t_message *msg){
     outt->ncellsBound = 0;
 
 	for(j=0; j<ncellsOutlet ;j++){
+
 		w=outt->wallBound[j];
 		c1=w->ccells[0];
 		g1=w->gcells[0];
 		outt->cellBound[outt->ncellsBound]=c1;
 		outt->ncellsBound++;
-		for(k=0;k<g1->nneig;k++){
-			cAux=g1->neigcell[k];
-			// Celda vecina de la celda de entrada
-			if(g1->neigwall[k]->id==g1->id||g1->neigwall[k]->id2==g1->id){
-				for(l=0;l<nfound;l++){
-					if(cAux->id==founded[l]){
-						found=1;
+		
+		if(mesh->NCwall==3){
+			for(k=0;k<g1->nneig;k++){
+				cAux=g1->neigcell[k];
+
+				if(g1->neigwall[k]->id==g1->id||g1->neigwall[k]->id2==g1->id){
+					for(l=0;l<nfound;l++){
+						if(cAux->id==founded[l]){
+							found=1;
+						}
 					}
+					if(	!found &&
+						(cAux->geom->nneig==mesh->NCwall ||
+						(cAux->geom->nneig!=mesh->NCwall&&cAux->geom->isBound==0) )){
+
+						cAux->geom->isBound=i+1;
+						
+						outt->cellInner=(t_c_cell**)realloc(outt->cellInner,sizeof(t_c_cell**)*(nfound+1));
+						outt->cellInner[nfound]=cAux;
+						founded[nfound]=cAux->id;
+						nfound++;
+						outt->ncellsInner=nfound;
+					}
+					found=0;
 				}
-				if(!found&&(cAux->geom->nneig==mesh->NCwall||(cAux->geom->nneig!=mesh->NCwall&&cAux->geom->isBound==0))){
-					cAux->geom->isBound=i+1;
-                    outt->cellInner=(t_c_cell**)realloc(outt->cellInner,sizeof(t_c_cell**)*(nfound+1));
-					outt->cellInner[nfound]=cAux;
-					founded[nfound]=cAux->id;
-					nfound++;
-					outt->ncellsInner=nfound;
-				}
-				found=0;
 			}
 		}
 	}

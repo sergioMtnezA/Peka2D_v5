@@ -22,17 +22,17 @@ EXPORT_DLL int createArraysCudaMemory(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateArraysCudaMem(
-    int NCwall, int ncells, int nWallCell, int nwc, int nwb,   
-    t_cuPtr *cuPtr);
-/*----------------------------*/
-
-////////////////////////////////////////////////////////////////
-EXPORT_DLL int copyControlArraysCudaMem(
+EXPORT_DLL int copyComputationControls(
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr);
 /*----------------------------*/  
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateArraysCudaMem(
+    int NCwall, int ncells, int nWallCell, int nwc, int nwb,   
+    t_cuPtr *cuPtr);
+/*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
 int copyMeshArraysCudaMem(
@@ -41,9 +41,8 @@ int copyMeshArraysCudaMem(
     t_cuPtr *cuPtr);
 /*----------------------------*/
 
-
 ////////////////////////////////////////////////////////////////
-__global__ void assignGArraysToCudaMem(t_arrays *garrays,
+__global__ void assignMeshArraysToCudaMem(t_arrays *garrays,
 	//------------------------cells
 	int *activeC,
 	int *actCells,
@@ -69,6 +68,7 @@ __global__ void assignGArraysToCudaMem(t_arrays *garrays,
 	int *solidWallByCell,
 	int *neighCell,
 	int *neighWall,
+    int *typeWallByCell,
 	double *normalXbyCell,
 	double *normalYbyCell,
 	//---------------------- internal walls
@@ -98,53 +98,76 @@ __global__ void assignGArraysToCudaMem(t_arrays *garrays,
 EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr);
 /*----------------------------*/
 
-
-
-
-#if SET_SOLUTE
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateArraysSolutesCudaMem(
-    int nSolutes, 
-    int NCwall, int ncells, int nWallCell, int nwc, int nwb, 
+EXPORT_DLL int allocateBoundArraysCudaMem(
+    int nOBC, int nInlet, int nOutlet, 
+    int nTotalBoundCells, int nTotalInnerCells,
+    int nTotalPointSeries,
     t_cuPtr *cuPtr);
 /*----------------------------*/
 
-
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int copyControlArraysSolutesCudaMem(
-    int nSolutes,
+EXPORT_DLL int copyBoundSetupArraysCudaMem(
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr);
 /*----------------------------*/
 
-
 ////////////////////////////////////////////////////////////////
-int copyMeshArraysSolutesCudaMem(
-    int nSolutes,
+EXPORT_DLL int copyBoundMeshArraysCudaMem(
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr);
 /*----------------------------*/
 
-
+////////////////////////////////////////////////////////////////
+__global__ void assignBoundArraysToCudaMem(t_arrays *garrays,
+	//------------------------ bound geometry
+	int *nCellsOBC,
+    int *iniIndexOBC,
+    int *idBoundOBC,
+    int *typeOBC,
+    int *flagInitializeOBC,
+    double *blockSectionOBC,
+    double *normalXOBC,
+    double *normalYOBC,
+    double *totalLengthOBC,
+    double *totalAreaOBC,
+    int *cellZminOBC,
+    int *nInnerCellsOBC,
+    int *iniInnerIndexOBC,
+    //----------------------- bound cells
+    int *cidxBound,
+    double *zCellBound,
+    double *areaCellBound,    
+    double *nxWallBound,
+    double *nyWallBound,
+    double *lWallBound,
+    //----------------------- inner cells
+    int *cidxInner,
+    //----------------------- time series
+    int *nPointsSeriesOBC,
+    int *iniIndexSeriesOBC,
+    double *tSeriesOBC,
+    double *qSeriesOBC,
+    double *hzSeriesOBC,
+    double *frSeriesOBC,
+    double *phiSeriesOBC,
+    //----------------------- mass balance pointers
+    double *qBoundByCell,
+    double *mBoundByCell,
+    double *mInnerByCell,
+    double *qInByInlet,
+    double *qOutByOutlet,
+    double *mInByInlet, 
+    double *mOutByOutlet);
+/*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-__global__ void assignGArraysSolutesToCudaMem(int nSolutes, t_arrays *garrays,
-	//------------------------solutes
-	int *typeDiff,
-	double *k_xx,
-	double *k_yy,
-	//------------------------solutes*cells
-	double *hcsol,
-	double *csol,
-	//------------------------solutes*cells*NCwalls
-	double *dhcsol);
+EXPORT_DLL int freeBoundaCudaMemory(
+    int nOBC, int nInlet, int nOutlet, 
+    int nTotalBoundCells, int nTotalInnerCells,
+    int nTotalPointSeries,
+    t_cuPtr *cuPtr);
 /*----------------------------*/
-
-EXPORT_DLL int freeSolutesCudaMemory(
-	int nSolutes, 
-	t_cuPtr *cuPtr);
-/*----------------------------*/
-#endif
 

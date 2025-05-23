@@ -12,74 +12,50 @@ EXPORT_DLL int createArraysCudaMemory(
     int NCwall;
 	int ncells,nwc,nwb;
     int nWallCell;
-    int nSolutes;
+
+    int nInlet, nOutlet, nOBC;
+    int nTotalBoundCells, nTotalInnerCells;
+    int nTotalPointSeries;
 
 	size_t free_mem, total_mem;
 
     int nTasks, blocksPerGrid;
 
-	//Local variables just for allocation
+	//Mesh variables for allocation
     NCwall=carrays->NCwall;	//walls per cell
 	ncells=carrays->ncells;
     nWallCell=NCwall*ncells;
 	nwc=carrays->nw_calc;
 	nwb=carrays->nw_bound;
-    nSolutes=carrays->nSolutes;
+   
+    //Bound variables for allocation
+    nInlet = carrays->nInlet;
+    nOutlet = carrays->nOutlet;
+    nOBC = carrays->nOBC;
+    nTotalBoundCells = carrays->nTotalBoundCells;
+    nTotalInnerCells = carrays->nTotalInnerCells;
+    nTotalPointSeries = carrays->nTotalPointSeries;
 
-    //allocate arrays memory
+
+    //Transfer computation arrays 
+    if(!copyComputationControls(
+        carrays, 
+        garrays, 
+        cuPtr)
+    ) return 0;
+
     if(!allocateArraysCudaMem( 
         NCwall, ncells, nWallCell, nwc, nwb, 
         cuPtr) 
     ) return 0;
 
-    #if SET_SOLUTE
-    if(!allocateArraysSolutesCudaMem( 
-        nSolutes,
-        NCwall, ncells, nWallCell, nwc, nwb, 
-        cuPtr)
-    ) return 0;
-    #endif 
-    cudaDeviceSynchronize();
-    //getCudaMemoryState(&free_mem, &total_mem);   
-
-
-    //allocate  control arrays memory
-    if(!copyControlArraysCudaMem(
-        carrays, 
-        garrays, 
-        cuPtr)
-    ) return 0;
-
-    #if SET_SOLUTE
-    if(!copyControlArraysSolutesCudaMem(
-        nSolutes, 
-        carrays, garrays, cuPtr)
-    ) return 0;        
-    #endif    
-    cudaDeviceSynchronize();
-    //getCudaMemoryState(&free_mem, &total_mem); 
-
-
-
-    //copy mesh arrays memory
     if(!copyMeshArraysCudaMem(
         carrays, 
         garrays, 
         cuPtr)
-    ) return 0;
-    
-    #if SET_SOLUTE
-    if(!copyMeshArraysSolutesCudaMem(
-        nSolutes, 
-        carrays, garrays, cuPtr)
-    ) return 0; 
-    #endif   
-    cudaDeviceSynchronize();
-    //getCudaMemoryState(&free_mem, &total_mem);     
+    ) return 0;      
 
-
-    //assign CUDA garrays to CUDA cuPtr 
-    assignGArraysToCudaMem <<<1,1>>> (garrays,
+    assignMeshArraysToCudaMem <<<1,1>>> (garrays,
         //------------------------cells
         cuPtr->activeC,
         cuPtr->actCells,
@@ -105,6 +81,7 @@ EXPORT_DLL int createArraysCudaMemory(
         cuPtr->solidWallByCell,
         cuPtr->neighCell,
         cuPtr->neighWall,
+        cuPtr->typeWallByCell,
         cuPtr->normalXbyCell,
         cuPtr->normalYbyCell,
         //---------------------- internal walls
@@ -128,21 +105,76 @@ EXPORT_DLL int createArraysCudaMemory(
         cuPtr->solidWall,
         cuPtr->qnormalL,
         cuPtr->localDt
-    );
+    ); 
 
-    #if SET_SOLUTE
-    assignGArraysSolutesToCudaMem <<<1,1>>> (nSolutes, garrays,
-        //------------------------solutes
-        cuPtr->typeDiff,
-        cuPtr->k_xx,
-        cuPtr->k_yy,
-        //------------------------solutes*cells
-        cuPtr->hcsol,
-        cuPtr->hcsol,
-        //------------------------solutes*cells*NCwall
-        cuPtr->dhcsol
-    );
-    #endif
+    cudaDeviceSynchronize();
+    //getCudaMemoryState(&free_mem, &total_mem);        
+
+
+
+    //Transfer boundary arrays 
+    if(!allocateBoundArraysCudaMem( 
+        nOBC, nInlet, nOutlet,
+        nTotalBoundCells, nTotalInnerCells, 
+        nTotalPointSeries,
+        cuPtr) 
+    ) return 0; 
+
+    if(!copyBoundSetupArraysCudaMem(
+        carrays, 
+        garrays, 
+        cuPtr)
+    ) return 0;  
+
+    if(!copyBoundMeshArraysCudaMem(
+        carrays, 
+        garrays, 
+        cuPtr)
+    ) return 0; 
+
+    assignBoundArraysToCudaMem <<<1,1>>> (garrays,
+        //------------------------ bound geometry
+        cuPtr->nCellsOBC,
+        cuPtr->iniIndexOBC,
+        cuPtr->idBoundOBC,
+        cuPtr->typeOBC,
+        cuPtr->flagInitializeOBC,
+        cuPtr->blockSectionOBC,
+        cuPtr->normalXOBC,
+        cuPtr->normalYOBC,
+        cuPtr->totalLengthOBC,
+        cuPtr->totalAreaOBC,
+        cuPtr->cellZminOBC,
+        cuPtr->nInnerCellsOBC,
+        cuPtr->iniInnerIndexOBC,
+        //----------------------- bound cells
+        cuPtr->cidxBound,
+        cuPtr->zCellBound,
+        cuPtr->areaCellBound,        
+        cuPtr->nxWallBound,
+        cuPtr->nyWallBound,
+        cuPtr->lWallBound,
+        //----------------------- inner cells
+        cuPtr->cidxInner,
+        //----------------------- time series
+        cuPtr->nPointsSeriesOBC,
+        cuPtr->iniIndexSeriesOBC,
+        cuPtr->tSeriesOBC,
+        cuPtr->qSeriesOBC,
+        cuPtr->hzSeriesOBC,
+        cuPtr->frSeriesOBC,
+        cuPtr->phiSeriesOBC,
+        //----------------------- mass balance pointers
+        cuPtr->qBoundByCell,
+        cuPtr->mBoundByCell,
+        cuPtr->mInnerByCell,
+        cuPtr->qInByInlet,
+        cuPtr->qOutByOutlet,
+        cuPtr->mInByInlet, 
+        cuPtr->mOutByOutlet
+    );     
+
+    //Chech final CUDA memory
     cudaDeviceSynchronize();
     getCudaMemoryState(&free_mem, &total_mem); 
 
@@ -152,35 +184,117 @@ EXPORT_DLL int createArraysCudaMemory(
 
 
 
+
+
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateArraysCudaMem(
-    int NCwall, int ncells, int nWallCell, int nwc, int nwb,
+EXPORT_DLL int copyComputationControls(
+    t_arrays *carrays,
+    t_arrays *garrays,
     t_cuPtr *cuPtr){
 /*----------------------------*/
 
-    //computation controls
+    int iaux=0;
+
+    // CONTROL ARRAYS ////////////////////////////////
+    //simulation
+    cudaMemcpy(&(garrays->ncores), &(carrays->ncores), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->gpuid), &(carrays->gpuid), sizeof(int), cudaMemcpyHostToDevice );
+
+    cudaMemcpy(&(garrays->ti), &(carrays->ti), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->tf), &(carrays->tf), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->CFL), &(carrays->CFL), sizeof(double), cudaMemcpyHostToDevice );
+
+    cudaMemcpy(&(garrays->writeMass), &(carrays->writeMass), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->writeExtremes), &(carrays->writeExtremes), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->indexWriteHotstart), &(carrays->indexWriteHotstart), sizeof(int), cudaMemcpyHostToDevice );
+
+    cudaMemcpy(&(garrays->nIterOut), &(carrays->nIterOut), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->dtOut), &(carrays->dtOut), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->dtDump), &(carrays->dtDump), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->minh), &(carrays->minh), sizeof(double), cudaMemcpyHostToDevice );
+
+    //mesh 
+    cudaMemcpy(&(garrays->NCwall), &(carrays->NCwall), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->ncells), &(carrays->ncells), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nWallCell), &(carrays->nWallCell), sizeof(int), cudaMemcpyHostToDevice );
+
+    cudaMemcpy(&(garrays->nw_calc), &(carrays->nw_calc), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nw_bound), &(carrays->nw_bound), sizeof(int), cudaMemcpyHostToDevice );
+
+    //execution 
+    cudaMemcpy(&(garrays->t), &(carrays->t), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->dt), &(carrays->dt), sizeof(double), cudaMemcpyHostToDevice );
+
+    cudaMemcpy(&(garrays->nActCells), &(carrays->nActCells), sizeof(int), cudaMemcpyHostToDevice ); //initial active cells
+    cudaMemcpy(&(garrays->nActWalls), &(carrays->nActWalls), sizeof(int), cudaMemcpyHostToDevice ); //initial active walls
+
+    cudaMemcpy(&(garrays->nIter), &(carrays->nIter), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->indexOut), &(carrays->indexOut), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->indexDump), &(carrays->indexDump), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->dumpComponent), &(carrays->dumpComponent), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->dumpState), &(carrays->dumpState), sizeof(int), cudaMemcpyHostToDevice );
+
+    cudaMemcpy(&(garrays->massOld), &(carrays->massOld), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->massNew), &(carrays->massNew), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->massError), &(carrays->massError), sizeof(double), cudaMemcpyHostToDevice );
+
+    //boundary permanent flag
+    cudaMemcpy(&(garrays->nInlet), &(carrays->nInlet), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nOutlet), &(carrays->nOutlet), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nOBC), &(carrays->nOBC), sizeof(int), cudaMemcpyHostToDevice );
+
+    //solute permanent flag
+    cudaMemcpy(&(garrays->nSolutes), &(carrays->nSolutes), sizeof(int), cudaMemcpyHostToDevice );
+
+
+
+    // CONTROL POINTERS ////////////////////////////////
     cudaMalloc((void**) &(cuPtr->index), sizeof(int));
     cudaMalloc((void**) &(cuPtr->check), sizeof(int));
+    cudaMemcpy(cuPtr->index, &(iaux), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(cuPtr->check, &(iaux), sizeof(int), cudaMemcpyHostToDevice );    
 
     cudaMalloc((void**) &(cuPtr->t), sizeof(double));
     cudaMalloc((void**) &(cuPtr->dt), sizeof(double));
+    cudaMemcpy(cuPtr->t , &(carrays->t), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(cuPtr->dt, &(carrays->dt), sizeof(double), cudaMemcpyHostToDevice );    
 
     cudaMalloc((void**) &(cuPtr->nActCells), sizeof(int));
     cudaMalloc((void**) &(cuPtr->nActWalls), sizeof(int));
+    cudaMemcpy(cuPtr->nActCells, &(carrays->nActCells), sizeof(int), cudaMemcpyHostToDevice ); //initial active cells
+    cudaMemcpy(cuPtr->nActWalls, &(carrays->nActWalls), sizeof(int), cudaMemcpyHostToDevice ); //initial active walls
 
     cudaMalloc((void**) &(cuPtr->nIter), sizeof(int));
     cudaMalloc((void**) &(cuPtr->indexOut), sizeof(int));
     cudaMalloc((void**) &(cuPtr->indexDump), sizeof(int));
     cudaMalloc((void**) &(cuPtr->dumpComponent), sizeof(int));
     cudaMalloc((void**) &(cuPtr->dumpState), sizeof(int));
+    cudaMemcpy(cuPtr->nIter, &(carrays->nIter), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(cuPtr->indexOut, &(carrays->indexOut), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(cuPtr->indexDump, &(carrays->indexDump), sizeof(int), cudaMemcpyHostToDevice ); 
+    cudaMemcpy(cuPtr->dumpComponent, &(carrays->dumpComponent), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(cuPtr->dumpState, &(carrays->dumpState), sizeof(int), cudaMemcpyHostToDevice );    
 
     cudaMalloc((void**) &(cuPtr->massOld), sizeof(double));
     cudaMalloc((void**) &(cuPtr->massNew), sizeof(double));
     cudaMalloc((void**) &(cuPtr->massError), sizeof(double));
+    cudaMemcpy(cuPtr->massOld, &(carrays->massOld), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(cuPtr->massNew, &(carrays->massNew), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(cuPtr->massError, &(carrays->massError), sizeof(double), cudaMemcpyHostToDevice );    
 
-    cudaMalloc((void**) &(cuPtr->qTotalIn), sizeof(double));
-    cudaMalloc((void**) &(cuPtr->qTotalOut), sizeof(double));
+    return 1;
 
+}
+
+
+
+
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateArraysCudaMem(
+    int NCwall, int ncells, int nWallCell, int nwc, int nwb,
+    t_cuPtr *cuPtr){
+/*----------------------------*/
 
     //cells
     cudaMalloc((void**) &(cuPtr->activeC), ncells*sizeof(int));
@@ -214,6 +328,7 @@ EXPORT_DLL int allocateArraysCudaMem(
     cudaMalloc((void**) &(cuPtr->solidWallByCell), nWallCell*sizeof(int));
     cudaMalloc((void**) &(cuPtr->neighCell), nWallCell*sizeof(int));
     cudaMalloc((void**) &(cuPtr->neighWall), nWallCell*sizeof(int));
+    cudaMalloc((void**) &(cuPtr->typeWallByCell), nWallCell*sizeof(int));
 
     cudaMalloc((void**) &(cuPtr->normalXbyCell), nWallCell*sizeof(double));
     cudaMalloc((void**) &(cuPtr->normalYbyCell), nWallCell*sizeof(double));
@@ -246,110 +361,11 @@ EXPORT_DLL int allocateArraysCudaMem(
 
     cudaMalloc((void**) &(cuPtr->qnormalL), nwc*sizeof(double));
     cudaMalloc((void**) &(cuPtr->localDt), nwc*sizeof(double));
-
-
-    //boundaries
-
-    
       
     return(1);
 
 }
 
-
-
-////////////////////////////////////////////////////////////////
-EXPORT_DLL int copyControlArraysCudaMem(
-    t_arrays *carrays,
-    t_arrays *garrays,
-    t_cuPtr *cuPtr){
-/*----------------------------*/
-
-    int iaux=0;
-
-    // COMPUTATION CONTROLS ////////////////////////////////
-    cudaMemcpy(cuPtr->index, &(iaux), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(cuPtr->check, &(iaux), sizeof(int), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(cuPtr->t , &(carrays->t), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(cuPtr->dt, &(carrays->dt), sizeof(double), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(cuPtr->nActCells, &(carrays->nActCells), sizeof(int), cudaMemcpyHostToDevice ); //initial active cells
-    cudaMemcpy(cuPtr->nActWalls, &(carrays->nActWalls), sizeof(int), cudaMemcpyHostToDevice ); //initial active walls
-
-    cudaMemcpy(cuPtr->nIter, &(carrays->nIter), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(cuPtr->indexOut, &(carrays->indexOut), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(cuPtr->indexDump, &(carrays->indexDump), sizeof(int), cudaMemcpyHostToDevice ); 
-    cudaMemcpy(cuPtr->dumpComponent, &(carrays->dumpComponent), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(cuPtr->dumpState, &(carrays->dumpState), sizeof(int), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(cuPtr->massOld, &(carrays->massOld), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(cuPtr->massNew, &(carrays->massNew), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(cuPtr->massError, &(carrays->massError), sizeof(double), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(cuPtr->qTotalIn, &(carrays->qTotalIn), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(cuPtr->qTotalOut, &(carrays->qTotalOut), sizeof(double), cudaMemcpyHostToDevice );
-
-
-
-
-    // COMPUTATION ARRAYS ////////////////////////////////
-    cudaMemcpy(&(garrays->ncores), &(carrays->ncores), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->gpuid), &(carrays->gpuid), sizeof(int), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(&(garrays->ti), &(carrays->ti), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->tf), &(carrays->tf), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->CFL), &(carrays->CFL), sizeof(double), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(&(garrays->writeMass), &(carrays->writeMass), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->writeExtremes), &(carrays->writeExtremes), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->indexWriteHotstart), &(carrays->indexWriteHotstart), sizeof(int), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(&(garrays->nIterOut), &(carrays->nIterOut), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->dtOut), &(carrays->dtOut), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->dtDump), &(carrays->dtDump), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->minh), &(carrays->minh), sizeof(double), cudaMemcpyHostToDevice );
-
-    //mesh
-    cudaMemcpy(&(garrays->NCwall), &(carrays->NCwall), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->ncells), &(carrays->ncells), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->nWallCell), &(carrays->nWallCell), sizeof(int), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(&(garrays->nw_calc), &(carrays->nw_calc), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->nw_bound), &(carrays->nw_bound), sizeof(int), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(&(garrays->nInlet), &(carrays->nInlet), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->nOutlet), &(carrays->nOutlet), sizeof(int), cudaMemcpyHostToDevice );
-
-    //computation controls
-    cudaMemcpy(&(garrays->t), &(carrays->t), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->dt), &(carrays->dt), sizeof(double), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(&(garrays->nActCells), &(carrays->nActCells), sizeof(int), cudaMemcpyHostToDevice ); //initial active cells
-    cudaMemcpy(&(garrays->nActWalls), &(carrays->nActWalls), sizeof(int), cudaMemcpyHostToDevice ); //initial active walls
-
-    cudaMemcpy(&(garrays->nIter), &(carrays->nIter), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->indexOut), &(carrays->indexOut), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->indexDump), &(carrays->indexDump), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->dumpComponent), &(carrays->dumpComponent), sizeof(int), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->dumpState), &(carrays->dumpState), sizeof(int), cudaMemcpyHostToDevice );
-
-    cudaMemcpy(&(garrays->massOld), &(carrays->massOld), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->massNew), &(carrays->massNew), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->massError), &(carrays->massError), sizeof(double), cudaMemcpyHostToDevice );
-
-    //boundary control
-    cudaMemcpy(&(garrays->qTotalIn), &(carrays->qTotalIn), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(&(garrays->qTotalOut), &(carrays->qTotalOut), sizeof(double), cudaMemcpyHostToDevice );
-
-
-    //solute permanent flat
-    cudaMemcpy(&(garrays->nSolutes), &(carrays->nSolutes), sizeof(int), cudaMemcpyHostToDevice );
-
-
-    return 1;
-
-}
 
 
 
@@ -405,6 +421,7 @@ int copyMeshArraysCudaMem(
     cudaMemcpy((cuPtr->solidWallByCell), (carrays->solidWallByCell), nWallCell*sizeof(int), cudaMemcpyHostToDevice );
     cudaMemcpy((cuPtr->neighCell), (carrays->neighCell), nWallCell*sizeof(int), cudaMemcpyHostToDevice );
     cudaMemcpy((cuPtr->neighWall), (carrays->neighWall), nWallCell*sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy((cuPtr->typeWallByCell), (carrays->typeWallByCell), nWallCell*sizeof(int), cudaMemcpyHostToDevice );
 
     cudaMemcpy((cuPtr->normalXbyCell), (carrays->normalXbyCell), nWallCell*sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy((cuPtr->normalYbyCell), (carrays->normalYbyCell), nWallCell*sizeof(double), cudaMemcpyHostToDevice );    
@@ -438,16 +455,13 @@ int copyMeshArraysCudaMem(
     cudaMemcpy((cuPtr->qnormalL), (carrays->qnormalL), nwc*sizeof(double), cudaMemcpyHostToDevice ); 
     cudaMemcpy((cuPtr->localDt), (carrays->localDt), nwc*sizeof(double), cudaMemcpyHostToDevice ); 
 
-    //boundaries
-  
-
     return(1);
     
 }
 
 
 ////////////////////////////////////////////////////////////////
-__global__ void assignGArraysToCudaMem(t_arrays *garrays,
+__global__ void assignMeshArraysToCudaMem(t_arrays *garrays,
 	//------------------------cells
 	int *activeC,
 	int *actCells,
@@ -473,6 +487,7 @@ __global__ void assignGArraysToCudaMem(t_arrays *garrays,
 	int *solidWallByCell,
 	int *neighCell,
 	int *neighWall,
+    int *typeWallByCell,
 	double *normalXbyCell,
 	double *normalYbyCell,
 	//---------------------- internal walls
@@ -524,9 +539,12 @@ __global__ void assignGArraysToCudaMem(t_arrays *garrays,
 	garrays->dh=dh;
 	garrays->dhu=dhu;
 	garrays->dhv=dhv;
+
 	garrays->solidWallByCell=solidWallByCell;
 	garrays->neighCell=neighCell;
 	garrays->neighWall=neighWall;
+    garrays->typeWallByCell=typeWallByCell;
+
 	garrays->normalXbyCell=normalXbyCell;
 	garrays->normalYbyCell=normalYbyCell;
 
@@ -587,10 +605,6 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr){
     cudaFree(cuPtr->massNew);
     cudaFree(cuPtr->massError);
 
-    cudaFree(cuPtr->qTotalIn);
-    cudaFree(cuPtr->qTotalOut);
-    
-
 
     //cells
     cudaFree(cuPtr->activeC);
@@ -624,6 +638,7 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr){
     cudaFree(cuPtr->solidWallByCell);
     cudaFree(cuPtr->neighCell);
     cudaFree(cuPtr->neighWall);
+    cudaFree(cuPtr->typeWallByCell);
 
     cudaFree(cuPtr->normalXbyCell);
     cudaFree(cuPtr->normalYbyCell);
@@ -656,11 +671,6 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr){
 
     cudaFree(cuPtr->qnormalL);
     cudaFree(cuPtr->localDt);
-
-
-    //boundaries
-
-    
       
     return(1);
 
@@ -669,143 +679,406 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr){
 
 
 
-#if SET_SOLUTE
+
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateArraysSolutesCudaMem(
-    int nSolutes, 
-    int NCwall, int ncells, int nWallCell, int nwc, int nwb, 
+EXPORT_DLL int allocateBoundArraysCudaMem(
+    int nOBC, int nInlet, int nOutlet, 
+    int nTotalBoundCells, int nTotalInnerCells,
+    int nTotalPointSeries,
     t_cuPtr *cuPtr){
 /*----------------------------*/
 
-    if(nSolutes){
-        //solute control arrays
-        cudaMalloc((void**) &(cuPtr->typeDiff), nSolutes*sizeof(int));
-        cudaMalloc((void**) &(cuPtr->k_xx), nSolutes*sizeof(double));
-        cudaMalloc((void**) &(cuPtr->k_yy), nSolutes*sizeof(double));
 
-        //cells
-        cudaMalloc((void**) &(cuPtr->hcsol), nSolutes*ncells*sizeof(double));
-        cudaMalloc((void**) &(cuPtr->csol), nSolutes*ncells*sizeof(double));
+    if(nOBC){
 
-        //cells*NCwall
-        cudaMalloc((void**) &(cuPtr->dhcsol), nSolutes*nWallCell*sizeof(double));
-    }
+        //bound geometry
+        cudaMalloc((void**) &(cuPtr->nCellsOBC), nOBC*sizeof(int));
+        cudaMalloc((void**) &(cuPtr->iniIndexOBC), nOBC*sizeof(int));
+        cudaMalloc((void**) &(cuPtr->idBoundOBC), nOBC*sizeof(int));
+        cudaMalloc((void**) &(cuPtr->typeOBC), nOBC*sizeof(int));
+        cudaMalloc((void**) &(cuPtr->flagInitializeOBC), nOBC*sizeof(int));
 
-    return(1);
+        cudaMalloc((void**) &(cuPtr->blockSectionOBC), nOBC*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->normalXOBC), nOBC*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->normalYOBC), nOBC*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->totalLengthOBC), nOBC*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->totalAreaOBC), nOBC*sizeof(double));
+
+        cudaMalloc((void**) &(cuPtr->cellZminOBC), nOBC*sizeof(int));
+        cudaMalloc((void**) &(cuPtr->nInnerCellsOBC), nOBC*sizeof(int));
+        cudaMalloc((void**) &(cuPtr->iniInnerIndexOBC), nOBC*sizeof(int));
+
+        //bound cells
+        cudaMalloc((void**) &(cuPtr->cidxBound), nTotalBoundCells*sizeof(int));
+        cudaMalloc((void**) &(cuPtr->zCellBound), nTotalBoundCells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->areaCellBound), nTotalBoundCells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->nxWallBound), nTotalBoundCells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->nyWallBound), nTotalBoundCells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->lWallBound), nTotalBoundCells*sizeof(double));
+
+        // cudaMalloc((void**) &(cuPtr->localh), nTotalBoundCells*sizeof(double));
+        // cudaMalloc((void**) &(cuPtr->localhu), nTotalBoundCells*sizeof(double));
+        // cudaMalloc((void**) &(cuPtr->localhv), nTotalBoundCells*sizeof(double));
+        
+        //inner cells
+        // if(nTotalInnerCells){
+        //     cudaMalloc((void**) &(cuPtr->cidxInner), nTotalInnerCells*sizeof(int));
+        // }
+
+        //time series
+        cudaMalloc((void**) &(cuPtr->nPointsSeriesOBC), nOBC*sizeof(int)); 
+        cudaMalloc((void**) &(cuPtr->iniIndexSeriesOBC), nOBC*sizeof(int));
+
+        cudaMalloc((void**) &(cuPtr->tSeriesOBC), nTotalPointSeries*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->qSeriesOBC), nTotalPointSeries*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->hzSeriesOBC), nTotalPointSeries*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->frSeriesOBC), nTotalPointSeries*sizeof(double));
+
+        //mass balance pointers
+        cudaMalloc((void**) &(cuPtr->qBoundByCell), nTotalBoundCells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->mBoundByCell), nTotalBoundCells*sizeof(double));
+
+        // if(nTotalInnerCells){
+        //     cudaMalloc((void**) &(cuPtr->mInnerByCell), nTotalInnerCells*sizeof(double));
+        // }
+
+        if(nInlet){
+            cudaMalloc((void**) &(cuPtr->qInByInlet), nInlet*sizeof(double));
+            cudaMalloc((void**) &(cuPtr->mInByInlet), nInlet*sizeof(double));
+            cudaMalloc((void**) &(cuPtr->aux1sByInlet), nInlet*sizeof(double));
+        }
+        if(nOutlet){
+            cudaMalloc((void**) &(cuPtr->qOutByOutlet), nOutlet*sizeof(double));
+            cudaMalloc((void**) &(cuPtr->mOutByOutlet), nOutlet*sizeof(double));
+            cudaMalloc((void**) &(cuPtr->aux1sByOutlet), nOutlet*sizeof(double));
+        }
+
+        cudaMalloc((void**) &(cuPtr->qTotalIn), sizeof(double));
+        cudaMalloc((void**) &(cuPtr->qTotalOut), sizeof(double)); 
+        cudaMalloc((void**) &(cuPtr->mTotalIn), sizeof(double));
+        cudaMalloc((void**) &(cuPtr->mTotalOut), sizeof(double)); 
+
+        cudaMalloc((void**) &(cuPtr->massTotalIn), sizeof(double));
+        cudaMalloc((void**) &(cuPtr->massTotalOut), sizeof(double));
+
+    }  
+
+    return 1;    
 
 }
 
 
-
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int copyControlArraysSolutesCudaMem(
-    int nSolutes,
+EXPORT_DLL int copyBoundSetupArraysCudaMem(
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr){
 /*----------------------------*/
 
-    if(nSolutes){
-        //solute arrays
-        cudaMemcpy((cuPtr->typeDiff), (carrays->typeDiff), nSolutes*sizeof(int), cudaMemcpyHostToDevice );
-        cudaMemcpy((cuPtr->k_xx), (carrays->k_xx), nSolutes*sizeof(double), cudaMemcpyHostToDevice );
-        cudaMemcpy((cuPtr->k_yy), (carrays->k_yy), nSolutes*sizeof(double), cudaMemcpyHostToDevice );
+    int nOBC = carrays->nOBC;
+    int nInlet = carrays->nInlet;
+    int nOutlet = carrays->nOutlet;
+    int nTotalPointSeries = carrays->nTotalPointSeries;
+
+    int i;
+    double *aux1s;
+
+    //ARRAYS ----------------------------------
+    cudaMemcpy(&(garrays->nTotalCellsIn), &(carrays->nTotalCellsIn), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nTotalCellsOut), &(carrays->nTotalCellsOut), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nTotalBoundCells), &(carrays->nTotalBoundCells), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nTotalBoundCells), &(carrays->nTotalBoundCells), sizeof(int), cudaMemcpyHostToDevice );
+
+    cudaMemcpy(&(garrays->nMaxBoundCells), &(carrays->nMaxBoundCells), sizeof(int), cudaMemcpyHostToDevice );  
+ 
+    cudaMemcpy(&(garrays->nTotalPointSeries), &(carrays->nTotalPointSeries), sizeof(int), cudaMemcpyHostToDevice );
+
+    cudaMemcpy(&(garrays->qTotalIn), &(carrays->qTotalIn), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->qTotalOut), &(carrays->qTotalOut), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->massTotalIn), &(carrays->massTotalIn), sizeof(int), cudaMemcpyHostToDevice );  
+    cudaMemcpy(&(garrays->massTotalIn), &(carrays->massTotalIn), sizeof(int), cudaMemcpyHostToDevice );
+  
+    // POINTERS ----------------------------------
+    if(nOBC){
+
+        //bound geometry
+        cudaMemcpy((cuPtr->nCellsOBC), (carrays->nCellsOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->iniIndexOBC), (carrays->iniIndexOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->idBoundOBC), (carrays->idBoundOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->typeOBC), (carrays->typeOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->flagInitializeOBC), (carrays->flagInitializeOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+
+        cudaMemcpy((cuPtr->blockSectionOBC), (carrays->blockSectionOBC), nOBC*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->normalXOBC), (carrays->normalXOBC), nOBC*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->normalYOBC), (carrays->normalYOBC), nOBC*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->totalLengthOBC), (carrays->totalLengthOBC), nOBC*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->totalAreaOBC), (carrays->totalAreaOBC), nOBC*sizeof(double), cudaMemcpyHostToDevice );
+
+        cudaMemcpy((cuPtr->cellZminOBC), (carrays->cellZminOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+        //cudaMemcpy((cuPtr->nInnerCellsOBC), (carrays->nInnerCellsOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+        //cudaMemcpy((cuPtr->iniInnerIndexOBC), (carrays->iniInnerIndexOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+
+        //time series
+        cudaMemcpy((cuPtr->nPointsSeriesOBC), (carrays->nPointsSeriesOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->iniIndexSeriesOBC), (carrays->iniIndexSeriesOBC), nOBC*sizeof(int), cudaMemcpyHostToDevice );
+        
+        cudaMemcpy((cuPtr->tSeriesOBC), (carrays->tSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->qSeriesOBC), (carrays->qSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->hzSeriesOBC), (carrays->hzSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->frSeriesOBC), (carrays->frSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
+
+        //mass balance pointers  
+        if(nInlet){
+            cudaMemcpy(cuPtr->qInByInlet, &(carrays->qInByInlet), nInlet*sizeof(double), cudaMemcpyHostToDevice );
+            cudaMemcpy(cuPtr->mInByInlet, &(carrays->mInByInlet), nInlet*sizeof(double), cudaMemcpyHostToDevice );
+
+            aux1s = (double*)malloc(nInlet*sizeof(double));
+            for(i=0;i<nInlet;i++){
+                aux1s[i]=1.;
+            }
+            cudaMemcpy(cuPtr->aux1sByInlet, aux1s, nInlet*sizeof(double), cudaMemcpyHostToDevice );
+            free(aux1s);
+        }
+        if(nOutlet){
+            cudaMemcpy(cuPtr->qOutByOutlet, &(carrays->qOutByOutlet), nOutlet*sizeof(double), cudaMemcpyHostToDevice );      
+            cudaMemcpy(cuPtr->mOutByOutlet, &(carrays->mOutByOutlet), nOutlet*sizeof(double), cudaMemcpyHostToDevice );  
+
+            aux1s = (double*)malloc(nOutlet*sizeof(double));
+            for(i=0;i<nOutlet;i++){
+                aux1s[i]=1.;
+            }
+            cudaMemcpy(cuPtr->aux1sByOutlet, aux1s, nOutlet*sizeof(double), cudaMemcpyHostToDevice );
+            free(aux1s);                
+        }
+
+        cudaMemcpy(cuPtr->qTotalIn, &(carrays->qTotalIn), sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy(cuPtr->qTotalOut, &(carrays->qTotalOut), sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy(cuPtr->mTotalIn, &(carrays->mTotalIn), sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy(cuPtr->mTotalOut, &(carrays->mTotalOut), sizeof(double), cudaMemcpyHostToDevice );
+
+        cudaMemcpy(cuPtr->massTotalIn, &(carrays->massTotalIn), sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy(cuPtr->massTotalOut, &(carrays->massTotalOut), sizeof(double), cudaMemcpyHostToDevice );        
     }
 
-    return(1);
+    return 1;
 
-}    
-
-
-
-
+}
 
 
 ////////////////////////////////////////////////////////////////
-int copyMeshArraysSolutesCudaMem(
-    int nSolutes,
+EXPORT_DLL int copyBoundMeshArraysCudaMem(
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr){
 /*----------------------------*/
-    
-	int i,j;
-    int NCwall;
-	int ncells,nwc,nwb;
-    int nWallCell;
 
-	//Local variables just for allocation
-    NCwall=carrays->NCwall;	//walls per cell
-	ncells=carrays->ncells;
-    nWallCell=NCwall*ncells;
-	nwc=carrays->nw_calc;
-	nwb=carrays->nw_bound;
+    int nOBC = carrays->nOBC;
+    int nTotalBoundCells = carrays->nTotalBoundCells;
+    int nTotalInnerCells = carrays->nTotalInnerCells;
 
-    if(nSolutes){
-        //solutes*cells    
-        cudaMemcpy((cuPtr->hcsol), (carrays->hcsol), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
-        cudaMemcpy((cuPtr->csol), (carrays->csol), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
-    
-        //solutes*cells*NCwall
-        cudaMemcpy((cuPtr->dhcsol), (carrays->dhcsol), nSolutes*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
+    if(nOBC){
+        //bound cells
+        cudaMemcpy((cuPtr->cidxBound), (carrays->cidxBound), nTotalBoundCells*sizeof(int), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->zCellBound), (carrays->zCellBound), nTotalBoundCells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->areaCellBound), (carrays->areaCellBound), nTotalBoundCells*sizeof(double), cudaMemcpyHostToDevice );
+
+        //bound walls
+        cudaMemcpy((cuPtr->nxWallBound), (carrays->nxWallBound), nTotalBoundCells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->nyWallBound), (carrays->nyWallBound), nTotalBoundCells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->lWallBound), (carrays->lWallBound), nTotalBoundCells*sizeof(double), cudaMemcpyHostToDevice );
+
+        //inner cells
+        // if(nTotalInnerCells){
+        //     cudaMemcpy((cuPtr->cidxInner), (carrays->cidxInner), nTotalInnerCells*sizeof(int), cudaMemcpyHostToDevice );
+        // }
+
     }
 
-    return(1);
+    return 1;
 
-}  
+}
 
 
 
 ////////////////////////////////////////////////////////////////
-__global__ void assignGArraysSolutesToCudaMem(int nSolutes, t_arrays *garrays,
-	//------------------------cells
-	int *typeDiff,
-	double *k_xx,
-	double *k_yy,
-	double *hcsol,
-	double *csol,
-	double *dhcsol){
+__global__ void assignBoundArraysToCudaMem(t_arrays *garrays,
+	//------------------------ bound geometry
+	int *nCellsOBC,
+    int *iniIndexOBC,
+    int *idBoundOBC,
+    int *typeOBC,
+    int *flagInitializeOBC,
+    double *blockSectionOBC,
+    double *normalXOBC,
+    double *normalYOBC,
+    double *totalLengthOBC,
+    double *totalAreaOBC,
+    int *cellZminOBC,
+    int *nInnerCellsOBC,
+    int *iniInnerIndexOBC,
+    //----------------------- bound cells
+    int *cidxBound,
+    double *zCellBound,
+    double *areaCellBound,
+    double *nxWallBound,
+    double *nyWallBound,
+    double *lWallBound,
+    //----------------------- inner cells
+    int *cidxInner,
+    //----------------------- time series
+    int *nPointsSeriesOBC,
+    int *iniIndexSeriesOBC,
+    double *tSeriesOBC,
+    double *qSeriesOBC,
+    double *hzSeriesOBC,
+    double *frSeriesOBC,
+    double *phiSeriesOBC,
+    //----------------------- mass balance pointers
+    double *qBoundByCell,
+    double *mBoundByCell,
+    double *mInnerByCell,
+    double *qInByInlet,
+    double *qOutByOutlet,
+    double *mInByInlet, 
+    double *mOutByOutlet){
 /*----------------------------*/
 
-    if(nSolutes){    
-        //solute controls
-        garrays->typeDiff=typeDiff;
-        garrays->k_xx=k_xx;
-        garrays->k_yy=k_yy;
+    if(garrays->nOBC){
 
-        //mesh
-        garrays->hcsol=hcsol;
-        garrays->csol=hcsol;
+        //bound geometry
+        garrays->nCellsOBC=nCellsOBC;
+        garrays->iniIndexOBC=iniIndexOBC;
+        garrays->idBoundOBC=idBoundOBC;
+        garrays->typeOBC=typeOBC;
+        garrays->flagInitializeOBC=flagInitializeOBC;
 
-        //cells*NCwall
-        garrays->dhcsol=dhcsol;
+        garrays->blockSectionOBC=blockSectionOBC;
+        garrays->normalXOBC=normalXOBC;
+        garrays->normalYOBC=normalYOBC;
+        garrays->totalLengthOBC=totalLengthOBC;
+        garrays->totalAreaOBC=totalAreaOBC;
+
+        garrays->cellZminOBC=cellZminOBC;
+        garrays->nInnerCellsOBC=nInnerCellsOBC;
+        garrays->iniInnerIndexOBC=iniInnerIndexOBC;
+
+        //bound cells
+        garrays->cidxBound=cidxBound;
+        garrays->zCellBound=zCellBound;
+        garrays->areaCellBound=areaCellBound;
+        garrays->nxWallBound=nxWallBound;
+        garrays->nyWallBound=nyWallBound;
+        garrays->lWallBound=lWallBound;  
+
+        //inner cells 
+        // if(garrays->nTotalInnerCells){
+        //     garrays->cidxInner=cidxInner;
+        // }     
+
+        //time series
+        garrays->nPointsSeriesOBC=nPointsSeriesOBC;
+        garrays->iniIndexSeriesOBC=iniIndexSeriesOBC;
+
+        garrays->tSeriesOBC=tSeriesOBC;
+        garrays->qSeriesOBC=qSeriesOBC;
+        garrays->hzSeriesOBC=hzSeriesOBC;
+        garrays->frSeriesOBC=frSeriesOBC;
+
+        //mass balance pointers
+        garrays->qBoundByCell=qBoundByCell;
+        garrays->mBoundByCell=mBoundByCell;
+        // if(garrays->nTotalInnerCells){
+        //     garrays->mInnerByCell=mInnerByCell;
+        // }   
+
+        if(garrays->nInlet){
+            garrays->qInByInlet=qInByInlet;
+            garrays->mInByInlet=mInByInlet;
+        }
+        if(garrays->nOutlet){
+            garrays->qOutByOutlet=qOutByOutlet;
+            garrays->mOutByOutlet=mOutByOutlet;
+        }
+
     }
 
 }
 
 
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int freeSolutesCudaMemory(
-    int nSolutes, 
+EXPORT_DLL int freeBoundaCudaMemory(
+    int nOBC, int nInlet, int nOutlet, 
+    int nTotalBoundCells, int nTotalInnerCells,
+    int nTotalPointSeries,
     t_cuPtr *cuPtr){
 /*----------------------------*/
 
-    if(nSolutes){
-        //solute control arrays
-        cudaFree(cuPtr->typeDiff);
-        cudaFree(cuPtr->k_xx);
-        cudaFree(cuPtr->k_yy);
+    if(nOBC){
+        cudaFree(cuPtr->nCellsOBC);
+        cudaFree(cuPtr->iniIndexOBC);
+        cudaFree(cuPtr->idBoundOBC);
+        cudaFree(cuPtr->typeOBC);
+        cudaFree(cuPtr->flagInitializeOBC);
 
-        //cells
-        cudaFree(cuPtr->hcsol);
-        cudaFree(cuPtr->csol);
 
-        //cells*NCwall
-        cudaFree(cuPtr->dhcsol);
-    }
+        cudaFree(cuPtr->blockSectionOBC);
+        cudaFree(cuPtr->normalXOBC);
+        cudaFree(cuPtr->normalYOBC);
+        cudaFree(cuPtr->totalLengthOBC);
+        cudaFree(cuPtr->totalAreaOBC);
 
-    return(1);
+        cudaFree(cuPtr->cellZminOBC);
+        cudaFree(cuPtr->nInnerCellsOBC);
+        cudaFree(cuPtr->iniInnerIndexOBC);
+
+        cudaFree(cuPtr->cidxBound);
+        cudaFree(cuPtr->zCellBound);
+        cudaFree(cuPtr->areaCellBound);
+        cudaFree(cuPtr->nxWallBound);
+        cudaFree(cuPtr->nyWallBound);
+        cudaFree(cuPtr->lWallBound);
+
+        if(nTotalInnerCells){
+            cudaFree(cuPtr->cidxInner);
+        }
+
+        cudaFree(cuPtr->nPointsSeriesOBC);
+        cudaFree(cuPtr->iniIndexSeriesOBC);
+
+        cudaFree(cuPtr->tSeriesOBC);
+        cudaFree(cuPtr->qSeriesOBC);
+        cudaFree(cuPtr->hzSeriesOBC);
+        cudaFree(cuPtr->frSeriesOBC);      
+
+        cudaFree(cuPtr->qBoundByCell);
+        cudaFree(cuPtr->mBoundByCell);
+
+        if(nTotalInnerCells){
+            cudaFree(cuPtr->mInnerByCell);
+        }
+
+        if(nInlet){
+            cudaFree(cuPtr->qInByInlet);
+            cudaFree(cuPtr->mInByInlet);
+            cudaFree(cuPtr->aux1sByInlet);
+        }
+        if(nOutlet){
+            cudaFree(cuPtr->qOutByOutlet);
+            cudaFree(cuPtr->mOutByOutlet);
+            cudaFree(cuPtr->aux1sByOutlet);
+        }
+
+        cudaFree(cuPtr->qTotalIn);
+        cudaFree(cuPtr->qTotalOut);
+        cudaFree(cuPtr->mTotalIn);
+        cudaFree(cuPtr->mTotalOut);
+
+        cudaFree(cuPtr->massTotalIn);
+        cudaFree(cuPtr->massTotalOut);         
+    } 
+
+    return(1);    
 
 }
 
-#endif
+
