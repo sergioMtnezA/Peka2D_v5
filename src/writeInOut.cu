@@ -213,6 +213,7 @@ EXPORT_DLL int create_computation_files(char *path, t_message *msg){
 	return 1;
 }
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 EXPORT_DLL int write_massBalance(char *path, t_arrays *arrays, t_message *msg){
 
@@ -224,9 +225,10 @@ EXPORT_DLL int write_massBalance(char *path, t_arrays *arrays, t_message *msg){
 	fp=fopen(filename,"a+");
 
 	if(fp){
-		fprintf(fp,"%.3lf %12.6lf %12.6lf %12.6lf\n",
+		fprintf(fp,"%.3lf %12.6lf %12.6lf %12.6lf %12.6lf %12.6lf %12.6lf %12.6lf\n",
 			arrays->t,
-			arrays->massIn, arrays->massOut, arrays->massNew);
+			arrays->qTotalIn, arrays->qTotalOut, arrays->mTotalIn,arrays->mTotalOut,
+			arrays->massTotalIn, arrays->massTotalOut, arrays->massNew);
 
 		fclose(fp);		
 	}else{
@@ -237,40 +239,6 @@ EXPORT_DLL int write_massBalance(char *path, t_arrays *arrays, t_message *msg){
 	return 1;
 
 }
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg){
-
-	char temp[1024], filename[1024];
-	FILE *fp;
-
-	//mass balance file
-	sprintf(filename,"%scomputationTime.out",path);
-	fp=fopen(filename,"w");
-
-	if(fp){
-		fprintf(fp,"total              %12.6lf %12.3lf\n", timers.total, (timers.total/timers.total)*100.);
-		fprintf(fp,"__loading          %12.6lf %12.3lf\n", timers.loading, (timers.loading/timers.total)*100.);
-		fprintf(fp,"__init             %12.6lf %12.3lf\n", timers.init, (timers.init/timers.total)*100.);
-		fprintf(fp,"__initGPU          %12.6lf %12.3lf\n", timers.initGPU, (timers.initGPU/timers.total)*100.);
-		fprintf(fp,"__computeSim       %12.6lf %12.3lf\n", timers.computeSim, (timers.computeSim/timers.total)*100.);
-		fprintf(fp,"____wallCalculus   %12.6lf %12.3lf\n", timers.wallCalculus, (timers.wallCalculus/timers.computeSim)*100.);
-		fprintf(fp,"____cellUpdating   %12.6lf %12.3lf\n", timers.cellUpdating, (timers.cellUpdating/timers.computeSim)*100.);
-		fprintf(fp,"____boundConditon  %12.6lf %12.3lf\n", timers.boundConditon, (timers.boundConditon/timers.computeSim)*100.);
-		fprintf(fp,"____wetDryFix      %12.6lf %12.3lf\n", timers.wetDryFix, (timers.wetDryFix/timers.computeSim)*100.);
-		fprintf(fp,"____memoryTransfer %12.6lf %12.3lf\n", timers.memoryTransfer, (timers.memoryTransfer/timers.computeSim)*100.);
-		fprintf(fp,"____writeOut       %12.6lf %12.3lf\n", timers.writeOut, (timers.writeOut/timers.computeSim)*100.);
-		fclose(fp);		
-	}else{
-        sprintf(temp,"Computation time file not reacheable");
-        Notify(temp,MSG_ERROR,msg);		
-	}
-
-	return 1;
-
-}
-
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,11 +254,16 @@ EXPORT_DLL void dump_screen_info(t_arrays *arrays, t_message *msg){
     printf("%s Active Cells: %d   Active Walls: %d\n",MSGEXC,
 		arrays->nActCells,
 		arrays->nActWalls);       
-	printf("%s Volume: In %.6e m3/s   Out %.6e m3/s   Inner %.6e m3\n",MSGINFO,
+	printf("%s Inlet:  Discharge %.6e m3/s   Mass %.6e m3\n",MSGINFO,
 		arrays->qTotalIn,
+		arrays->mTotalIn);
+	printf("%s Outlet: Discharge %.6e m3/s   Mass %.6e m3\n",MSGINFO,
 		arrays->qTotalOut,
-		arrays->massNew);
-    printf("%s Mass balance error: %.6e\n",MSGINFO,arrays->massError);
+		arrays->mTotalOut);	
+	// printf("%s Mass: In %.6e m3/s   Out %.6e m3\n",MSGINFO,
+	// 	arrays->massTotalIn,
+	// 	arrays->massTotalOut);			
+    printf("%s Mass balance: Inner %.6e m3   Error %.6e\n",MSGINFO,arrays->massNew, arrays->massError);
 
 }
 
@@ -377,7 +350,7 @@ EXPORT_DLL int write_vtk_state(char *filename, t_mesh *mesh, t_arrays *arrays, t
 			fprintf (fp, "LOOKUP_TABLE default\n");
 			for(i=0;i<arrays->ncells;i++){
 				idx = j*arrays->ncells+i;
-				write_Dscalar_in_vtk(fp, arrays->csol[idx]);
+				write_Dscalar_in_vtk(fp, arrays->phi[idx]);
 			}
 		}		
 	}
@@ -387,8 +360,6 @@ EXPORT_DLL int write_vtk_state(char *filename, t_mesh *mesh, t_arrays *arrays, t
 
 	return(1);
 }
-
-
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -506,6 +477,7 @@ EXPORT_DLL void write_Dscalar_in_vtk(FILE *fp, double val){
     #endif
 }
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 EXPORT_DLL void write_Iscalar_in_vtk(FILE *fp, int val){
     
@@ -542,7 +514,82 @@ EXPORT_DLL void write_Dvector_in_vtk(FILE *fp, double val1, double val2){
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+EXPORT_DLL int write_hotstart_file(char *filename, t_arrays *arrays, t_message *msg){
 
+	int i,j;
+	int ncells=arrays->ncells;
+	int nSolutes=arrays->nSolutes;
+
+	char temp[1024];
+	FILE *fp;
+
+	fp=fopen(filename,"w");
+
+	if(fp){
+		//header
+		fprintf(fp,"4 %d 0 0\n",arrays->nSolutes);
+
+		//cells data
+		for(i=0;i<ncells;i++){
+			fprintf(fp,"%lf %lf %lf %lf",
+				arrays->z[i],
+				arrays->h[i],
+				arrays->u[i],
+				arrays->v[i]);
+			#if SET_SOLUTE
+			for(j=0;j<nSolutes;j++){
+				fprintf(fp," %lf",arrays->phi[j*ncells+i]);
+			}
+			#endif
+			fprintf(fp," \n");
+		}
+		fclose(fp);	
+			
+	}else{
+		sprintf(temp,"Hotstart file not reacheable");
+        Notify(temp,MSG_ERROR,msg);	
+		return 0;	
+	}
+
+	return 1;
+
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg){
+
+	char temp[1024], filename[1024];
+	FILE *fp;
+
+	//mass balance file
+	sprintf(filename,"%scomputationTime.out",path);
+	fp=fopen(filename,"w");
+
+	if(fp){
+		fprintf(fp,"total              %12.6lf %12.3lf\n", timers.total, (timers.total/timers.total)*100.);
+		fprintf(fp,"__loading          %12.6lf %12.3lf\n", timers.loading, (timers.loading/timers.total)*100.);
+		fprintf(fp,"__init             %12.6lf %12.3lf\n", timers.init, (timers.init/timers.total)*100.);
+		fprintf(fp,"__initGPU          %12.6lf %12.3lf\n", timers.initGPU, (timers.initGPU/timers.total)*100.);
+		fprintf(fp,"__computeSim       %12.6lf %12.3lf\n", timers.computeSim, (timers.computeSim/timers.total)*100.);
+		fprintf(fp,"____wallCalculus   %12.6lf %12.3lf\n", timers.wallCalculus, (timers.wallCalculus/timers.computeSim)*100.);
+		fprintf(fp,"____cellUpdating   %12.6lf %12.3lf\n", timers.cellUpdating, (timers.cellUpdating/timers.computeSim)*100.);
+		fprintf(fp,"____boundConditon  %12.6lf %12.3lf\n", timers.boundConditon, (timers.boundConditon/timers.computeSim)*100.);
+		fprintf(fp,"____wetDryFix      %12.6lf %12.3lf\n", timers.wetDryFix, (timers.wetDryFix/timers.computeSim)*100.);
+		fprintf(fp,"____diffusion      %12.6lf %12.3lf\n", timers.diffusion, (timers.diffusion/timers.computeSim)*100.);
+		fprintf(fp,"____memoryTransfer %12.6lf %12.3lf\n", timers.memoryTransfer, (timers.memoryTransfer/timers.computeSim)*100.);
+		fprintf(fp,"____writeOut       %12.6lf %12.3lf\n", timers.writeOut, (timers.writeOut/timers.computeSim)*100.);
+		fprintf(fp,"__closeSim         %12.6lf %12.3lf\n", timers.closeSim, (timers.closeSim/timers.total)*100.);
+		fclose(fp);		
+	}else{
+        sprintf(temp,"Computation time file not reacheable");
+        Notify(temp,MSG_ERROR,msg);		
+	}
+
+	return 1;
+
+}
 
 
 

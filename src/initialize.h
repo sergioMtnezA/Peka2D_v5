@@ -8,30 +8,22 @@
 #include "structs.h"
 #include "loadData.h"
 
-////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateArraysMemory(
-    t_parameters spar, 
-    t_mesh *mesh,
-    t_arrays *carrays,
-    t_message *msg);
-/*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int initilizeControlArrays(
+EXPORT_DLL int initilizeComputationControls(
     t_parameters spar, 
     t_mesh *mesh,
     t_arrays *carrays,
     t_message *msg);
 /*----------------------------*/  
 
-// ////////////////////////////////////////////////////////////////
-// EXPORT_DLL int initilizeCommunicationArrays(
-//     t_parameters spar, 
-//     t_mesh *mesh,
-//     t_arrays *carrays,   
-//     t_cuPtr *cuPtr, 
-//     t_message *msg);
-// /*----------------------------*/
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateMeshArraysMem(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg);
+/*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int initilizeMeshArrays(
@@ -41,10 +33,8 @@ EXPORT_DLL int initilizeMeshArrays(
     t_message *msg);
 /*----------------------------*/
 
-
-#if SET_SOLUTE
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateArraysSoluteMemory(
+EXPORT_DLL int allocateBoundaryArraysMem(
     t_parameters spar, 
     t_mesh *mesh,
     t_arrays *carrays,
@@ -52,7 +42,25 @@ EXPORT_DLL int allocateArraysSoluteMemory(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int initilizeControlSoluteArrays(
+EXPORT_DLL int initilizeBoundaryControlArrays(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int initilizeBoundaryMeshArrays(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg);
+/*----------------------------*/
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateSoluteArraysMem(
     t_parameters spar, 
     t_mesh *mesh,
     t_arrays *carrays,

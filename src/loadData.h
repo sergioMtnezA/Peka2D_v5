@@ -113,7 +113,7 @@ struct Peka2D_Solute_{
     char name[STR_SIZE];
     int typeDiff;
     double k_xx,k_yy;
-    double maxConc;
+    double iniConc;
 };
 
 struct Peka2D_SoluteGroup_{
@@ -216,6 +216,17 @@ int setInitialState(
 
 ////////////////////////////////////////////////////////////////
 /**
+ * @brief This function initializes all the computational variables (water depth, water discharge, etc.) in variable mesh.
+ * @param mesh In this function, variable mesh receives the initialization of the computational variables.
+ */
+int readHotstartState(
+    char *filename,
+    t_mesh *mesh, 
+    t_message *e);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+/**
  * @brief This function loads the general setting of the boundary conditions.
  */
 int loadBoundaryConditions(
@@ -268,7 +279,6 @@ int readOpenBoundaryFile(
     t_message *e);
 /*----------------------------*/
 
-
 #if SET_SOLUTE
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int loadSoluteData(
@@ -287,7 +297,7 @@ int readSoluteFile(
 
 ////////////////////////////////////////////////////////////////
 int createSoluteStructures(
-    Peka2D_SoluteGroup *soluteGroup, 
+    Peka2D_Setup *pksetup, 
     t_parameters *spar, 
     t_mesh *mesh,    
     t_message *e);
@@ -295,12 +305,20 @@ int createSoluteStructures(
 
 ////////////////////////////////////////////////////////////////
 int setInitialSoluteState(
-    Peka2D_SoluteGroup *soluteGroup,
+    Peka2D_Setup *pksetup,
     t_parameters *spar,
     t_mesh *mesh, 
     t_message *e);
 /*----------------------------*/
-#endif
 
+////////////////////////////////////////////////////////////////
+int readHotstartSoluteState(
+    char *filename,
+    t_mesh *mesh, 
+    int nSolutes,
+    t_message *e);
+/*----------------------------*/
+
+#endif
 
 #endif //end #ifndef hy_mesh_

@@ -353,17 +353,18 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
 
         //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc friction fix
         hqi2=0.0;
-        if(landl[0]*landl[2] < 0.0){ // Subcritico + entropy fix
-            if(landl[1] >= 0.0){
-                hqi2 = hqi1 - beta_f;
-            }else{
-                hqi2 = hqi1 - beta_f; //+beta3_f=-beta1_f 
-            }
-		}else if(landl[0] > 0.0){ // Supercritico derecha
-            hqi2 = hqi1 - beta_f; //+beta3_f=-beta1_f         
-		}else if(landl[2] < 0.0){  // Supercritico izquierda
-            hqi2 = hqi1 - beta_f;
-		} 
+        // if(landl[0]*landl[2] < 0.0){ // Subcritico + entropy fix
+        //     if(landl[1] >= 0.0){
+        //         hqi2 = hqi1 - beta_f;
+        //     }else{
+        //         hqi2 = hqi1 - beta_f; //+beta3_f=-beta1_f 
+        //     }
+		// }else if(landl[0] > 0.0){ // Supercritico derecha
+        //     hqi2 = hqi1 - beta_f; //+beta3_f=-beta1_f         
+		// }else if(landl[2] < 0.0){  // Supercritico izquierda
+        //     hqi2 = hqi1 - beta_f;
+		// } 
+        hqi2 = hqi1 - beta_f;
         if(fabs(hqi2)<TOL12){hqi2 = 0.0;}
 
         aux1 = hqi1*hqi2;
@@ -413,10 +414,10 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
 
 
         //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc time step
-        //if ((hL>arrays->minh) && (hR>arrays->minh) ){
+        if( (hL>arrays->minh) && (hR>arrays->minh) ){
             dtl=fmin( dtl , deltaXl/fabs(landl[0]) );
             dtl=fmin( dtl , deltaXl/fabs(landl[2]) );
-        //}
+        }
 
 
         //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc compute contributions	
@@ -533,10 +534,12 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
 
 
         //ccccccccccccccccccccccccccccccccccccccccccccccc update active cell list
+        //#if RECONSTRUC_ACTIVE
  		if(wetWall==0){
             g_add_active_cells(arrays, id1);
             g_add_active_cells(arrays, id2);
-		} 
+		}
+        //#endif 
 
 	} // end iwall loop
 
@@ -825,11 +828,16 @@ __global__ void g_update_wetdry_cells(int nTasks, t_arrays *arrays){
 
                 solidWall=0;
       			if( (arrays->solidWallByCell[k*ncells+idx]==1) || //computational solidWalls
-                    (arrays->neighCell[k*ncells+idx]==-1) ){ //closed boundary walls 
+                    (arrays->typeWallByCell[k*ncells+idx]==0) ){ //closed boundary walls 
                     
                     solidWall=1;
       				count++;
       			}
+
+                // if(i==0)
+                // printf("cell %d solidWall %d count %d hu %lf hv %lf ny %lf nx %lf\n",i,solidWall,
+                //     count,arrays->hu[idx],arrays->hv[idx],
+                //     arrays->normalXbyCell[k*ncells+idx],arrays->normalYbyCell[k*ncells+idx]);
 
       			// Modify velocity
                 if(solidWall==1){
@@ -868,6 +876,9 @@ __global__ void g_update_wetdry_cells(int nTasks, t_arrays *arrays){
 
       		}
 
+            // if(i==0)
+            // printf("cell %d hu %lf hv %lf\n",i,arrays->hu[idx],arrays->hv[idx]);            
+
             if(fabs(arrays->hu[idx])<TOL14) arrays->hu[idx]=0.0;
             if(fabs(arrays->hv[idx])<TOL14) arrays->hv[idx]=0.0;
 
@@ -885,13 +896,30 @@ __global__ void g_update_wetdry_cells(int nTasks, t_arrays *arrays){
 __global__ void g_compute_mass_error(t_arrays *arrays){
 /*----------------------------*/
 
+    int i;
 	double massError;
+    double mass0;
+
+    arrays->massTotalIn += arrays->mTotalIn; //positive increases mass
+    arrays->massTotalOut += arrays->mTotalOut; //positive INCREASES mass   
+
+    arrays->massTotalIn += arrays->qTotalIn*arrays->dt; //always positive, increases mass
+    arrays->massTotalOut -= arrays->qTotalOut*arrays->dt; //always positive, REDUCES mass
 
     if(arrays->massOld>TOL3){
-        massError=fabs(arrays->massNew-arrays->massOld)/(arrays->massOld)*100.0;
-        if(massError<TOL14) massError=TOL14;
+        mass0 = arrays->massOld;
+
+        mass0 += arrays->mTotalIn;
+        mass0 += arrays->mTotalOut;  
+               
+        mass0 += arrays->qTotalIn*arrays->dt;
+        mass0 -= arrays->qTotalOut*arrays->dt; 
+
+        massError=fabs(arrays->massNew-mass0)/(arrays->massOld);
+        if(massError<TOL16) massError=TOL16;
+
     }else{ 
-        massError = TOL14;
+        massError = TOL16;
     }
 
 	arrays->massError=massError;

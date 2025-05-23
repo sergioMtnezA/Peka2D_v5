@@ -100,9 +100,13 @@ struct t_mesh_{
 
 	int nInlet;
 	int nTotalCellsIn;
+	int nTotalInnerIn;
+    int nTotalSeriesIn;
 	t_bound *in;
 	int nOutlet;
 	int nTotalCellsOut;
+	int nTotalInnerOut;
+    int nTotalSeriesOut;
 	t_bound *out;
 
     double minZ, maxZ;
@@ -315,7 +319,7 @@ struct t_solute_{
 	char name[STR_SIZE]; /**< @brief Solute name*/
 	int typeDiff; /**< @brief Diffusion model*/
 	double k_xx,k_yy; /**< @brief Longitudinal and transversal diffusion coefficients*/
-	double maxConc;
+	double iniConc;
 };
 
 
@@ -355,8 +359,6 @@ struct t_arrays_{
 	int ncells; /**< @brief Number of cells in the domain :: NCELLS */
 	int nw_calc; /**< @brief Number of internal (calculus) walls :: NWCALC */
 	int nw_bound; /**< @brief Number of boundary walls */
-	int nInlet; /**< @brief Number of inlets in the domain */
-	int nOutlet; /**< @brief Number of outlets in the domain */
 
 
     //computation controls
@@ -372,11 +374,6 @@ struct t_arrays_{
 	double massOld; /**< @brief Run-control integrated volume at the beginning of the time step*/
 	double massNew; /**< @brief Run-control current integrated volume */
     double massError; /**< @brief Run-control mass error computed at the end of the time stop */
-
-	double massIn; /**< @brief Run-control total inflow volume accumulated during the simulation*/
-	double massOut; /**< @brief Run-control total outflow volume accumulated during the simulation*/
-	double qTotalIn; /**< @brief Run-control inflow discharge inegrated for all the inlet boundaries*/
-	double qTotalOut; /**< @brief Run-control outflow discharge inegrated for all the outlet boundaries*/
 
 	//solute controls
 	int nSolutes; /**< @brief Number of solutes */
@@ -397,7 +394,7 @@ struct t_arrays_{
     double *u; /**< @brief [NCELLS] X-velocity in cells*/ 
 	double *v; /**< @brief [NCELLS] Y-velocity in cells*/
     double *modulou; /**< @brief [NCELLS] Velocity modulus in cells*/
-	double *sqrh; /**< @brief [NCELLS] Square depth of flow depth in cells*/
+	double *sqrh; /**< @brief [NCELLS] Square root of flow depth in cells*/
 
 	double *area; /**< @brief [NCELLS] Cell area*/
 	double *nman; /**< @brief [NCELLS] Manning roughness coefficient nMan [s m^(-1/3)] in cells*/
@@ -416,7 +413,8 @@ struct t_arrays_{
     int *solidWallByCell; /**< @brief [NCELLS*NCWALL] Local flag for solid wall behaviour*/
     int *neighCell; /**< @brief [NCELLS*NCWALL] Neigboring cell indexes. Boundary neigbour marked with index -1*/
     int *neighWall; /**< @brief [NCELLS*NCWALL] Neigboring wall IDs :: Internal calculus wall - Bound walls*/
-	
+    int *typeWallByCell; /**< @brief [NCELLS*NCWALL] Type of wall :: [-1] Inner wall - [0] Closed boundary - [2] Inlet - [3] Outlet*/
+
 	double *normalXbyCell; /**< @brief [NCELLS*NCWALL] X-nomall neighboring wall*/
 	double *normalYbyCell; /**< @brief [NCELLS*NCWALL] Y-nomall neighboring wall*/
 	
@@ -452,34 +450,76 @@ struct t_arrays_{
 
 
 	// BOUNDARY ARRAYS ///////////////////////////	
-	double *normalXIn, *normalYlIn;
-	double *normalXOut, *normalYOut;	
+	int nInlet; /**< @brief Number of inlets in the domain */
+    int nTotalCellsIn;    
 
-	int nTotalCellsIn;	
-	int *cidxIn;
-	int *idBoundIn;	
-	double *lengthwallIn;
+	int nOutlet; /**< @brief Number of outlets in the domain */
+    int nTotalCellsOut;	
 
-	int nTotalCellsOut;	
-	int *cidxOut;
-	int *idBoundOut;
-	double *lengthwallOut;		
+	int nOBC;
+
+    //.........................................
+    int nTotalPointSeries;
+    int *nPointsSeriesOBC,*iniIndexSeriesOBC;
+    double *tSeriesOBC, *qSeriesOBC, *hzSeriesOBC, *frSeriesOBC;
+	double *phiSeriesOBC;
+
+    //......................................... 
+    int *nCellsOBC, *iniIndexOBC;
+    int *idBoundOBC, *typeOBC, *flagInitializeOBC;
+	double *blockSectionOBC;
+	double *normalXOBC, *normalYOBC;
+	double *totalLengthOBC, *totalAreaOBC;
+	int *cellZminOBC;
+	int *nInnerCellsOBC, *iniInnerIndexOBC;
+
+	//......................................... 
+    int nTotalBoundCells;
+	int nMaxBoundCells;	
+    int *cidxBound;
+	double *zCellBound, *areaCellBound;
+    double *nxWallBound, *nyWallBound;
+    double *lWallBound; 
+
+	int nTotalInnerCells;
+	int *cidxInner;
+    //..........................................
+
+    double *qBoundByCell, *mBoundByCell;
+	double *mInnerByCell;
+	
+    double *qInByInlet, *qOutByOutlet;
+    double *mInByInlet, *mOutByOutlet;			
+
+	double qTotalIn; /**< @brief Run-control inflow discharge inegrated for all the inlet boundaries*/
+	double qTotalOut; /**< @brief Run-control outflow discharge inegrated for all the outlet boundaries*/
+	double mTotalIn;
+	double mTotalOut;	
+	double massTotalIn; /**< @brief Run-control total inflow volume accumulated during the simulation*/
+	double massTotalOut; /**< @brief Run-control total outflow volume accumulated during the simulation*/ 
+    ////////////////////////////////////////////	    
 
 
 	// SOLUTE ARRAYS ///////////////////////////	
 	#if SET_SOLUTE
 		int flagDiffusion; /**< @brief Solute diffusion activation flag */
+		double Dtd; /**< @brief Solute global dt*/
 
 		//solute data
 		int *typeDiff; //nsol
 		double *k_xx, *k_yy; //nsol	
 
 		//solute conservative
-		double *hcsol; /**< @brief [NSOL x NCELLS] Solute mass in cells*/
-		double *csol; /**< @brief [NSOL x NCELLS] Solute concentration in cells*/	
+		double *hphi; /**< @brief [NSOL x NCELLS] Solute mass in cells*/
+		double *phi; /**< @brief [NSOL x NCELLS] Solute concentration in cells*/
+		double *localDtd; /**< @brief [NSOL x NCELLS] Solute local dt in cells*/
+		double *BTcell;/**< @brief [NSOL x NCELLS] Solute coefficient in cells*/
+		
 
 		//solute contributions
-		double *dhcsol;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute mass*/
+		double *dhphi;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute mass*/
+		double *Bwall;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute coefficient*/
+	
 	#endif
 
 };
@@ -505,7 +545,6 @@ struct t_cuPtr_{
     double *massOld, *massNew;
     double *massError;
 
-	double *qTotalIn, *qTotalOut;	
 
 	// GPU COMPUTATION ARRAYS ////////////////////////////////////////////
     //cells
@@ -518,6 +557,7 @@ struct t_cuPtr_{
 	//cells*NCwall
 	double *dh, *dhu, *dhv;
 	int *solidWallByCell, *neighCell, *neighWall;
+	int *typeWallByCell;
 	double *normalXbyCell, *normalYbyCell;
 
 	//internal walls
@@ -531,28 +571,59 @@ struct t_cuPtr_{
 
 
 	// BOUNDARY ARRAYS ///////////////////////////	
-	int *cidxIn;
-	int *idBoundIn;	
-	double *normalXwallIn, *normalYwallIn;
-	double *lengthwallIn;
+    int *nPointsSeriesOBC,*iniIndexSeriesOBC;
+    double *tSeriesOBC, *qSeriesOBC, *hzSeriesOBC, *frSeriesOBC;
+	double *phiSeriesOBC;
 
-	int *cidxOut;
-	int *idBoundOut;
-	double *normalXwallOut, *normalYwallOut;
-	double *lengthwallOut;		
+    int *nCellsOBC, *iniIndexOBC;
+    int *idBoundOBC, *typeOBC, *flagInitializeOBC;
+	double *blockSectionOBC;
+	double *normalXOBC, *normalYOBC;
+	double *totalLengthOBC, *totalAreaOBC;
+	int *cellZminOBC;
+	int *nInnerCellsOBC, *iniInnerIndexOBC;
 
+    int *cidxBound;
+	double *zCellBound, *areaCellBound;
+    double *nxWallBound, *nyWallBound;
+    double *lWallBound; 
+	
+	//double *localh, *localhu, *localhv;
+	//double *localhphi;
+
+	int *cidxInner;
+
+    double *qBoundByCell, *mBoundByCell;
+	double *mInnerByCell;
+    double *qInByInlet, *qOutByOutlet;
+	double *mInByInlet, *mOutByOutlet;	
+
+	double *aux1sByInlet, *aux1sByOutlet;
+
+	double *qTotalIn, *qTotalOut;
+	double *mTotalIn, *mTotalOut;
+
+
+    double *massTotalIn, *massTotalOut;	    	
 
 	// SOLUTE ARRAYS ///////////////////////////
 	#if SET_SOLUTE
+
+		double *Dtd,*dtAux;
+
 		//solutes
 		int *typeDiff;
 		double *k_xx, *k_yy; 
 
 		//nsolutes*cells
-		double *hcsol, *csol;
+		double *hphi, *phi;
+		double *localDtd;
+		double *BTcell;
 
 		//nsolutes*cells*NCwall
-		double *dhcsol; 
+		double *dhphi;  
+		double *Bwall;
+
 	#endif
 
 };
@@ -571,8 +642,10 @@ struct t_timers_{
 	double cellUpdating=0.0;
 	double boundConditon=0.0;
 	double wetDryFix=0.0;
+	double diffusion=0.0;
 	double memoryTransfer=0.0;
 	double writeOut=0.0;
+	double closeSim=0.0;
 };
 
 

@@ -14,7 +14,13 @@
 #include "writeInOut.cuh"
 #include "memoryManage.cuh"
 #include "water.cuh"
+#include "boundary.cuh"
 #include "cuTilities.cuh"
+
+#if SET_SOLUTE
+#include "solute.cuh"
+#endif
+
 
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int computeSimulation(
@@ -23,6 +29,14 @@ EXPORT_DLL int computeSimulation(
     t_arrays *carrays,
     t_timers *timers,
 	t_message *msg);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int computeInitialBoundaryConditions(
+    t_arrays *carrays,
+    t_arrays *garrays,     
+    t_cuPtr *cuPtr,
+    t_message *msg);
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
