@@ -487,6 +487,11 @@ EXPORT_DLL void generateTimeStep(
     #if SET_SOLUTE
     //nTasks=carrays->nActCells;
     nTasks=carrays->nActCells*carrays->nSolutes;
+
+    #if SET_MULTILAYER
+    nTasks=carrays->nActCells;
+    #endif
+
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     #endif

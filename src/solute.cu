@@ -221,9 +221,9 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
 
     int nActWalls=arrays->nActWalls;
     int nActCells=arrays->nActCells;    
-    int ws = 10.;
-    int epsis1 = 10.;
-    int epsis2 = 10.;
+    int ws = 0.1;
+    int epsis1 = 0.5;
+    int epsis2 = 0.5;
     int aux1, aux2, aux3, aux4;
    
 
@@ -233,7 +233,7 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
 
-        #if MULTILAYER 
+        #if SET_MULTILAYER 
         idx=arrays->actCells[i]; //compact
         #endif
 
@@ -250,20 +250,31 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
 
         if(arrays->h[idx]>TOL12){ //wet cells
 
-            #if MULTILAYER
+            #if SET_MULTILAYER
             for(jphi=0;jphi<arrays->nSolutes;jphi++){ //compact
             #endif
 
                 siw0 = jphi*(ncells*NCwall)+idx;
                 sid = jphi*ncells+idx;
-                sid1 = jphi*ncells+idx1;
-                sid2 = jphi*ncells+idx2;
-                
-                #if MULTILAYER
-                aux1 = ws*((arrays->phi[sid2]-arrays->phi[sid1])/2);
-                aux2 = epsis1((arrays->phi[sid2]-array->phi[sid])/(arrays->h[idx]/nSolutes));
-                aux3 = epsis2((arrays->phi[sid]-array->phi[sid1])/(arrays->h[idx]/nSolutes));
-                aux4 = area*(aux1 + aux2 - aux3);
+
+                #if SET_MULTILAYER
+                if (jphi>0 && jphi<arrays->nSolutes-1){
+                    sid2 = (jphi-1)*ncells+idx;
+                    sid1 = (jphi+1)*ncells+idx;
+                    aux1 = arrays->phi[sid2];
+                    aux2 = arrays->phi[sid1];
+                }else if(jphi == arrays->nSolutes-1){
+                    sid2 = (jphi-1)*ncells+idx;
+                    aux1 = arrays->phi[sid2];
+                    aux2 = 0.0;
+                }else if(jphi == 0){
+                    sid1 =(jphi+1)*ncells+idx;
+                    aux2 = arrays->phi[sid1];
+                    aux1 = 0.0;
+                }
+
+                aux4 = arrays->area[idx]*(ws*((aux1-aux2)/2) + epsis1*((aux1-arrays->phi[sid])/(arrays->h[idx]/arrays->nSolutes)) -epsis2*((arrays->phi[sid]-aux2)/(arrays->h[idx]/arrays->nSolutes)));
+               
                 #endif
 
                 arrays->hphi[sid] += (arrays->dhphi[siw0]+aux4)*dt;
@@ -273,7 +284,7 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
                 
                 arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
 
-            #if MULTILAYER
+            #if SET_MULTILAYER
             } //compact
             #endif
 

@@ -41,7 +41,7 @@
 	*/
 	#ifndef SET_SOLUTE
 		#define SET_SOLUTE 1
-		#define SET_MULTILAYER 0
+		#define SET_MULTILAYER 1
 	#endif		
 
 #endif
