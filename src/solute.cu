@@ -208,25 +208,34 @@ __global__ void g_update_solute_contributions(int nTasks, t_arrays *arrays){
 ////////////////////////////////////////////////////
 __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
 /*----------------------------*/
-	int idx;
+	int idx, idx1, idx2;
     double dt;
-    int siw0,sid;
+    int siw0,sid,sid1,sid2;
 
     int NCwall=arrays->NCwall;
     int ncells=arrays->ncells;
+    int nSolutes=arrays->nSolutes;
 
     int jphi;
     int iactCell;
 
     int nActWalls=arrays->nActWalls;
     int nActCells=arrays->nActCells;    
+    int ws = 10.;
+    int epsis1 = 10.;
+    int epsis2 = 10.;
+    int aux1, aux2, aux3, aux4;
+   
 
     dt=arrays->dt;
+    aux4 = 0.;
 
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
 
-        //idx=arrays->actCells[i]; //compact
+        #if MULTILAYER 
+        idx=arrays->actCells[i]; //compact
+        #endif
 
         //solute index
         jphi=(int)(i/nActCells);
@@ -234,23 +243,41 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
         //cell index
         iactCell=i-jphi*nActCells;
         idx=arrays->actCells[iactCell];
+        idx1=arrays->idx1[idx];
+        idx2=arrays->idx2[idx];
+
+        int area=arrays->area[idx];
 
         if(arrays->h[idx]>TOL12){ //wet cells
 
-            //for(jphi=0;jphi<arrays->nSolutes;jphi++){ //compact
+            #if MULTILAYER
+            for(jphi=0;jphi<arrays->nSolutes;jphi++){ //compact
+            #endif
 
                 siw0 = jphi*(ncells*NCwall)+idx;
                 sid = jphi*ncells+idx;
+                sid1 = jphi*ncells+idx1;
+                sid2 = jphi*ncells+idx2;
+                
+                #if MULTILAYER
+                aux1 = ws*((arrays->phi[sid2]-arrays->phi[sid1])/2);
+                aux2 = epsis1((arrays->phi[sid2]-array->phi[sid])/(arrays->h[idx]/nSolutes));
+                aux3 = epsis2((arrays->phi[sid]-array->phi[sid1])/(arrays->h[idx]/nSolutes));
+                aux4 = area*(aux1 + aux2 - aux3);
+                #endif
 
-                arrays->hphi[sid] += arrays->dhphi[siw0]*dt;
+                arrays->hphi[sid] += (arrays->dhphi[siw0]+aux4)*dt;
                 if(fabs(arrays->hphi[sid])<TOL14){
                     arrays->hphi[sid]=0.0;
                 }
                 
                 arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
 
-            //} //compact
+            #if MULTILAYER
+            } //compact
+            #endif
 
+            
         }
     }
 
