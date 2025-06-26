@@ -17,7 +17,7 @@
 #include "boundary.cuh"
 #include "cuTilities.cuh"
 
-#if SET_SOLUTE
+#if SET_SOLUTE || SET_SED
 #include "solute.cuh"
 #endif
 

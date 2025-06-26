@@ -30,6 +30,9 @@ typedef struct t_bound_ t_bound;
 typedef struct t_solute_ t_solute;
 typedef struct l_solutes_ l_solutes;
 
+typedef struct t_sediment_ t_sediment;
+typedef struct l_sediment_ l_sediments;
+
 typedef struct t_arrays_ t_arrays;
 typedef struct t_cuPtr_ t_cuPtr;
 
@@ -114,6 +117,10 @@ struct t_mesh_{
 	//solutes
 	int nSolutes;
 	l_solutes *solutes;
+
+	//sediments
+	int nSediments;
+	l_sediments *sediments;
 
 };
 
@@ -332,6 +339,24 @@ struct l_solutes_{
 	t_solute *solute;
 };
 
+/**
+ * @brief Passive sediment
+*/
+struct t_sediment_{
+	char name[STR_SIZE]; /**< @brief Sediment name*/
+	double dsp,Fsp,rhoW,rhoS; /**< @sediments parameters*/
+	double maxConc;
+};
+
+
+/**
+ * @brief List of passive solutes
+*/
+struct l_sediments_{
+	int n; 
+	int flagErosion;  //flag to determine if it is necessary to go inside erosion subroutines
+	t_sediment *sediment;
+};
 
 
 /**
@@ -377,6 +402,12 @@ struct t_arrays_{
 
 	//solute controls
 	int nSolutes; /**< @brief Number of solutes */
+
+	//sediment controls
+	int nSediments; /**< @brief Number of sediments */
+
+	//particules controls
+	int nParticles; /**< @brief Number of solutes + sediment*/
 
 	
 	//ARRAY DE CELDA
@@ -499,7 +530,7 @@ struct t_arrays_{
 	double massTotalOut; /**< @brief Run-control total outflow volume accumulated during the simulation*/ 
     ////////////////////////////////////////////	    
 
-
+	#if SET_SOLUTE || SET_SED
 	// SOLUTE ARRAYS ///////////////////////////	
 	#if SET_SOLUTE
 		int flagDiffusion; /**< @brief Solute diffusion activation flag */
@@ -510,16 +541,39 @@ struct t_arrays_{
 		double *k_xx, *k_yy; //nsol	
 
 		//solute conservative
-		double *hphi; /**< @brief [NSOL x NCELLS] Solute mass in cells*/
-		double *phi; /**< @brief [NSOL x NCELLS] Solute concentration in cells*/
+		//double *hphi; /**< @brief [NSOL x NCELLS] Solute mass in cells*/
+		//double *phi; /**< @brief [NSOL x NCELLS] Solute concentration in cells*/
 		double *localDtd; /**< @brief [NSOL x NCELLS] Solute local dt in cells*/
 		double *BTcell;/**< @brief [NSOL x NCELLS] Solute coefficient in cells*/
 		
 
 		//solute contributions
-		double *dhphi;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute mass*/
+		//double *dhphi;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute mass*/
 		double *Bwall;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute coefficient*/
 	
+	#endif
+
+	// SEDIMENT ARRAYS ///////////////////////////	
+	#if SET_SED
+		int flagErosion; /**< @brief Sediment erosion activation flag */
+
+		//solute data
+		double *dsp, *Fsp, *rhoW, *rhoS; //nsed
+
+		//solute conservative
+		double *NbSed; /**< @brief [NSED x NCELLS] Sediment local dt in cells*/
+
+		//cell
+		double *NbTcell;/**< @brief [NCELLS] Wall-contributions to cell solute coefficient*/
+	
+	#endif
+
+	//Particle concervative
+	double *hphi; /**< @brief [(NSOL+NSED) x NCELLS] Particle mass in cells*/
+	double *phi; /**< @brief [(NSOL+NSED) x NCELLS] Particle concentration in cells*/
+
+	//Partciles conservative
+	double *dhphi;/**< @brief [(NSOL+NSED)*NCELLS*NCWALL] Wall-contributions to cell Particle mass*/
 	#endif
 
 };
@@ -606,6 +660,7 @@ struct t_cuPtr_{
 
     double *massTotalIn, *massTotalOut;	    	
 
+	#if SET_SOLUTE || SET_SED
 	// SOLUTE ARRAYS ///////////////////////////
 	#if SET_SOLUTE
 
@@ -624,6 +679,26 @@ struct t_cuPtr_{
 		double *dhphi;  
 		double *Bwall;
 
+	#endif
+
+	#if SET_SED
+
+		//sediment
+		double *dsp, *Fsp, *rhoW, *rhoS; 
+
+		//nsediments*cells
+		
+		double *NbSed;
+
+		//cells
+		double *NbTcell;
+
+	#endif
+	
+	//(nsolutes+nsediment)*cells
+	double *hphi, *phi;
+	//(nsolutes+nsediment)*cells*NCwall
+	double *dhphi; 
 	#endif
 
 };

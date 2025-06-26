@@ -44,6 +44,14 @@
 		#define SET_MULTILAYER 0
 	#endif		
 
+	/** Enables sediment computation 
+	 * 0 Disabled
+	 * 1 Enabled
+	*/
+	#ifndef SET_SED
+		#define SET_SED 1
+		#define SET_MULTILAYER 0
+	#endif
 #endif
 
 /** Active elemens arrangement

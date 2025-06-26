@@ -13,6 +13,8 @@ EXPORT_DLL int createArraysCudaMemory(
 	int ncells,nwc,nwb;
     int nWallCell;
     int nSolutes;
+    int nSediments;
+    int nParticles;
 
     int nInlet, nOutlet, nOBC;
     int nTotalBoundCells, nTotalInnerCells;
@@ -39,6 +41,8 @@ EXPORT_DLL int createArraysCudaMemory(
 
     //Solute variables for allocation
     nSolutes=carrays->nSolutes;
+    nSediments=carrays->nSediments;
+    nParticles=carrays->nSolutes + carrays->nSediments;
 
     //Transfer computation arrays 
     if(!copyComputationControls(
@@ -121,6 +125,8 @@ EXPORT_DLL int createArraysCudaMemory(
         nTotalBoundCells, nTotalInnerCells, 
         nTotalPointSeries,
         nSolutes,
+        nSediments,
+        nParticles,
         cuPtr) 
     ) return 0; 
 
@@ -182,33 +188,45 @@ EXPORT_DLL int createArraysCudaMemory(
     //getCudaMemoryState(&free_mem, &total_mem);  
 
 
-    #if SET_SOLUTE
-    if(!allocateSoluteArraysCudaMem( 
+    #if SET_SOLUTE || SET_SED
+    if(!allocateParticleArraysCudaMem( 
         nSolutes,
+        nSediments,
         NCwall, ncells, nWallCell, nwc, nwb, 
         cuPtr)
     ) return 0;
 
 
-    if(!copySoluteArraysCudaMem(
+    if(!copyParticleArraysCudaMem(
         nSolutes, 
+        nSediments,
         carrays, garrays, cuPtr)
     ) return 0;        
 
-    assignSoluteArraysToCudaMem <<<1,1>>> (nSolutes, garrays,
+    assignParticleArraysToCudaMem <<<1,1>>> (nSolutes, nSediments, nParticles, garrays,
         //------------------------solutes
         cuPtr->typeDiff,
         cuPtr->k_xx,
         cuPtr->k_yy,
         //------------------------solutes*cells
-        cuPtr->hphi,
-        cuPtr->phi,
         cuPtr->localDtd,
         cuPtr->BTcell,
         //------------------------solutes*cells*NCwall
-        cuPtr->dhphi,
         cuPtr->Bwall
-    );
+        //------------------------sediments
+        cuPtr->dsp,
+        cuPtr->Fsp,
+        cuPtr->rhoW,
+        cuPtr->rhoS,
+        //------------------------sediments*cells
+        cuPtr->NbSed,
+        //------------------------cells
+        cuPtr->NbTcell,
+        //------------------------particles*cells
+        cuPtr->hphi,
+        cuPtr->phi,
+        //------------------------particles*cells*NCwall
+        cuPtr->dhphi);
     // cudaDeviceSynchronize();
     // //getCudaMemoryState(&free_mem, &total_mem); 
     #endif
@@ -284,7 +302,10 @@ EXPORT_DLL int copyComputationControls(
 
     //solute permanent flag
     cudaMemcpy(&(garrays->nSolutes), &(carrays->nSolutes), sizeof(int), cudaMemcpyHostToDevice );
-
+    //sediment permanent flag
+    cudaMemcpy(&(garrays->nSediments), &(carrays->nSediments), sizeof(int), cudaMemcpyHostToDevice );
+    //particle permanent flag
+    cudaMemcpy(&(garrays->nParticles), &(carrays->nParticles), sizeof(int), cudaMemcpyHostToDevice );
 
 
     // CONTROL POINTERS ////////////////////////////////
@@ -725,6 +746,8 @@ EXPORT_DLL int allocateBoundArraysCudaMem(
     int nTotalBoundCells, int nTotalInnerCells,
     int nTotalPointSeries, 
     int nSolutes,
+    int nSediments,
+    int nParticles,
     t_cuPtr *cuPtr){
 /*----------------------------*/
 
@@ -777,9 +800,11 @@ EXPORT_DLL int allocateBoundArraysCudaMem(
         cudaMalloc((void**) &(cuPtr->hzSeriesOBC), nTotalPointSeries*sizeof(double));
         cudaMalloc((void**) &(cuPtr->frSeriesOBC), nTotalPointSeries*sizeof(double));
 
-        #if SET_SOLUTE
-        cudaMalloc((void**) &(cuPtr->phiSeriesOBC), nSolutes*nTotalPointSeries*sizeof(double));
+        #if SET_SOLUTE || SET_SED
+        cudaMalloc((void**) &(cuPtr->phiSeriesOBC), nParticles*nTotalPointSeries*sizeof(double));
         #endif
+
+
 
         //mass balance pointers
         cudaMalloc((void**) &(cuPtr->qBoundByCell), nTotalBoundCells*sizeof(double));
@@ -827,6 +852,8 @@ EXPORT_DLL int copyBoundSetupArraysCudaMem(
     int nOutlet = carrays->nOutlet;
     int nTotalPointSeries = carrays->nTotalPointSeries;
     int nSolutes = carrays->nSolutes;
+    int nSediments = carrays->nSediments;
+    int nParticles = carrays->nParticles;
 
     int i;
     double *aux1s;
@@ -875,8 +902,8 @@ EXPORT_DLL int copyBoundSetupArraysCudaMem(
         cudaMemcpy((cuPtr->hzSeriesOBC), (carrays->hzSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->frSeriesOBC), (carrays->frSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
 
-        #if SET_SOLUTE
-        cudaMemcpy((cuPtr->phiSeriesOBC), (carrays->phiSeriesOBC), nSolutes*nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
+        #if SET_SED || SET_SOLUTE
+        cudaMemcpy((cuPtr->phiSeriesOBC), (carrays->phiSeriesOBC), nParticles*nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
         #endif
 
         //mass balance pointers  
@@ -1036,7 +1063,7 @@ __global__ void assignBoundArraysToCudaMem(t_arrays *garrays,
         garrays->hzSeriesOBC=hzSeriesOBC;
         garrays->frSeriesOBC=frSeriesOBC;
 
-        #if SET_SOLUTE
+        #if SET_SOLUTE || SET_SED
         garrays->phiSeriesOBC=phiSeriesOBC;
         #endif
 
@@ -1107,7 +1134,7 @@ EXPORT_DLL int freeBoundaCudaMemory(
         cudaFree(cuPtr->frSeriesOBC);
 
 
-        #if SET_SOLUTE
+        #if SET_SOLUTE || SET_SED
         cudaFree(cuPtr->phiSeriesOBC);
         #endif        
 
@@ -1146,14 +1173,16 @@ EXPORT_DLL int freeBoundaCudaMemory(
 
 
 
-#if SET_SOLUTE
+#if SET_SOLUTE || SET_SED
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateSoluteArraysCudaMem(
-    int nSolutes, 
+EXPORT_DLL int allocateParticleArraysCudaMem(
+    int nSolutes,
+    int nSediments,
+    int nParticles, 
     int NCwall, int ncells, int nWallCell, int nwc, int nwb, 
     t_cuPtr *cuPtr){
 /*----------------------------*/
-
+    #if SET_SOLUTE  
     if(nSolutes){
         cudaMalloc((void**) &(cuPtr->Dtd), sizeof(double));
         cudaMalloc((void**) &(cuPtr->dtAux), sizeof(double));
@@ -1164,25 +1193,56 @@ EXPORT_DLL int allocateSoluteArraysCudaMem(
         cudaMalloc((void**) &(cuPtr->k_yy), nSolutes*sizeof(double));
 
         //cells
-        cudaMalloc((void**) &(cuPtr->hphi), nSolutes*ncells*sizeof(double));
-        cudaMalloc((void**) &(cuPtr->phi), nSolutes*ncells*sizeof(double));
+        //cudaMalloc((void**) &(cuPtr->hphi), nSolutes*ncells*sizeof(double));
+        //cudaMalloc((void**) &(cuPtr->phi), nSolutes*ncells*sizeof(double));
         cudaMalloc((void**) &(cuPtr->localDtd), nSolutes*ncells*sizeof(double));
         cudaMalloc((void**) &(cuPtr->BTcell), nSolutes*ncells*sizeof(double));
 
         //cells*NCwall
-        cudaMalloc((void**) &(cuPtr->dhphi), nSolutes*nWallCell*sizeof(double));
+        //cudaMalloc((void**) &(cuPtr->dhphi), nSolutes*nWallCell*sizeof(double));
         cudaMalloc((void**) &(cuPtr->Bwall), nSolutes*nWallCell*sizeof(double));
     }
 
     return(1);
+    #endif
 
+    #if SET_SED
+    if(nSediments){
+
+        //sediment control arrays
+        cudaMalloc((void**) &(cuPtr->dsp), nSediments*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->Fsp), nSediments*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->rhoW), nSediments*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->rhoS), nSediments*sizeof(double));
+
+        //cells*sediments
+        cudaMalloc((void**) &(cuPtr->NbSed), nSediments*ncells*sizeof(double));
+
+        //cells
+        cudaMalloc((void**) &(cuPtr->NbTcell), ncells*sizeof(double));
+    }
+
+    return(1);
+    #endif 
+
+    if(nParticles){
+        //cells
+        cudaMalloc((void**) &(cuPtr->hphi), nParticles*ncells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->phi), nParticles*ncells*sizeof(double));
+        //cells*NCwall
+        cudaMalloc((void**) &(cuPtr->dhphi), nParticles*nWallCell*sizeof(double));
+
+    }
+    return(1);
 }
 
 
 
 ////////////////////////////////////////////////////////////////
-int copySoluteArraysCudaMem(
+int copyParticleArraysCudaMem(
     int nSolutes,
+    int nSediments,
+    int nParticles,
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr){
@@ -1200,6 +1260,7 @@ int copySoluteArraysCudaMem(
 	nwc=carrays->nw_calc;
 	nwb=carrays->nw_bound;
 
+    #if SET_SOLUTE
     if(nSolutes){
         cudaMemcpy(&(garrays->flagDiffusion), &(carrays->flagDiffusion), sizeof(int), cudaMemcpyHostToDevice);
         cudaMemcpy(cuPtr->Dtd, &(carrays->Dtd), sizeof(double), cudaMemcpyHostToDevice);
@@ -1211,36 +1272,75 @@ int copySoluteArraysCudaMem(
         cudaMemcpy((cuPtr->k_yy), (carrays->k_yy), nSolutes*sizeof(double), cudaMemcpyHostToDevice );        
 
         //solutes*cells    
-        cudaMemcpy((cuPtr->hphi), (carrays->hphi), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
-        cudaMemcpy((cuPtr->phi), (carrays->phi), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        //cudaMemcpy((cuPtr->hphi), (carrays->hphi), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        //cudaMemcpy((cuPtr->phi), (carrays->phi), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->localDtd), (carrays->localDtd), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->BTcell), (carrays->BTcell), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
     
         //solutes*cells*NCwall
-        cudaMemcpy((cuPtr->dhphi), (carrays->dhphi), nSolutes*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
+        //cudaMemcpy((cuPtr->dhphi), (carrays->dhphi), nSolutes*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->Bwall), (carrays->Bwall), nSolutes*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
     }
 
     return(1);
+    #endif
+
+    #if SET_SED
+    if(nSediments){
+        cudaMemcpy(&(garrays->flagErosion), &(carrays->flagErosion), sizeof(int), cudaMemcpyHostToDevice);
+
+        //sediments
+        cudaMemcpy((cuPtr->dsp), (carrays->dsp), nSediments*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->Fsp), (carrays->Fsp), nSediments*sizeof(double), cudaMemcpyHostToDevice );      
+        cudaMemcpy((cuPtr->rhoW), (carrays->rhoW), nSediments*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->rhoS), (carrays->rhoS), nSediments*sizeof(double), cudaMemcpyHostToDevice ); 
+
+        //sediments*cells    
+        cudaMemcpy((cuPtr->NbSed), (carrays->NbSed), nSediments*ncells*sizeof(double), cudaMemcpyHostToDevice );
+    
+        //cells
+        cudaMemcpy((cuPtr->NbTcell), (carrays->NbTcell), ncells*sizeof(double), cudaMemcpyHostToDevice );
+    }
+
+    return(1);
+    #endif
+
+    if(nParticles){
+        //(solutes+sediment)*cells  
+        cudaMemcpy((cuPtr->hphi), (carrays->hphi), nParticles*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->phi), (carrays->phi), nParticles*ncells*sizeof(double), cudaMemcpyHostToDevice );
+
+        //(solutes+sediment)*cells*NCwall
+        cudaMemcpy((cuPtr->dhphi), (carrays->dhphi), nParticles*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
+    }
 
 }  
 
 
 
 ////////////////////////////////////////////////////////////////
-__global__ void assignSoluteArraysToCudaMem(int nSolutes, t_arrays *garrays,
+__global__ void assignParticleArraysToCudaMem(int nSolutes, int nSediments, int nParticles, t_arrays *garrays,
 	//------------------------cells
 	int *typeDiff,
 	double *k_xx,
 	double *k_yy,
-	double *hphi,
-	double *phi,
+	//double *hphi,
+	//double *phi,
     double *localDtd,
     double *BTcell,
-	double *dhphi,
-    double *Bwall){
+	//double *dhphi,
+    double *Bwall,
+    double *dsp,
+    double *Fsp,
+    double *rhoW,
+    double *rhoS,
+    double *NbSed,
+    double *NbTcell,
+    double *hphi,
+	double *phi,
+    double *dhphi){
 /*----------------------------*/
-
+    #if SET_SOLUTE
     if(nSolutes){    
         //solute controls
         garrays->typeDiff=typeDiff;
@@ -1248,25 +1348,53 @@ __global__ void assignSoluteArraysToCudaMem(int nSolutes, t_arrays *garrays,
         garrays->k_yy=k_yy;
 
         //mesh
-        garrays->hphi=hphi;
-        garrays->phi=phi;
+        //garrays->hphi=hphi;
+        //garrays->phi=phi;
         garrays->localDtd=localDtd;
         garrays->BTcell=BTcell;
 
         //cells*NCwall
-        garrays->dhphi=dhphi;
+        //garrays->dhphi=dhphi;
         garrays->Bwall=Bwall;
+    }
+    #endif
+
+    #if SET_SED
+    if(nSediments){    
+        //sediment controls
+        garrays->dsp=dsp;
+        garrays->Fsp=Fsp;
+        garrays->rhoW=rhoW;
+        garrays->rhoS=rhoS;
+
+        //sediment*cells
+        garrays->NbSed=NbSed;
+
+        //cells
+        garrays->NbTcell=NbTcell;
+    }
+    #endif
+
+    if(nParticles){
+        //mesh
+        garrays->hphi=hphi;
+        garrays->phi=phi;
+
+        //cells*NCwall
+        garrays->dhphi=dhphi;
     }
 
 }
 
 
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int freeSoluteCudaMemory(
+EXPORT_DLL int freeParticleCudaMemory(
     int nSolutes, 
+    int nSediments,
+    int nParticles, 
     t_cuPtr *cuPtr){
 /*----------------------------*/
-
+    #if SET_SOLUTE
     if(nSolutes){
         
         cudaFree(cuPtr->Dtd);
@@ -1278,16 +1406,47 @@ EXPORT_DLL int freeSoluteCudaMemory(
         cudaFree(cuPtr->k_yy);
 
         //cells
-        cudaFree(cuPtr->hphi);
-        cudaFree(cuPtr->phi);
+        //cudaFree(cuPtr->hphi);
+        //cudaFree(cuPtr->phi);
         cudaFree(cuPtr->localDtd);
         cudaFree(cuPtr->BTcell);
 
         //cells*NCwall
-        cudaFree(cuPtr->dhphi);
+        //cudaFree(cuPtr->dhphi);
         cudaFree(cuPtr->Bwall);
     }
 
+    return(1);
+    #endif
+
+    #if SET_SED
+    if(nSediments){
+
+        //solute control arrays
+        cudaFree(cuPtr->dsp);
+        cudaFree(cuPtr->Fsp);
+        cudaFree(cuPtr->rhoW);
+        cudaFree(cuPtr->rhoS);
+
+        //cells
+        cudaFree(cuPtr->NbSed);
+
+        //cells*NCwall
+        cudaFree(cuPtr->NbTcell);
+    }
+
+    return(1);
+    #endif
+
+    if(nParticles){
+        //cells
+        cudaFree(cuPtr->hphi);
+        cudaFree(cuPtr->phi);
+
+        //cells*NCwall
+        cudaFree(cuPtr->dhphi);
+
+    }
     return(1);
 
 }

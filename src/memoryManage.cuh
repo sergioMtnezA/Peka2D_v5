@@ -174,18 +174,22 @@ EXPORT_DLL int freeBoundaCudaMemory(
 
 
 
-#if SET_SOLUTE
+#if SET_SOLUTE || SET_SED
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateSoluteArraysCudaMem(
+EXPORT_DLL int allocateParticleArraysCudaMem(
     int nSolutes, 
+    int nSediments,
+    int nParticles,
     int NCwall, int ncells, int nWallCell, int nwc, int nwb, 
     t_cuPtr *cuPtr);
 /*----------------------------*/
 
 
 ////////////////////////////////////////////////////////////////
-int copySoluteArraysCudaMem(
+int copyParticleArraysCudaMem(
     int nSolutes,
+    int nSediments,
+    int nParticles,
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr);
@@ -194,23 +198,36 @@ int copySoluteArraysCudaMem(
 
 
 ////////////////////////////////////////////////////////////////
-__global__ void assignSoluteArraysToCudaMem(int nSolutes, t_arrays *garrays,
+__global__ void assignParticleArraysToCudaMem(int nSolutes, int nSediments, int nParticles, t_arrays *garrays,
 	//------------------------solutes
 	int *typeDiff,
 	double *k_xx,
 	double *k_yy,
 	//------------------------solutes*cells
-	double *hphi,
-	double *phi,
     double *localDtd,
 	double *BTcell,
 	//------------------------solutes*cells*NCwalls
-	double *dhphi,
-    double *Bwall);
+    double *Bwall,
+    //------------------------sediments
+    double *dsp,
+    double *Fsp,
+    double *rhoW,
+    double *rhoS,
+    //------------------------sediments*cells
+    double *NbSed,
+    //------------------------cells
+    double *NbTcell,
+    //------------------------particles*cells
+    double *hphi,
+	double *phi,
+    //------------------------sediments*cells*NCwalls
+    double *dhphi);
 /*----------------------------*/
 
-EXPORT_DLL int freeSoluteCudaMemory(
+EXPORT_DLL int freeParticleCudaMemory(
 	int nSolutes, 
+    int nSediments,
+    int nParticles,
 	t_cuPtr *cuPtr);
 /*----------------------------*/
 #endif

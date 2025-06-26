@@ -221,6 +221,10 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 
 	__shared__ int ncells;
 	__shared__ int nSolutes;
+    __shared__ int nSediments;
+    __shared__ int nParticles;
+    
+    
 
     __shared__ int idb;
 	__shared__ int nbc,i0;
@@ -258,7 +262,7 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
     
     double aux1,aux2,aux3,aux4,aux5;
 
-	#if SET_SOLUTE
+	#if SET_SOLUTE || SET_SED
 		//extern __shared__ double localhphi[1024];
 		double phit;
 	#endif
@@ -273,6 +277,9 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 
 		ncells = arrays->ncells;
 		nSolutes = arrays->nSolutes;
+        nSediments = arrays->nSediments;
+        nParticles = arrays->nSolutes + arrays->nSediments;
+
 
         //Bound index
         idb=arrays->idBoundOBC[iblock]; //bound ID: (-id) inlet  (+id) outlet
@@ -316,7 +323,7 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 	double *localhu = &localh[nbc];
 	double *localhv = &localhu[nbc];
 	double *localz = &localhv[nbc];		
-	#if SET_SOLUTE
+	#if SET_SOLUTE || SET_SED
 	double *phiIn = &localz[nbc];
 	#endif
 
@@ -337,8 +344,8 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
     }
     __syncthreads(); 
 
-	#if SET_SOLUTE
-	if(ithread<nSolutes){
+	#if SET_SOLUTE || SET_SED
+	if(ithread<nParticles){
 		phiIn[ithread]=0.0;
 	}
 	#endif	   
@@ -972,14 +979,14 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 
 
     // Solute inflow update ///////////////////////////////////////////////////////////
-	#if SET_SOLUTE
-	if(nSolutes){
+	#if SET_SOLUTE || SET_SED
+	if(nParticles){
 	if(flagInitialized==1){
 		if(idb<0){	
 			if(typebc==HYD_INFLOW_Q){
 
 				//interpolate time series value
-				if(ithread<nSolutes){
+				if(ithread<nParticles){
 					tidx = d_get_index(arrays->t, npts, ip0, arrays->tSeriesOBC);
 					phit = d_interpolate_matrix(arrays->t, ithread, arrays->nTotalPointSeries, 
 						npts, ip0, 
@@ -993,14 +1000,14 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 				__syncthreads();
 				
 
-				//impose solute concentration at cells
+				//impose solute and sed concentration at cells
 				if(ithread<nbc){	
 					if(localh[ithread] > TOL12){
-						for(j=0;j<nSolutes;j++){				
+						for(j=0;j<nParticles;j++){				
 							arrays->phi[j*ncells+cidx] = phiIn[j];
 						}
 					}else{
-						for(j=0;j<nSolutes;j++){
+						for(j=0;j<nParticles;j++){
 							arrays->phi[j*ncells+cidx] = 0.0;
 						}
 					}
@@ -1010,14 +1017,14 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 			}
 		}
 
-		//update solute at cells (always)
+		//update particle at cells (always)
 		if(ithread<nbc){	
 			if(localh[ithread] > TOL12){
-				for(j=0;j<nSolutes;j++){				
+				for(j=0;j<nParticles;j++){				
 					arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
 				}
 			}else{
-				for(j=0;j<nSolutes;j++){
+				for(j=0;j<nParticles;j++){
 					arrays->hphi[j*ncells+cidx] = 0.0;
 				}
 			}

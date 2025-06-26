@@ -1,8 +1,8 @@
 #include "solute.cuh"
 
-#if SET_SOLUTE
+#if SET_SOLUTE || SET_SED
 ////////////////////////////////////////////////////
-__global__ void g_initialize_solute_delta(int nTasks, t_arrays *arrays){
+__global__ void g_initialize_particles_delta(int nTasks, t_arrays *arrays){
 /*----------------------------*/
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
@@ -11,8 +11,9 @@ __global__ void g_initialize_solute_delta(int nTasks, t_arrays *arrays){
     }
 }
 
+
 ////////////////////////////////////////////////////
-__global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *localDt){
+__global__ void g_wall_particle_calculus(int nTasks, t_arrays *arrays, double *localDt){
 /*----------------------------*/
 
     int idx;
@@ -100,7 +101,7 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
 
 
 ////////////////////////////////////////////////////
-__global__ void g_bound_solute_calculus(int nTasks, t_arrays *arrays){		
+__global__ void g_bound_particle_calculus(int nTasks, t_arrays *arrays){		
 /*----------------------------*/
 
 	int cidx;
@@ -155,7 +156,7 @@ __global__ void g_bound_solute_calculus(int nTasks, t_arrays *arrays){
 
 
 ////////////////////////////////////////////////////
-__global__ void g_update_solute_contributions(int nTasks, t_arrays *arrays){
+__global__ void g_update_particle_contributions(int nTasks, t_arrays *arrays){
 /*----------------------------*/	
     int idx;
 	int ncells=arrays->ncells;
@@ -206,7 +207,7 @@ __global__ void g_update_solute_contributions(int nTasks, t_arrays *arrays){
 
 
 ////////////////////////////////////////////////////
-__global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
+__global__ void g_update_particle_cells(int nTasks, t_arrays *arrays){
 /*----------------------------*/
 	int idx;
     double dt;
@@ -576,6 +577,14 @@ __global__ void g_update_solute_diffusion_cells(int nTasks, t_arrays *arrays, do
 
 }
 
+////////////////////////////////////////////////////
+__global__ void g_wall_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
+/*----------------------------*/
+}
 
+////////////////////////////////////////////////////
+__global__ void g_update_sediment_erosion_contributions(int nTasks, t_arrays *arrays, double *localDtd){
+/*----------------------------*/	
+}
 
 #endif 

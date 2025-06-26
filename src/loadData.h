@@ -50,6 +50,8 @@ typedef struct Peka2D_NodeBoundary_ Peka2D_NodeBoundary;
 typedef struct Peka2D_OBCWalls_ Peka2D_OBCWalls;
 typedef struct Peka2D_SoluteGroup_ Peka2D_SoluteGroup;
 typedef struct Peka2D_Solute_ Peka2D_Solute;
+typedef struct Peka2D_SedimentGroup_ Peka2D_SedimentGroup;
+typedef struct Peka2D_Sediment_ Peka2D_Sediment;
 
 
 struct Peka2D_Run_{
@@ -63,6 +65,7 @@ struct Peka2D_Run_{
     int dambreach;    /**< 1 if there are dambreach*/
     int wind;
     int solutes;    /**< 1 if there are solutes*/
+    int sediments;    /**< 1 if there are sediments*/
 
     //controls
     int writeMass;
@@ -116,11 +119,27 @@ struct Peka2D_Solute_{
     double iniConc;
 };
 
+
+
 struct Peka2D_SoluteGroup_{
     int nSolutes;
     int flagDiffussion;
     char initialFile[STR_SIZE];
     Peka2D_Solute *solute;
+};
+
+struct Peka2D_Sediment_{
+    char name[STR_SIZE];
+    int typeDiff;
+    double dsp,Fsp,rhoW,rhoS;
+    double maxConc;
+};
+
+struct Peka2D_SedimentGroup_{
+    int nSediments;
+    int flagErosion;
+    char initialFile[STR_SIZE];
+    Peka2D_Sediment *sediment;
 };
 
 struct Peka2D_Setup_{
@@ -129,6 +148,7 @@ struct Peka2D_Setup_{
     Peka2D_OBCWalls *IOBC;
     Peka2D_OBCWalls *OOBC;  
     Peka2D_SoluteGroup *soluteGroup;  
+    Peka2D_SedimentGroup *soluteGroup;
 };
 
 
@@ -279,6 +299,8 @@ int readOpenBoundaryFile(
     t_message *e);
 /*----------------------------*/
 
+#if SET_SOLUTE || SET_SED
+
 #if SET_SOLUTE
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int loadSoluteData(
@@ -296,7 +318,41 @@ int readSoluteFile(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-int createSoluteStructures(
+int readHotstartSoluteState(
+    char *filename,
+    t_mesh *mesh, 
+    int nSolutes,
+    t_message *e);
+/*----------------------------*/
+#endif
+
+#if SET_SED
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int loadSedimentData(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh, 
+    t_message *msg);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+int readSedimentFile(
+    char *filename,
+    Peka2D_SedimentGroup *sedimentGroup,   
+    t_message *e);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+int readHotstartSedimentState(
+    char *filename,
+    t_mesh *mesh, 
+    int nSediments,
+    t_message *e);
+/*----------------------------*/
+#endif //end sediment
+
+////////////////////////////////////////////////////////////////
+int createParticleStructures(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
     t_mesh *mesh,    
@@ -304,18 +360,10 @@ int createSoluteStructures(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-int setInitialSoluteState(
+int setInitialParticleState(
     Peka2D_Setup *pksetup,
     t_parameters *spar,
     t_mesh *mesh, 
-    t_message *e);
-/*----------------------------*/
-
-////////////////////////////////////////////////////////////////
-int readHotstartSoluteState(
-    char *filename,
-    t_mesh *mesh, 
-    int nSolutes,
     t_message *e);
 /*----------------------------*/
 

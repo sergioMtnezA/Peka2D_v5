@@ -60,6 +60,12 @@ EXPORT_DLL int initilizeComputationControls(
     //solute permanent flag to switch on/off memory & computation
 	carrays->nSolutes = mesh->nSolutes;
 
+    //sediment permanent flag to switch on/off memory & computation
+	carrays->nSediments = mesh->nSediments;
+
+    //sediment permanent flag to switch on/off memory & computation
+	carrays->nParticles = mesh->nSolutes + mesh->nSediments;
+
     return 1;
  
 }
@@ -869,9 +875,9 @@ EXPORT_DLL int initilizeBoundaryMeshArrays(
 }
 
 
-#if SET_SOLUTE
+#if SET_SOLUTE|| SET_SED
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateSoluteArraysMem(
+EXPORT_DLL int allocateParticleArraysMem(
     t_parameters spar, 
     t_mesh *mesh,
     t_arrays *carrays,
@@ -892,9 +898,13 @@ EXPORT_DLL int allocateSoluteArraysMem(
     nWallCell=NCwall*ncells;
 	nwc=mesh->nw_calc;
 	nwb=mesh->nw_bound;
-    nSolutes=mesh->nSolutes;
+    
 
     //solutes
+    #if SET_SOLUTE
+
+    nSolutes=mesh->nSolutes;
+
     if(mesh->nSolutes){
 
         //solute arrays
@@ -903,17 +913,53 @@ EXPORT_DLL int allocateSoluteArraysMem(
         carrays->k_yy=(double*)malloc(nSolutes*sizeof(double));  
 
         //cell arrarys
-        carrays->hphi=(double*)malloc(nSolutes*ncells*sizeof(double));
-        carrays->phi=(double*)malloc(nSolutes*ncells*sizeof(double)); 
         carrays->localDtd=(double*)malloc(nSolutes*ncells*sizeof(double));
         carrays->BTcell=(double*)malloc(nSolutes*ncells*sizeof(double));
 
         //nWallCell arrays
-        carrays->dhphi=(double*)malloc(nSolutes*nWallCell*sizeof(double));  
         carrays->Bwall=(double*)malloc(nSolutes*nWallCell*sizeof(double));    
     }
 
     return 1;
+    #endif
+
+
+    //sediments
+    #if SET_SED
+
+    nSediments=mesh->nSediments;
+    if(mesh->nSediments){
+
+        //sediment arrays
+        //carrays->typeDiff=(int*)malloc(nSolutes*sizeof(int));
+        carrays->dsp=(double*)malloc(nSediments*sizeof(double)); 
+        carrays->Fsp=(double*)malloc(nSediments*sizeof(double)); 
+        carrays->rhoW=(double*)malloc(nSediments*sizeof(double)); 
+        carrays->rhoS=(double*)malloc(nSediments*sizeof(double)); 
+
+        //sed x cell arrarys
+        carrays->NbSed=(double*)malloc(nSediments*ncells*sizeof(double));
+
+        //Cell arrays
+        carrays->NbTcell=(double*)malloc(ncells*sizeof(double));    
+    }
+
+    return 1;
+    #endif
+
+    nParticles = mesh->nParticles;
+
+    if(mesh->nParticles){
+        //cell arrarys
+        carrays->hphi=(double*)malloc(nParticles*ncells*sizeof(double));
+        carrays->phi=(double*)malloc(nParticles*ncells*sizeof(double));
+
+        //nWallCell arrays
+        carrays->dhphi=(double*)malloc(nParticles*nWallCell*sizeof(double));
+    }
+    
+    return 1;
+
 
 }
 
@@ -922,7 +968,7 @@ EXPORT_DLL int allocateSoluteArraysMem(
 
 
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int initilizeSoluteArrays(
+EXPORT_DLL int initilizeParticleArrays(
     t_parameters spar, 
     t_mesh *mesh,
     t_arrays *carrays,   
@@ -933,6 +979,7 @@ EXPORT_DLL int initilizeSoluteArrays(
 	int NCwall,ncells,nwc,nwb,nWallCell;
     int nActCells, nActWalls;
     int nSolutes;
+    int nSediments;
     int idx;
 
 
@@ -950,7 +997,8 @@ EXPORT_DLL int initilizeSoluteArrays(
     nWallCell=carrays->nWallCell;
     nwc=mesh->nw_calc;
     nwb=mesh->nw_bound;
-    nSolutes=mesh->nSolutes;
+    nSolutes=0;
+    nSediments = 0;
 
     if(mesh->nSolutes){
 
@@ -971,8 +1019,6 @@ EXPORT_DLL int initilizeSoluteArrays(
                 idx = j*ncells+i;
                 c1=&(mesh->c_cells->cells[i]);
 
-                carrays->hphi[idx] = c1->hphi[j];
-                carrays->phi[idx] = c1->phi[j];  
                 carrays->localDtd[idx]= 1e6;
                 carrays->BTcell[idx]=0.0;
                 //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
@@ -981,13 +1027,85 @@ EXPORT_DLL int initilizeSoluteArrays(
 
         //solute*cell*NCwall arrays
         for(i=0;i<nSolutes*nWallCell;i++){
-		    carrays->dhphi[i]=0.0;
             carrays->Bwall[i]=0.0;
 	    }
       
     } 
 
     return 1;
+
+
+
+    #endif
+
+    //Sediments
+
+    #if SET_SED
+    nSediments=mesh->nSediments;
+
+    if(mesh->nSediments){
+
+        carrays->flagErosion=mesh->sediments->flagErosion;
+
+        //sediment arrays
+        for(j=0;j<nSediments;j++){  
+            //carrays->typeDiff[j] = mesh->solutes->solute[j].typeDiff;
+            carrays->dsp[j] = mesh->sediments->sediment[j].dsp; 
+            carrays->Fsp[j] = mesh->sediments->sediment[j].Fsp;  
+            carrays->rhoW[j] = mesh->sediments->sediment[j].rhoW; 
+            carrays->rhoS[j] = mesh->sediments->sediment[j].rhoS;           
+        }        
+
+        
+        //sediment*cell arrays
+        for(j=0;j<nSediments;j++){        
+            for(i=0;i<ncells;i++){
+                idx = j*ncells+i;
+                c1=&(mesh->c_cells->cells[i]);
+                carrays->NbSed[idx]=0.0;
+                //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
+            }
+        }
+
+        //cell arrays
+        for(i=0;i<ncells;i++){
+            carrays->NbTcell[i]=0.0;
+        }
+        
+    } 
+
+    return 1;
+
+    #endif
+
+//sed X solute
+
+    nParticles = mesh->nParticles;
+
+    if(mesh->nParticles){
+
+        //cell arrays
+        for(j=0;j<nParticles;j++){        
+            for(i=0;i<ncells;i++){
+                idx = j*ncells+i;
+                c1=&(mesh->c_cells->cells[i]);
+
+                carrays->hphi[idx] = c1->hphi[j];
+                carrays->phi[idx] = c1->phi[j];  
+                //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
+            }
+        }
+
+        //cell*NCwall arrays
+        for(i=0;i<nParticles*nWallCell;i++){
+		    carrays->dhphi[i]=0.0;
+      
+        }
+        
+    }
+
+    return 1;
+
 
 }
 
