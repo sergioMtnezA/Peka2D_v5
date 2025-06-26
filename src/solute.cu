@@ -221,9 +221,9 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
 
     int nActWalls=arrays->nActWalls;
     int nActCells=arrays->nActCells;    
-    int ws = 0.1;
-    int epsis1 = 0.5;
-    int epsis2 = 0.5;
+    int ws = 0.01;
+    int epsis1 = 1;
+    int epsis2 = 1;
     int aux1, aux2, aux3, aux4;
    
 
