@@ -216,7 +216,7 @@ EXPORT_DLL int createArraysCudaMemory(
         //------------------------sediments
         cuPtr->dsp,
         cuPtr->Fsp,
-        cuPtr->rhoW,
+        cuPtr->BulkSC,
         cuPtr->rhoS,
         //------------------------sediments*cells
         cuPtr->NbSed,
@@ -1212,7 +1212,7 @@ EXPORT_DLL int allocateParticleArraysCudaMem(
         //sediment control arrays
         cudaMalloc((void**) &(cuPtr->dsp), nSediments*sizeof(double));
         cudaMalloc((void**) &(cuPtr->Fsp), nSediments*sizeof(double));
-        cudaMalloc((void**) &(cuPtr->rhoW), nSediments*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->BulkSC), nSediments*sizeof(double));
         cudaMalloc((void**) &(cuPtr->rhoS), nSediments*sizeof(double));
 
         //cells*sediments
@@ -1292,7 +1292,7 @@ int copyParticleArraysCudaMem(
         //sediments
         cudaMemcpy((cuPtr->dsp), (carrays->dsp), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->Fsp), (carrays->Fsp), nSediments*sizeof(double), cudaMemcpyHostToDevice );      
-        cudaMemcpy((cuPtr->rhoW), (carrays->rhoW), nSediments*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->BulkSC), (carrays->BulkSC), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->rhoS), (carrays->rhoS), nSediments*sizeof(double), cudaMemcpyHostToDevice ); 
 
         //sediments*cells    
@@ -1332,7 +1332,7 @@ __global__ void assignParticleArraysToCudaMem(int nSolutes, int nSediments, int 
     double *Bwall,
     double *dsp,
     double *Fsp,
-    double *rhoW,
+    double *BulkSC,
     double *rhoS,
     double *NbSed,
     double *NbTcell,
@@ -1364,7 +1364,7 @@ __global__ void assignParticleArraysToCudaMem(int nSolutes, int nSediments, int 
         //sediment controls
         garrays->dsp=dsp;
         garrays->Fsp=Fsp;
-        garrays->rhoW=rhoW;
+        garrays->BulkSC=BulkSC;
         garrays->rhoS=rhoS;
 
         //sediment*cells
@@ -1425,7 +1425,7 @@ EXPORT_DLL int freeParticleCudaMemory(
         //solute control arrays
         cudaFree(cuPtr->dsp);
         cudaFree(cuPtr->Fsp);
-        cudaFree(cuPtr->rhoW);
+        cudaFree(cuPtr->BulkSC);
         cudaFree(cuPtr->rhoS);
 
         //cells

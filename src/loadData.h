@@ -131,7 +131,7 @@ struct Peka2D_SoluteGroup_{
 struct Peka2D_Sediment_{
     char name[STR_SIZE];
     int typeDiff;
-    double dsp,Fsp,rhoW,rhoS;
+    double dsp,Fsp,BulkSC,rhoS;
     double maxConc;
 };
 

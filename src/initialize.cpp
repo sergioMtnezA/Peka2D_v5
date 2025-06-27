@@ -934,7 +934,7 @@ EXPORT_DLL int allocateParticleArraysMem(
         //carrays->typeDiff=(int*)malloc(nSolutes*sizeof(int));
         carrays->dsp=(double*)malloc(nSediments*sizeof(double)); 
         carrays->Fsp=(double*)malloc(nSediments*sizeof(double)); 
-        carrays->rhoW=(double*)malloc(nSediments*sizeof(double)); 
+        carrays->BulkSC=(double*)malloc(nSediments*sizeof(double)); 
         carrays->rhoS=(double*)malloc(nSediments*sizeof(double)); 
 
         //sed x cell arrarys
@@ -1052,7 +1052,7 @@ EXPORT_DLL int initilizeParticleArrays(
             //carrays->typeDiff[j] = mesh->solutes->solute[j].typeDiff;
             carrays->dsp[j] = mesh->sediments->sediment[j].dsp; 
             carrays->Fsp[j] = mesh->sediments->sediment[j].Fsp;  
-            carrays->rhoW[j] = mesh->sediments->sediment[j].rhoW; 
+            carrays->BulkSC[j] = mesh->sediments->sediment[j].rhoW; 
             carrays->rhoS[j] = mesh->sediments->sediment[j].rhoS;           
         }        
 

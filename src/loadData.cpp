@@ -1731,7 +1731,7 @@ int createParticleStructures(
 
             mesh->sediments->sediment[j].dsp = sedimentGroup->sediment[j].dsp;
             mesh->sediments->sediment[j].Fsp = sedimentGroup->sediment[j].Fsp;
-            mesh->sediments->sediment[j].rhoW = sedimentGroup->sediment[j].rhoW;
+            mesh->sediments->sediment[j].BulkSC = sedimentGroup->sediment[j].BulkSC;
             mesh->sediments->sediment[j].rhoS = sedimentGroup->sediment[j].rhoS;
 
             mesh->sediments->sediment[j].maxConc=sedimentGroup->sediment[j].maxConc;
@@ -2056,7 +2056,7 @@ int readSedimentFile(
             fscanf(fp,"%lf %lf",
                 &sedimentGroup->sediment[i].dsp,
                 &sedimentGroup->sediment[i].Fsp,
-                &sedimentGroup->sediment[i].rhoW,
+                &sedimentGroup->sediment[i].BulkSC,
                 &sedimentGroup->sediment[i].rhoS);
         }
 

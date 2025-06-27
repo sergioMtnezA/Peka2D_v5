@@ -7,6 +7,7 @@
 #define ANISOTROPIC_DIFF 2
 #define FRICTION_DIFF 3
 #define _Dm_ 0.0 //Molecular diffusion
+#define alphap 1.0 //
 
 /**
  * @brief This function initializes the variation of conserved variables in the arrays structure to 0.0 and the array solidWallByCell to 0.

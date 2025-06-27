@@ -344,7 +344,7 @@ struct l_solutes_{
 */
 struct t_sediment_{
 	char name[STR_SIZE]; /**< @brief Sediment name*/
-	double dsp,Fsp,rhoW,rhoS; /**< @sediments parameters*/
+	double dsp,Fsp,BulkSC,rhoS; /**< @sediments parameters*/
 	double maxConc;
 };
 
@@ -557,8 +557,10 @@ struct t_arrays_{
 	#if SET_SED
 		int flagErosion; /**< @brief Sediment erosion activation flag */
 
-		//solute data
-		double *dsp, *Fsp, *rhoW, *rhoS; //nsed
+		//sediment data
+		double *dsp, *Fsp;//nsed
+		
+		double *BulkSC, *rhoS; //cells
 
 		//solute conservative
 		double *NbSed; /**< @brief [NSED x NCELLS] Sediment local dt in cells*/
@@ -684,7 +686,7 @@ struct t_cuPtr_{
 	#if SET_SED
 
 		//sediment
-		double *dsp, *Fsp, *rhoW, *rhoS; 
+		double *dsp, *Fsp, *BulkSC, *rhoS; 
 
 		//nsediments*cells
 		

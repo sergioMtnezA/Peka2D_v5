@@ -257,7 +257,7 @@ __global__ void g_update_particle_cells(int nTasks, t_arrays *arrays){
 
 }
 
-
+#if SET_SOLUTE
 ////////////////////////////////////////////////////
 __global__ void g_initialize_solute_diffusion_delta(int nTasks, t_arrays *arrays){
 /*----------------------------*/
@@ -522,6 +522,8 @@ __global__ void g_get_solute_diffusion_dtmin(t_arrays *arrays, double *localDtd,
 
 }
 
+#endif
+
 
 //////////////////////////////////////////////////////
 __global__ void g_update_solute_diffusion_cells(int nTasks, t_arrays *arrays, double *Dtd){
@@ -580,6 +582,83 @@ __global__ void g_update_solute_diffusion_cells(int nTasks, t_arrays *arrays, do
 ////////////////////////////////////////////////////
 __global__ void g_wall_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
 /*----------------------------*/
+    int idx;
+    int ncells = arrays->ncells;
+    int NCwall = arrays->NCwall;
+
+    int id1,id2;
+    int idw1,idw2; 
+
+    int jsed;
+
+    //hydrodynamic parameters
+    double qnormalL;
+    double length;
+    double areaL, areaR;
+
+    // Solute variable
+    double phiL, phiR;
+    double dhphi;
+    double dphi;
+
+    int nActWalls = arrays->nActWalls;
+    int iactWall;
+
+    double aux1,aux2,aux3,aux4;
+
+
+    //Sediment parameters
+    double dsp;
+    double Fsp;
+    double BulkSC;
+    double rhoS;
+
+    double wsp;
+
+    double Ebj;
+    double Dbj;
+
+    double dt = arrays->dt;
+    double gp = arrays->gp;
+
+    double pb;
+    double rhob;
+
+    int i = threadIdx.x+(blockIdx.x*blockDim.x);    
+    if(i<nTasks){
+
+        //cells index
+        id1=arrays->idx1[idx];
+        id2=arrays->idx2[idx];
+
+        BulkSC = arrays->BulkSC[idx];
+        rhoS = arrays->rhoS[idx];
+
+        aux2 = 0;
+
+        for(jphi=0;jphi<arrays->nSolutes;jphi++){
+            
+            BulkSC = arrays->BulkSC[idx];
+            rhoS = arrays->rhoS[idx];
+
+            dsp = arrays->dsp[jsed];
+            Fsp = arrays->Fsp[jsed];
+
+            aux1 = viscosity/dsp;
+
+            wsp = sqrt((3.95*aux1)*(3.95*aux1)+1.09 * (rhoS-BulkSC)/BulkSC*gp*dsp)-13.95*aux1;
+
+            aux2 = aux2 + 10*10*10*(Fsp * dsp);
+
+            
+        }
+
+        pb = 0.13 + 0.21*(0.002 + aux2);
+
+        rhob = BulkSC*pb + rhoS*
+
+    }
+
 }
 
 ////////////////////////////////////////////////////
