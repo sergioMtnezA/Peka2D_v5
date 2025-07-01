@@ -523,7 +523,7 @@ EXPORT_DLL void generateTimeStep(
 
 
 
-    #if SET_SOLUTE
+    #if SET_SOLUTE || SET_SED
     //Start diffusion time .....................................
     stime1=clock();
     if(carrays->flagDiffusion){
@@ -564,7 +564,13 @@ EXPORT_DLL void generateTimeStep(
     cudaDeviceSynchronize();
     stime2=clock();
 	timers->diffusion += double(stime2-stime1)/CLOCKS_PER_SEC;
-    //End diffusion time .....................................    
+    //End diffusion time .....................................
+    
+    if(carrays->flagErosion){
+        nTasks=carrays->nActCells;
+        blocksPerGrid = nTasks/threadsPerBlock + 1;                 
+        g_cell_sediment_erosion_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    }
     #endif
 
 

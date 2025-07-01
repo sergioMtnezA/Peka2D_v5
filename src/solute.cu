@@ -584,12 +584,10 @@ __global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
 /*----------------------------*/
     int idx;
     int ncells = arrays->ncells;
-    int NCwall = arrays->NCwall;
-
-    int id1,id2;
-    int idw1,idw2; 
-
     int jsed;
+    int gp = arrays->gp;
+    int nSolutes;
+    int idjsed;
 
     //hydrodynamic parameters
     double qnormalL;
@@ -597,15 +595,7 @@ __global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
     double areaL, areaR;
 
     // Solute variable
-    double phiL, phiR;
-    double dhphi;
-    double dphi;
-
-    int nActWalls = arrays->nActWalls;
-    int iactWall;
-
     double aux1,aux2,aux3,aux4;
-
 
     //Sediment parameters
     double dsp;
@@ -613,7 +603,6 @@ __global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
     double CriticSS, SheardS;
     double rhoS;
     double rhoSmed;
-    int rhow;
     double epsiS;
 
     double wsp;
@@ -623,7 +612,6 @@ __global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
     double Nbj;
 
     double dt = arrays->dt;
-    int gp = arrays->gp;
 
     double pb;
     double rhob;
@@ -641,9 +629,6 @@ __global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
     if(i<nTasks){
 
         //cells index
-        id1=arrays->idx1[idx];
-        id2=arrays->idx2[idx];
-
         u = arrays->u[idx];     
         v = arrays->v[idx];
 
@@ -658,6 +643,8 @@ __global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
         Totalphised = 0.;
 
         for(jsed=0;jsed<arrays->nSediments;jsed++){
+
+            idjsed = jsed*ncells+idx;
             
             CriticSS = arrays->CriticSS[jsed];
             rhoS = arrays->rhoS[jsed];
@@ -665,15 +652,14 @@ __global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
             dsp = arrays->dsp[jsed];
             Fsp = arrays->Fsp[jsed];
 
-
             aux1 = viscosity/dsp;
 
             wsp = sqrt((3.95*aux1)*(3.95*aux1)+1.09 * (rhoS-_rhow_)/_rhow_ *gp*dsp)-13.95*aux1;
 
             aux2 += 10.*10.*10.*(Fsp * dsp);
 
-            Dbj = alphap*wsp*arrays->phi[jsed*ncells+idx];
-            Totalphised += arrays->phi[jsed*ncells+idx];
+            Dbj = alphap*wsp*arrays->phi[idjsed];
+            Totalphised += arrays->phi[idjsed];
 
             rhoSmed += rhoS/arrays->nSediments;
 
@@ -684,18 +670,29 @@ __global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
 
                 moduloShear = sqrt(shearSx*shearSx + shearSy*shearSy);
 
-                SheardS = moduloShear/((rhoS-_rhow_)*gp*dsp);
+                SheardS = moduloShear/((rhoS - _rhow_)*gp*dsp);
                 
                 aux3 = BetaT*sqrt((rhoS/_rhow_)*gp*dsp*dsp*dsp);
                 aux4 = aux3*(pow((2.62e-5)*((SheardS/CriticSS - 1)*moduloU/wsp),1.74));
 
-                Ebj = alphap*Fsp*wsp*(aux4/(h*moduloU));
+                if(moduloU>TOL9){
+                    Ebj = alphap*Fsp*wsp*(aux4/(h*moduloU));
+                }else{
+                    Ebj = 0;
+                }
 
             }
 
             Nbj += Ebj-Dbj;
 
-            arrays->hphi[jsed*ncells + idx] += (Ebj-Dbj);
+            nSolutes = 0;
+
+            #if SET_SOLUTE
+            nSolutes = arrays->nSolutes;
+            #endif
+
+            arrays->hphi[nSolutes*ncells + idjsed] += (Ebj-Dbj);
+            arrays->phi[nSolutes*ncells + idjsed] = arrays->hphi[nSolutes*ncells + idjsed]/arrays->h[idx];
 
         }
 
@@ -714,7 +711,6 @@ __global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
         arrays->z[idx] += - epsiS*Nbj;
 
     }
-
 }
 
 #endif
