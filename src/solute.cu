@@ -254,7 +254,6 @@ __global__ void g_update_particle_cells(int nTasks, t_arrays *arrays){
 
         }
     }
-
 }
 
 #if SET_SOLUTE
@@ -579,8 +578,9 @@ __global__ void g_update_solute_diffusion_cells(int nTasks, t_arrays *arrays, do
 
 }
 
+#if SET_SED
 ////////////////////////////////////////////////////
-__global__ void g_wall_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
+__global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
 /*----------------------------*/
     int idx;
     int ncells = arrays->ncells;
@@ -610,19 +610,32 @@ __global__ void g_wall_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
     //Sediment parameters
     double dsp;
     double Fsp;
-    double BulkSC;
+    double CriticSS, SheardS;
     double rhoS;
+    double rhoSmed;
+    int rhow;
+    double epsiS;
 
     double wsp;
 
     double Ebj;
     double Dbj;
+    double Nbj;
 
     double dt = arrays->dt;
-    double gp = arrays->gp;
+    int gp = arrays->gp;
 
     double pb;
     double rhob;
+    double rho;
+
+    double u,v;
+    double h;
+    double shearSx, shearSy, moduloShear;
+    double Totalphised;
+
+    double moduloU;
+    double nman2wall;
 
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
@@ -631,39 +644,79 @@ __global__ void g_wall_sediment_erosion_calculus(int nTasks, t_arrays *arrays){
         id1=arrays->idx1[idx];
         id2=arrays->idx2[idx];
 
-        BulkSC = arrays->BulkSC[idx];
-        rhoS = arrays->rhoS[idx];
+        u = arrays->u[idx];     
+        v = arrays->v[idx];
 
-        aux2 = 0;
+        h = arrays->h[idx];
 
-        for(jphi=0;jphi<arrays->nSolutes;jphi++){
+        moduloU = sqrt(u*u+v*v);
+        nman2wall = arrays->nman2wall[idx];
+
+        aux2 = 0.;
+        Nbj = 0.;
+        rhoSmed = 0.;
+        Totalphised = 0.;
+
+        for(jsed=0;jsed<arrays->nSediments;jsed++){
             
-            BulkSC = arrays->BulkSC[idx];
-            rhoS = arrays->rhoS[idx];
+            CriticSS = arrays->CriticSS[jsed];
+            rhoS = arrays->rhoS[jsed];
 
             dsp = arrays->dsp[jsed];
             Fsp = arrays->Fsp[jsed];
 
+
             aux1 = viscosity/dsp;
 
-            wsp = sqrt((3.95*aux1)*(3.95*aux1)+1.09 * (rhoS-BulkSC)/BulkSC*gp*dsp)-13.95*aux1;
+            wsp = sqrt((3.95*aux1)*(3.95*aux1)+1.09 * (rhoS-_rhow_)/_rhow_ *gp*dsp)-13.95*aux1;
 
-            aux2 = aux2 + 10*10*10*(Fsp * dsp);
+            aux2 += 10.*10.*10.*(Fsp * dsp);
 
-            
+            Dbj = alphap*wsp*arrays->phi[jsed*ncells+idx];
+            Totalphised += arrays->phi[jsed*ncells+idx];
+
+            rhoSmed += rhoS/arrays->nSediments;
+
+            if(arrays->h[idx]>TOL12){
+                aux1 = nman2wall*nman2wall*pow(h,-4/3);
+                shearSx = _rhow_*gp*h*aux1*moduloU*u;
+                shearSy = _rhow_*gp*h*aux1*moduloU*v;
+
+                moduloShear = sqrt(shearSx*shearSx + shearSy*shearSy);
+
+                SheardS = moduloShear/((rhoS-_rhow_)*gp*dsp);
+                
+                aux3 = BetaT*sqrt((rhoS/_rhow_)*gp*dsp*dsp*dsp);
+                aux4 = aux3*(pow((2.62e-5)*((SheardS/CriticSS - 1)*moduloU/wsp),1.74));
+
+                Ebj = alphap*Fsp*wsp*(aux4/(h*moduloU));
+
+            }
+
+            Nbj += Ebj-Dbj;
+
+            arrays->hphi[jsed*ncells + idx] += (Ebj-Dbj);
+
         }
 
-        pb = 0.13 + 0.21*(0.002 + aux2);
+        pb = 0.13 + 0.21*pow(0.002 + aux2, -0.21);
+        rhob = _rhow_*pb + rhoSmed*(1-pb);
+        rho = _rhow_*(1-Totalphised) + rhoSmed * Totalphised;
 
-        rhob = BulkSC*pb + rhoS*
+        epsiS = 1./(1.-pb);
+
+        arrays->Nbsed[idx] = Nbj;
+
+        arrays->h[idx] += epsiS*Nbj;
+        arrays->hu[idx] += - u*(rhob/rho - 1)*epsiS*Nbj;
+        arrays->hv[idx] += - v*(rhob/rho - 1)*epsiS*Nbj;
+
+        arrays->z[idx] += - epsiS*Nbj;
 
     }
 
 }
 
-////////////////////////////////////////////////////
-__global__ void g_update_sediment_erosion_contributions(int nTasks, t_arrays *arrays, double *localDtd){
-/*----------------------------*/	
-}
+#endif
 
 #endif 

@@ -211,7 +211,7 @@ __global__ void assignParticleArraysToCudaMem(int nSolutes, int nSediments, int 
     //------------------------sediments
     double *dsp,
     double *Fsp,
-    double *rhoW,
+    double *CriticSS,
     double *rhoS,
     //------------------------sediments*cells
     double *NbSed,

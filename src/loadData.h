@@ -131,7 +131,7 @@ struct Peka2D_SoluteGroup_{
 struct Peka2D_Sediment_{
     char name[STR_SIZE];
     int typeDiff;
-    double dsp,Fsp,BulkSC,rhoS;
+    double dsp,Fsp,CriticSS,rhoS;
     double maxConc;
 };
 
@@ -148,7 +148,7 @@ struct Peka2D_Setup_{
     Peka2D_OBCWalls *IOBC;
     Peka2D_OBCWalls *OOBC;  
     Peka2D_SoluteGroup *soluteGroup;  
-    Peka2D_SedimentGroup *soluteGroup;
+    Peka2D_SedimentGroup *sedimentGroup;
 };
 
 
