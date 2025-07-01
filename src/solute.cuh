@@ -80,5 +80,13 @@ __global__ void g_get_solute_diffusion_dtmin(t_arrays *arrays, double *localDtd,
  */
 __global__ void g_update_solute_diffusion_cells(int nTasks, t_arrays *arrays, double *Dtd);
 
+#if SET_SED
+/**
+ * @brief This function updates the water depth and water discharges (in wet cells).
+ * @param nTasks This integer variable passes the number of times the computation needs to be done.
+ * @param arrays This pointer variable passes the arrays structure.
+ */
+__global__ void g_cell_sediment_erosion_calculus(int nTasks, t_arrays *arrays);
 
+#endif
 
