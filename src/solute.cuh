@@ -43,6 +43,13 @@ __global__ void g_update_solute_contributions(int nTasks, t_arrays *arrays);
 __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays);
 
 /**
+ * @brief This function updates the water depth and water discharges (in wet cells).
+ * @param nTasks This integer variable passes the number of times the computation needs to be done.
+ * @param arrays This pointer variable passes the arrays structure.
+ */
+__global__ void g_multilayer_update_solute_cells(int nTasks, t_arrays *arrays);
+
+/**
  * @brief This function initializes the variation of conserved variables in the arrays structure to 0.0 and the array solidWallByCell to 0.
  * @param nTasks This integer variable passes the number of times the computation needs to be done.
  * @param localDt This pointer variable gets the values of the local time steps.
