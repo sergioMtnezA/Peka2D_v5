@@ -258,17 +258,16 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
                 sid = jphi*ncells+idx;
 
                 #if SET_MULTILAYER
+                sid2 = (jphi-1)*ncells+idx; //j+1
+                sid1 = (jphi+1)*ncells+idx; //j-1
+
                 if (jphi>0 && jphi<arrays->nSolutes-1){
-                    sid2 = (jphi-1)*ncells+idx;
-                    sid1 = (jphi+1)*ncells+idx;
-                    aux1 = arrays->phi[sid2];
-                    aux2 = arrays->phi[sid1];
-                }else if(jphi == arrays->nSolutes-1){
-                    sid2 = (jphi-1)*ncells+idx;
-                    aux1 = arrays->phi[sid2];
-                    aux2 = 0.0;
+                    aux1 = arrays->phi[sid2]; // phi j+1
+                    aux2 = arrays->phi[sid1]; // phi j-1
+                }else if(jphi == arrays->nSolutes){
+                    aux1 = arrays->phi[sid2]; // phi j+1
+                    aux2 = 0.0; 
                 }else if(jphi == 0){
-                    sid1 =(jphi+1)*ncells+idx;
                     aux2 = arrays->phi[sid1];
                     aux1 = 0.0;
                 }
