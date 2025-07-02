@@ -274,15 +274,11 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
                     }
 
                     aux4 = arrays->area[idx]*(ws*((aux1-aux2)/2) + epsis1*((aux1-arrays->phi[sid])/(arrays->h[idx]/arrays->nSolutes)) -epsis2*((arrays->phi[sid]-aux2)/(arrays->h[idx]/arrays->nSolutes)));
-                    
-                    __host__ __device__ __forceinline__ constexpr
-                    double my_fabs(double x) {
-                        return x < 0.0 ? -x : x;
-                    }
 
-                    if(my_fabs(aux4)<TOL14){
-                        aux4 = 0.0;
-                    }
+                    printf("contrib %lf\n",aux4);
+                    // if(fabs(aux4)<TOL14){
+                    //     aux4 = 0.0;
+                    // }
                 }
                 #endif
 
