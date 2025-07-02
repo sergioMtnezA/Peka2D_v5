@@ -264,7 +264,7 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
                 if (jphi>0 && jphi<arrays->nSolutes-1){
                     aux1 = arrays->phi[sid2]; // phi j+1
                     aux2 = arrays->phi[sid1]; // phi j-1
-                }else if(jphi == arrays->nSolutes){
+                }else if(jphi == arrays->nSolutes-1){
                     aux1 = arrays->phi[sid2]; // phi j+1
                     aux2 = 0.0; 
                 }else if(jphi == 0){
