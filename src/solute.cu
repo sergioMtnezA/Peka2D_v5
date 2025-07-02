@@ -258,22 +258,32 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
                 sid = jphi*ncells+idx;
 
                 #if SET_MULTILAYER
-                sid2 = (jphi-1)*ncells+idx; //j+1
-                sid1 = (jphi+1)*ncells+idx; //j-1
+                if(arrays->h[idx]>TOL12){
+                    sid2 = (jphi-1)*ncells+idx; //j+1
+                    sid1 = (jphi+1)*ncells+idx; //j-1
 
-                if (jphi>0 && jphi<arrays->nSolutes-1){
-                    aux1 = arrays->phi[sid2]; // phi j+1
-                    aux2 = arrays->phi[sid1]; // phi j-1
-                }else if(jphi == arrays->nSolutes-1){
-                    aux1 = arrays->phi[sid2]; // phi j+1
-                    aux2 = 0.0; 
-                }else if(jphi == 0){
-                    aux2 = arrays->phi[sid1];
-                    aux1 = 0.0;
+                    if (jphi>0 && jphi<arrays->nSolutes-1){
+                        aux1 = arrays->phi[sid2]; // phi j+1
+                        aux2 = arrays->phi[sid1]; // phi j-1
+                    }else if(jphi == arrays->nSolutes){
+                        aux1 = arrays->phi[sid2]; // phi j+1
+                        aux2 = 0.0; 
+                    }else if(jphi == 0){
+                        aux2 = arrays->phi[sid1];
+                        aux1 = 0.0;
+                    }
+
+                    aux4 = arrays->area[idx]*(ws*((aux1-aux2)/2) + epsis1*((aux1-arrays->phi[sid])/(arrays->h[idx]/arrays->nSolutes)) -epsis2*((arrays->phi[sid]-aux2)/(arrays->h[idx]/arrays->nSolutes)));
+                    
+                    __host__ __device__ __forceinline__ constexpr
+                    double my_fabs(double x) {
+                        return x < 0.0 ? -x : x;
+                    }
+
+                    if(my_fabs(aux4)<TOL14){
+                        aux4 = 0.0;
+                    }
                 }
-
-                aux4 = arrays->area[idx]*(ws*((aux1-aux2)/2) + epsis1*((aux1-arrays->phi[sid])/(arrays->h[idx]/arrays->nSolutes)) -epsis2*((arrays->phi[sid]-aux2)/(arrays->h[idx]/arrays->nSolutes)));
-               
                 #endif
 
                 arrays->hphi[sid] += (arrays->dhphi[siw0]+aux4)*dt;
