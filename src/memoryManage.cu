@@ -284,6 +284,7 @@ EXPORT_DLL int copyComputationControls(
 
     //solute permanent flag
     cudaMemcpy(&(garrays->nSolutes), &(carrays->nSolutes), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nInterfaces), &(carrays->nInterfaces), sizeof(int), cudaMemcpyHostToDevice );
 
 
 

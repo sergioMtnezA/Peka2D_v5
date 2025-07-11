@@ -115,6 +115,9 @@ struct t_mesh_{
 	int nSolutes;
 	l_solutes *solutes;
 
+	//multilayer
+	int nInterfaces;
+
 };
 
 
@@ -377,7 +380,7 @@ struct t_arrays_{
 
 	//solute controls
 	int nSolutes; /**< @brief Number of solutes */
-
+	int nInterfaces;
 	
 	//ARRAY DE CELDA
     int nActCells; /**< @brief Run-control number of active cells*/

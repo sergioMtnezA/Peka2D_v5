@@ -218,6 +218,7 @@ EXPORT_DLL int setControlParameters(
 
     //initialize configuration parameters
     mesh->nSolutes=0;
+    mesh->nInterfaces=0;
 
     return 1;
 
@@ -1829,7 +1830,13 @@ int readHotstartSoluteState(
 
                 if(c1->h > TOL12){
                     c1->phi[j] = MAX(0.0,dataSolute);
+
+                    #if SET_MULTILAYER
+                    c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
+                    #else
                     c1->hphi[j] = c1->h * c1->phi[j];
+                    #endif
+
                 }else{
                     c1->phi[j] = 0.0;
                     c1->hphi[j] = 0.0;

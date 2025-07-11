@@ -19,6 +19,8 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
     int ncells = arrays->ncells;
     int NCwall = arrays->NCwall;
 
+    int nSolutes=arrays->nSolutes;
+
     int id1,id2;
     int idw1,idw2; 
 
@@ -76,8 +78,12 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
             phiR = arrays->phi[sid2];
 
             dphi=0.5*(phiL+phiR)-SIGN(qnormalL)*0.5*(phiR-phiL);
+            #if SET_MULTILAYER
+            dhphi=(qnormalL/nSolutes)*dphi;
+            #else
             dhphi=qnormalL*dphi;
-
+            #endif
+            
             //ccccccccccccccccccccccccccccccccccccccccccccccc Add solute contributions
             aux1 = length/areaL;
             aux2 = length/areaR;
@@ -136,7 +142,12 @@ __global__ void g_bound_solute_calculus(int nTasks, t_arrays *arrays){
 		hv=arrays->hv[cidx];
         area=arrays->area[cidx];
 
+        #if SET_MULTILAYER
         hun = hu*arrays->nxWallBound[iBoundCell] + hv*arrays->nyWallBound[iBoundCell];
+        hun /= nSolutes;
+        #else
+        hun = hu*arrays->nxWallBound[iBoundCell] + hv*arrays->nyWallBound[iBoundCell];
+        #endif        
         length = arrays->lWallBound[iBoundCell];
 
         //for(jphi=0;jphi<nSolutes;jphi++){ //compact
@@ -222,10 +233,10 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
     int nActWalls=arrays->nActWalls;
     int nActCells=arrays->nActCells;    
     int aux1, aux2, aux3, aux4;
-   
+
+    double hlayer;
 
     dt=arrays->dt;
-
 
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
@@ -242,24 +253,26 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
 
         if(arrays->h[idx]>TOL12){ //wet cells
 
+            hlayer=arrays->h[idx]/nSolutes;
             
             //for(jphi=0;jphi<arrays->nSolutes;jphi++){ //compact
         
-
                 siw0 = jphi*(ncells*NCwall)+idx;
                 sid = jphi*ncells+idx;
-
-            //} //compact
         
                 arrays->hphi[sid] += arrays->dhphi[siw0]*dt;
                     
                 if(fabs(arrays->hphi[sid])<TOL14){
                     arrays->hphi[sid]=0.0;
                 }
-                
-                arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
 
-                
+                #if SET_MULTILAYER
+                arrays->phi[sid] = arrays->hphi[sid]/hlayer;
+                #else
+                arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
+                #endif
+
+            //} //compact
         }
     }
 
@@ -268,57 +281,59 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
 ////////////////////////////////////////////////////
 __global__ void g_multilayer_update_solute_cells(int nTasks, t_arrays *arrays){
 /*----------------------------*/
-int idx, idx1, idx2;
-    double dt;
-    int siw0,sid,sid1,sid2;
+    int idx;
+    int sid1,sid2;
+    int jphi;
 
-    int NCwall=arrays->NCwall;
     int ncells=arrays->ncells;
     int nSolutes=arrays->nSolutes;
+    int nInterfaces= arrays->nSolutes-1;
 
-    int jphi;
-    int iactCell;
+    double phij1, phij2;
+    double aux1;
+    double hlayer;
 
-    int nActWalls=arrays->nActWalls;
-    int nActCells=arrays->nActCells;    
-    int ws = 0.01;
-    int epsis1 = 1e-4;
-    int epsis2 = 1e-4;
-    int aux1, aux2, aux3, aux4;
-    int area=arrays->area[idx];
+    double dt;
 
     dt=arrays->dt;
-
+    
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
         idx=arrays->actCells[i]; //compact
-        aux4 = 0.;
-        for(jphi=0;jphi<arrays->nSolutes;jphi++){
-            sid = jphi*ncells+idx;
-            sid2 = (jphi-1)*ncells+idx; //j+1
-            sid1 = (jphi+1)*ncells+idx; //j-1
 
-            if(arrays->h[idx]>TOL12){
-                if (jphi>0 && jphi<arrays->nSolutes-1){
-                    aux1 = arrays->phi[sid2]; // phi j+1
-                    aux2 = arrays->phi[sid1]; // phi j-1
-                }else if(jphi == arrays->nSolutes){
-                    aux1 = arrays->phi[sid2]; // phi j+1
-                    aux2 = 0.0; 
-                }else if(jphi == 0){
-                    aux2 = arrays->phi[sid1];
-                    aux1 = 0.0;
+        hlayer = arrays->h[idx]/nSolutes;
+
+        if(arrays->h[idx] >= arrays->minh){
+            aux1 = 0.0;
+
+            for(jphi=0;jphi<nInterfaces;jphi++){
+
+                sid1 = jphi*ncells+idx;
+                sid2 = (jphi+1)*ncells+idx; //j+1
+
+                phij1 = arrays->phi[sid1];
+                phij2 = arrays->phi[sid2]; //j-1 aux2
+
+                aux1 = dt*(ws*((phij1+phij2)/2.) + epsis1*((phij2-phij1)/hlayer));
+        
+                if(fabs(aux1)>TOL14){
+
+                    if(aux1>0 && aux1>arrays->hphi[sid2]){
+                        aux1 = arrays->hphi[sid2];
+                    }else if(aux1<0 && fabs(aux1)>arrays->hphi[sid1]){
+                        aux1 = arrays->hphi[sid1];
+                    }
+                    arrays->hphi[sid1] += aux1;
+                    arrays->hphi[sid2] -= aux1;
+
+                    arrays->phi[sid1] = arrays->hphi[sid1]/hlayer;
+                    arrays->phi[sid2] = arrays->hphi[sid2]/hlayer;
                 }
-                aux4 = arrays->area[idx]*(ws*((aux1-aux2)/2) + epsis1*((aux1-arrays->phi[sid])/(arrays->h[idx]/arrays->nSolutes)) -epsis2*((arrays->phi[sid]-aux2)/(arrays->h[idx]/arrays->nSolutes)));
-            }
-            if(fabs(aux4)>TOL12){
-                arrays->hphi[sid] += aux4; 
-                arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
+                
             }
         }
-            
+        
     }
-
 }
 
 

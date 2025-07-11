@@ -59,6 +59,7 @@ EXPORT_DLL int initilizeComputationControls(
 
     //solute permanent flag to switch on/off memory & computation
 	carrays->nSolutes = mesh->nSolutes;
+    carrays->nInterfaces = mesh->nSolutes - 1;
 
     return 1;
  
@@ -971,8 +972,12 @@ EXPORT_DLL int initilizeSoluteArrays(
                 idx = j*ncells+i;
                 c1=&(mesh->c_cells->cells[i]);
 
+                #if SET_MULTILAYER
+                carrays->hphi[idx] = c1->hphi[j]/nSolutes;
+                #else
                 carrays->hphi[idx] = c1->hphi[j];
-                carrays->phi[idx] = c1->phi[j];  
+                #endif
+                carrays->phi[idx] = c1->phi[j]; 
                 carrays->localDtd[idx]= 1e6;
                 carrays->BTcell[idx]=0.0;
                 //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
