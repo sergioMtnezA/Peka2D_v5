@@ -392,7 +392,12 @@ EXPORT_DLL void generateTimeStep(
 
     nTasks=carrays->nActWalls;
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
-    g_wall_rotated_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
+    #if RIEMANN == 1
+        g_wall_rotated_calculus_aroe <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
+    #elif RIEMANN == 2
+        g_wall_rotated_calculus_hlls <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
+    #endif
+    getchar();
     cudaMemcpy(&(carrays->nActCells), &(garrays->nActCells), sizeof(int), cudaMemcpyDeviceToHost );
   
     

@@ -22,7 +22,14 @@ __global__ void g_initialize_delta(int nTasks, t_arrays *arrays);
  * @param nTasks This integer variable passes the number of times the computation needs to be done.
  * @param localDt This pointer variable gets the values of the local time steps.
  */
-__global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *localDt);
+__global__ void g_wall_rotated_calculus_aroe(int nTasks, t_arrays *arrays, double *localDt);
+
+/**
+ * @brief This function initializes the variation of conserved variables in the arrays structure to 0.0 and the array solidWallByCell to 0.
+ * @param nTasks This integer variable passes the number of times the computation needs to be done.
+ * @param localDt This pointer variable gets the values of the local time steps.
+ */
+__global__ void g_wall_rotated_calculus_hlls(int nTasks, t_arrays *arrays, double *localDt);
 
 //__global__ void g_bound_calculus
 

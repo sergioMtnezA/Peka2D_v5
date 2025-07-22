@@ -28,7 +28,7 @@ __global__ void g_initialize_delta(int nTasks, t_arrays *arrays){
 
 
 ////////////////////////////////////////////////////
-__global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *localDt){
+__global__ void g_wall_rotated_calculus_aroe(int nTasks, t_arrays *arrays, double *localDt){
 /*----------------------------*/
 
     int idx;
@@ -476,6 +476,491 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
                     for(j=0;j<3;j++){
                         dURrot[j] += aux1*eigel[k][j];
                     }
+                }
+            }
+        }
+
+        // Left cell X-Y contributions
+        dUL[0] = dULrot[0];
+        dUL[1] = dULrot[1]*nx - dULrot[2]*ny;
+        dUL[2] = dULrot[1]*ny + dULrot[2]*nx;
+
+        // Right cell Left cell X-Y contributions
+        dUR[0] = dURrot[0];
+        dUR[1] = dURrot[1]*nx - dURrot[2]*ny;
+        dUR[2] = dURrot[1]*ny + dURrot[2]*nx;       
+
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc normal mass flux
+        qnormalL = (huL*nx + hvL*ny) - dUL[0];
+
+        // Neglect very small mass fluxes (wet-dry control)
+        if(fabs(qnormalL)<TOL14){
+            qnormalL=0.0;
+            dUL[0] = (huL*nx + hvL*ny);
+            dUR[0] = -(huR*nx + hvR*ny);
+        }
+
+        // Neglect very small momentum fluxes
+        #pragma unroll
+        for(k=1;k<3;k++){
+            if(fabs(dUR[k])<TOL14){dUR[k]=0.0;}
+            if(fabs(dUL[k])<TOL14){dUL[k]=0.0;}
+        }
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccc Add contributions
+        aux1 = arrays->length[idx]/arrays->area[id1];
+        iw1=(arrays->idw1[idx]*arrays->ncells)+id1;
+        arrays->dh[iw1]=dUL[0]*aux1;
+        arrays->dhu[iw1]=dUL[1]*aux1;
+        arrays->dhv[iw1]=dUL[2]*aux1;
+
+        aux2 = arrays->length[idx]/arrays->area[id2];
+        iw2=(arrays->idw2[idx]*arrays->ncells)+id2;
+        arrays->dh[iw2]=dUR[0]*aux2;
+        arrays->dhu[iw2]=dUR[1]*aux2;
+        arrays->dhv[iw2]=dUR[2]*aux2;
+
+        //} //end ((hL>TOL12)||(hR>TOL12)){ // Bucle de paredes mojadas
+
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccc update aux arrays
+		arrays->qnormalL[idx] = qnormalL;
+        localDt[idx]=dtl;
+
+		arrays->solidWall[idx] = solidWall;
+		arrays->solidWallByCell[iw1] = solidWall;
+		arrays->solidWallByCell[iw2] = solidWall;
+
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccc update active cell list
+        //#if RECONSTRUC_ACTIVE
+ 		if(wetWall==0){
+            g_add_active_cells(arrays, id1);
+            g_add_active_cells(arrays, id2);
+		}
+        //#endif 
+
+	} // end iwall loop
+
+}
+
+
+////////////////////////////////////////////////////
+__global__ void g_wall_rotated_calculus_hlls(int nTasks, t_arrays *arrays, double *localDt){
+/*----------------------------*/
+
+    int idx;
+	int j,k;
+    int id1,id2;
+    int iw1,iw2; 
+
+	double hL,hR;
+	double zL,zR;
+	double sqrhL,sqrhR;
+    double huL,huR,hvL,hvR;
+    double modUL, modUR;
+	double unL, unR, vtL, vtR;
+	double hbar, unbar,vtbar,cbar,inverseCbar;
+	double nx,ny;
+	double deltah,deltahu,deltahv;
+
+    double aux1,aux2,aux3,aux4;
+
+	double gp;
+ 	double deltaXl;	    
+	double sqrghL,sqrghR;
+	double landaL[3],landaR[3];
+	double coc;
+    double difqx,difqy;
+
+    double beta_z;
+	double dZ,dL,dR,dZs;
+    double bedSlope_term,ps1,ps2,psmax;
+	double hqi0,hqi1,hqi2;
+	
+	double beta_f;
+	double maxh, minU, manning2;
+	double modUbar, nux, nuy, dint, tau, stress, auxTau;
+	double friction_term, friction_t;
+    double sourceS[3], sourceH[3];
+
+	double hstar,hls,hrs;   		
+	
+    double waveR, waveL;
+	double landl  [3]; 	
+	double deltaU  [3]; 
+	double deltaF  [3]; 	 	
+	double dUL    [3], dULrot  [3]; 	
+	double dUR    [3], dURrot  [3];
+    double landaH;
+
+	int    solidWall,wetWall;
+    double qnormalL;
+
+    double dtl;	
+
+    int i = threadIdx.x+(blockIdx.x*blockDim.x);    
+    if(i<nTasks){
+        idx=arrays->actWalls[i];
+
+        solidWall=0;
+        wetWall = 1;	
+        dtl = 1e6;
+        qnormalL=0.0;
+
+        nx = arrays->normalX[idx];
+        ny = arrays->normalY[idx];		
+        deltaXl = arrays->deltaX[idx];	
+        gp = arrays->gp[idx];
+        
+        //cells index
+        id1=arrays->idx1[idx];
+        id2=arrays->idx2[idx];
+
+        zL  = arrays->z[id1];
+        zR  = arrays->z[id2];	        
+
+        hL = arrays->h[id1];
+        hR = arrays->h[id2];
+		
+	    //if ((hL>TOL12)||(hR>TOL12)){
+
+	  
+        if(hL<TOL12){ wetWall=0; }				
+        if(hR<TOL12){ wetWall=0; }	
+
+        sqrhL=arrays->sqrh[id1];
+        sqrhR=arrays->sqrh[id2];
+
+        huL = arrays->hu[id1];
+        huR = arrays->hu[id2];
+        
+        hvL = arrays->hv[id1];
+        hvR = arrays->hv[id2];	
+
+        modUL  = arrays->modulou[id1];
+        modUR  = arrays->modulou[id2];	                        	
+
+
+        //---------------- Rotated reference system   	
+        unL  = arrays->u[id1]*nx + arrays->v[id1]*ny;
+        unR  = arrays->u[id2]*nx + arrays->v[id2]*ny;
+				
+        vtL  = -arrays->u[id1]*ny + arrays->v[id1]*nx;
+        vtR  = -arrays->u[id2]*ny + arrays->v[id2]*nx;
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccccc conserved variable differences
+        deltah = hR - hL ; 
+        deltahu = hR*unR - hL*unL;
+        deltahv = hR*vtR - hL*vtL;    
+        
+        deltaU[0] = deltah;
+        deltaU[1] = deltahu;
+        deltaU[2] = deltahv;
+
+        deltaF[0] = deltahu;
+        deltaF[1] = hR*unR*unR + 0.5*gp*hR*hR - hL*unL*unL - 0.5*gp*hL*hL;
+        deltaF[2] = hR*unR*vtR - hL*unL*vtL;
+
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccccc cell values
+        sqrghL = sqrhL*sqrt(gp); 
+        sqrghR = sqrhR*sqrt(gp);  
+     
+        landaL[0]=unL-sqrghL;
+        landaR[0]=unR-sqrghR;
+
+        landaL[1]=unL;
+        landaR[1]=unR;
+    
+        landaL[2]=unL+sqrghL;
+        landaR[2]=unR+sqrghR;        
+
+        
+        //ccccccccccccccccccccccccccccccccccccccccccccccccc Wall-averaged values		 
+        hbar = 0.5*(hL+hR);
+        cbar = sqrt(gp*hbar);
+        inverseCbar=1./(cbar);
+
+        aux1 = sqrhL + sqrhR;
+        unbar = (unL*sqrhL + unR*sqrhR)/aux1;
+        vtbar = (vtL*sqrhL + vtR*sqrhR)/aux1;
+
+        if(fabs(unbar) < TOL12) unbar = 0.0;
+        if(fabs(vtbar) < TOL12) vtbar = 0.0;
+
+
+		//ccccccccccccccccccccccccccccccccccccccccccccccccc Eigenvalues
+        landl[0]= unbar - cbar;
+        landl[1]= unbar;
+        landl[2]= unbar + cbar;
+
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccccc Wave selection
+        waveL = landl[0];
+        waveR = landl[2];
+
+        if (wetWall==1){
+            waveL = fmin(waveL, landaL[0]);
+            waveL = fmin(waveL, landaR[0]);
+
+            waveR = fmax(waveR, landaL[2]);
+            waveR = fmax(waveR, landaR[2]);
+        }
+
+
+
+         //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc entropy fix
+        landaH = landl[0]*landl[2];
+
+        if( (wetWall==1) &&  //wet-wet wall
+            (landl[0]*landl[2]<0.0) ){ //subcritical wall
+            if( (landaL[0] < 0.0) && (landaR[0] > 0.0) ){
+                if((fabs(landl[0]) < fabs(landaL[0]))){
+                    landaH = landaL[0] * landl[2];
+                }
+            }else if( (landaL[2] < 0.0) && (landaR[2] > 0.0) ){
+                if((fabs(landl[2]) < fabs(landaR[2]))){
+                    landaH = landl[0] * landaR[2];
+                }
+            }               
+        }
+     	
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccc bed slope
+        bedSlope_term = 0.0;
+        dR    = zR + hR;
+        dL    = zL + hL;       
+        dZs   = dR - dL;
+
+        dZ    = zR - zL;
+        if(fabs(dZ)>TOL12){
+            ps1 = -cbar*cbar * dZ;
+            if(dZ<0.0){
+                if(dR<zL){
+                    aux1 = -hR;
+                }else{
+                    aux1 =  dZ;
+                }
+                ps2 = -gp*(hR-0.5*fabs(aux1))*aux1;
+            }else{
+                if(dL<zR){
+                    aux1 =  hL;
+                }else{
+                    aux1 =  dZ;
+                }
+                ps2 = -gp*(hL-0.5*fabs(aux1))*aux1;
+            }
+
+            bedSlope_term = ps2;
+
+            ////////////// Correccion /////////////////////
+            if(fabs(ps1)>fabs(ps2)){
+                psmax = ps1;
+            }else{
+                psmax = ps2;
+            }
+
+            if(dZs*dZ > 0.0){ // Free-surface y bed con las misma pendiente
+                if(unbar*dZ > 0.0){ // Velocidad en contra de pendiente
+                    bedSlope_term = psmax;	
+                }
+            }
+            ////////////////////////////////////////////////
+        }
+        sourceS[0] = 0.0;
+        sourceS[1] = bedSlope_term;
+        sourceS[2] = 0.0;
+
+        sourceH[0] = -bedSlope_term/landaH;
+        sourceH[1] = 0.0;
+        sourceH[2] = vtbar*sourceH[0];
+
+
+        //inner state of the normal discharge -- homogeneous + bed-pressure
+        hqi0=0.0;
+        hqi1=0.0;
+        aux1 = waveR-waveL;
+        hqi0 = (waveR*hL*unL - waveL*hR*unR + waveL*waveR*deltah)/aux1;
+        hqi1 = hqi0 + waveL*(sourceS[0]-waveR*sourceH[0])/aux1;
+        if(fabs(hqi1)<TOL12){hqi1 = 0.0;}
+
+
+
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccccccccc friction_slope
+        friction_term=0.0;
+
+        if(wetWall==1){
+            maxh=fmax(hL,hR);
+            minU=fmin(modUR,modUL);
+            manning2 = arrays->nman2wall[idx];
+
+            modUbar=0.0;
+            nux=0.0;
+            nuy=0.0;
+            if(modUL>TOL12 && modUR>TOL12){
+                modUbar=0.5*(modUL+modUR);
+                nux=0.5*(arrays->u[id1]/modUL + arrays->u[id2]/modUR);
+                nuy=0.5*(arrays->v[id1]/modUL + arrays->v[id2]/modUR);
+            }else if(modUL>TOL12){
+                modUbar=modUL;
+                nux=arrays->u[id1]/modUL;
+                nuy=arrays->v[id1]/modUL;
+            }else if(modUR>TOL12){
+                modUbar=modUL;
+                nux=arrays->u[id2]/modUR;
+                nuy=arrays->v[id2]/modUR;
+            }
+
+            tau = 0.0;
+            stress = 0.0;
+            dint = 0.0;
+            if(fabs(hqi1) > 0.0){
+
+                //tau  = _rhow_ * gp * manning2 * modUbar * modUbar / cbrt(hbar);
+                tau  = _rhow_ * gp * hbar * manning2 * modUbar * modUbar / (maxh*cbrt(maxh));
+
+                aux1 = hqi1 / fabs(hqi1);
+                stress = aux1 * tau;
+                if(fabs(modUbar) > TOL3) {
+                    dint = fabs( (arrays->distCentX[idx])*nux + (arrays->distCentY[idx])*nuy );
+                } else {
+                    dint = arrays->distNormal[idx];
+                }
+
+            }else{
+                stress = 0.0;
+                dint = arrays->distNormal[idx];
+            }
+
+            //ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+            // Integrated friction force
+            friction_term = -1.* stress/_rhow_ * dint;
+            //ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo	
+
+            //*****************************************
+            // turbulent friction energy limitation
+            friction_t = fabs(friction_term)/(cbar*cbar);
+
+            //Limite = fabs(un)*modUbar/(2g);
+            aux1 = 10. * 0.5*fabs(unbar)*modUbar/gp;
+            aux2 = fabs(friction_t);
+            if (aux2>aux1){
+                friction_term *= (aux1/aux2);
+            }
+            //**************************************
+
+        }//end mojado==1
+        sourceS[0] = 0.0;
+        sourceS[1] = bedSlope_term+friction_term;
+        sourceS[2] = 0.0;
+
+        sourceH[0] = -sourceS[1]/landaH;
+        sourceH[1] = 0.0;
+        sourceH[2] = vtbar*sourceH[0];
+
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc friction fix
+        hqi2=0.0;
+        aux1 = waveR-waveL;
+        hqi2 = hqi0 + waveL*(sourceS[0]-waveR*sourceH[0])/aux1;
+        if(fabs(hqi2)<TOL12){hqi2 = 0.0;}
+
+        aux1 = hqi1*hqi2;
+        if(aux1<=0.0){
+            sourceH[0] = hqi0/landaH;
+            sourceS[1] = -(waveL*waveR)*sourceH[0];
+        }
+        
+        
+        //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc positivity fix
+        if( (wetWall == 1) && //wet-wet wall
+            (landl[0]*landl[2] < 0.0) ){ // subcritical + entropy
+            
+            aux1 = waveR-waveL;
+            aux2 = (waveR*hR - waveL*hL - deltahu + sourceS[0])/aux1;   // Homegenous h-inner state
+
+            hls = aux2 - waveR*sourceH[0]/aux1;                         // augmented left h-inner state
+            if(fabs(hls)<TOL12){hls=0.0;}
+
+            hrs = aux2 - waveL*sourceH[0]/aux1;                         // augmented right h-inner state
+            if(fabs(hrs)<TOL12){hrs=0.0;}
+
+            if(aux2>0.0 && hls<0.0){
+                sourceS[1] = -( waveR*hR - waveL*hL +  huL - huR )*landaH/waveR;
+            }
+
+            if(aux2>0.0 && hrs<0.0){
+                sourceS[1] = -( waveR*hR - waveL*hL  + huL - huR )*landaH/waveL;
+            }
+
+            sourceH[0] = -sourceS[1]/landaH;
+            sourceH[1] = 0.0;
+            sourceH[2] = vtbar*sourceH[0];
+        }
+
+        
+
+
+        //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc time step
+        if( (hL>arrays->minh) && (hR>arrays->minh) ){
+            dtl=fmin( dtl , deltaXl/fabs(waveL) );
+            dtl=fmin( dtl , deltaXl/fabs(waveR) );
+        }
+
+        if(dtl<1e-8){
+            printf("Chosen L wave: %lf\n", waveL);
+            printf("Chosen R wave: %lf\n", waveR);
+            printf("dtl local: %lf", dtl);
+        }
+        //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc compute contributions	
+        #pragma unroll
+        for(j=0;j<3;j++){
+            dULrot[j] = 0.0;
+            dURrot[j] = 0.0;            
+        }
+
+        aux1 = waveR-waveL;
+        aux2 = (waveR*hR - waveL*hL - deltahu + sourceS[0])/aux1;   // Homegenous h-inner state
+
+        hls = aux2 - waveR*sourceH[0]/aux1;                         // augmented left h-inner state
+        if(fabs(hls)<TOL12){hls=0.0;}
+        hrs = aux2 - waveL*sourceH[0]/aux1;     
+        if(fabs(hrs)<TOL12){hrs=0.0;}        
+
+				
+        if(hR<TOL12 && hrs<0.0){ //right wet-dry
+            solidWall=1;
+            hqi1 = 0.0;
+            dULrot[0] = hqi1 - huL;
+
+        }else if(hL<TOL12 && hls<0.0){ //left wet-dry
+            solidWall=1;
+            hqi1 = 0.0;
+            dURrot[0] = huR - hqi1;
+
+        }else{ //wet-wet
+            if(waveL*waveR<0.0){
+                aux1 = waveL/(waveR-waveL);
+                aux2 = waveR/(waveR-waveL);
+                #pragma unroll
+                for(k=0;k<3;k++){
+                    dULrot[k] = aux1*(waveR*deltaU[k]-deltaF[k] + (sourceS[k] - waveR*sourceH[k]));
+                    dURrot[k] = aux2*(-waveL*deltaU[k]+deltaF[k] - (sourceS[k] - waveL*sourceH[k]));
+                }
+            }else if(waveL > 0.0){      // supercritic right
+                #pragma unroll
+                for(k=0;k<3;k++){
+                    dULrot[k] = 0.0;
+                    dURrot[k] = deltaF[k] - sourceS[k];
+                }
+            }else if(waveR < 0.0){      // supercritic right
+                #pragma unroll
+                for(k=0;k<3;k++){
+                    dULrot[k] = deltaF[k] - sourceS[k];
+                    dURrot[k] = 0.0;
                 }
             }
         }

@@ -11,11 +11,16 @@
 #if LINUX_COMPILATION==1
 
 	/** Selection of the solver
-	 *  1 SWE-Roe 
+	 *  1 SWE 
 	*/
 	#ifndef SOLVER
 		#define SOLVER 1
 	#endif
+
+	#ifndef RIEMANN
+		#define RIEMANN 2 // AROE 1, HLLS 2
+	#endif
+	
 
 	/** Enables GPU compilation 
 	 * 0 Disabled
