@@ -30,3 +30,7 @@ gpeka2D
 # ignore directories
 .pytest_cache/
 __pycache__/
+
+# resutls
+*.vtk
+*.pvsm
