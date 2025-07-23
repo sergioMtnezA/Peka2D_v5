@@ -910,11 +910,7 @@ __global__ void g_wall_rotated_calculus_hlls(int nTasks, t_arrays *arrays, doubl
             dtl=fmin( dtl , deltaXl/fabs(waveR) );
         }
 
-        if(dtl<1e-8){
-            printf("Chosen L wave: %lf\n", waveL);
-            printf("Chosen R wave: %lf\n", waveR);
-            printf("dtl local: %lf", dtl);
-        }
+
         //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc compute contributions	
         #pragma unroll
         for(j=0;j<3;j++){
@@ -965,15 +961,21 @@ __global__ void g_wall_rotated_calculus_hlls(int nTasks, t_arrays *arrays, doubl
             }
         }
 
+        if(id1 == 449 && id2 == 450){
+            for(k=0;k<3;k++){
+                printf("dULrot = %lf, dURrot = %lf\n", dULrot[k], dURrot[k]);
+            }
+        }
+
         // Left cell X-Y contributions
-        dUL[0] = dULrot[0];
-        dUL[1] = dULrot[1]*nx - dULrot[2]*ny;
-        dUL[2] = dULrot[1]*ny + dULrot[2]*nx;
+        dUL[0] = -dULrot[0];
+        dUL[1] = -(dULrot[1]*nx - dULrot[2]*ny);
+        dUL[2] = -(dULrot[1]*ny + dULrot[2]*nx);
 
         // Right cell Left cell X-Y contributions
-        dUR[0] = dURrot[0];
-        dUR[1] = dURrot[1]*nx - dURrot[2]*ny;
-        dUR[2] = dURrot[1]*ny + dURrot[2]*nx;       
+        dUR[0] = -dURrot[0];
+        dUR[1] = -(dURrot[1]*nx - dURrot[2]*ny);
+        dUR[2] = -(dURrot[1]*ny + dURrot[2]*nx);       
 
 
         //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc normal mass flux

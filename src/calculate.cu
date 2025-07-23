@@ -397,7 +397,6 @@ EXPORT_DLL void generateTimeStep(
     #elif RIEMANN == 2
         g_wall_rotated_calculus_hlls <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
     #endif
-    getchar();
     cudaMemcpy(&(carrays->nActCells), &(garrays->nActCells), sizeof(int), cudaMemcpyDeviceToHost );
   
     
