@@ -218,12 +218,7 @@ EXPORT_DLL int setControlParameters(
 
     //initialize configuration parameters
     mesh->nSolutes=0;
-
-    //initialize configuration parameters
-    mesh->nSediments=0;
-
-    //initialize configuration parameters
-    mesh->nParticles=mesh->nSolutes + mesh->nSediments;
+    mesh->nInterfaces=0;
 
     return 1;
 
@@ -665,7 +660,7 @@ int readHotstartState(
     double aux1, wse;
     char temp[1024];
 
-    int nhydro, nsolutes, nseds;
+    int nhydro, nsolutes;
 
     fp = fopen(filename,"r");
     if(!fp){
@@ -675,7 +670,7 @@ int readHotstartState(
 
     }else{
         //headers
-        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(nsolutes), &(nseds));  
+        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(nsolutes));  
         if(nhydro!=4){
             fclose(fp);
             sprintf(temp,"Unconsistent number of hydrodynamic data in %s",filename);
@@ -696,13 +691,6 @@ int readHotstartState(
             //skip nsolutes data
             if(nsolutes){ 
                 for(j=0;j<nsolutes;j++){
-                    fscanf(fp,"%*lf");
-                }
-            }  
-
-            //skip nseds data
-            if(nseds){ 
-                for(j=0;j<nseds;j++){
                     fscanf(fp,"%*lf");
                 }
             }  
@@ -1352,9 +1340,9 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].t=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     mesh->in[countInlet].q=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
-                    #if SET_SOLUTE || SET_SED
-                    mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*sizeof(double*));
-                    for(k=0;k<mesh->nParticles;k++){
+                    #if SET_SOLUTE
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nSolutes*sizeof(double*));
+                    for(k=0;k<mesh->nSolutes;k++){
                         mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     }
                     #endif
@@ -1366,8 +1354,8 @@ int readOpenBoundaryFile(
 
                         mesh->in[countInlet].t[j] *= 3600.0;
 
-                        #if SET_SOLUTE || SET_SED
-                        for(k=0;k<mesh->nParticles;k++){
+                        #if SET_SOLUTE
+                        for(k=0;k<mesh->nSolutes;k++){
                             fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
                             //printf("file id %d sol %d phi %lf \n",countInlet,k,mesh->in[countInlet].phi[k][j]);
                         }
@@ -1385,9 +1373,9 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].t=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     mesh->in[countInlet].hZ=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
-                    #if SET_SOLUTE || SET_SED
-                    mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*sizeof(double*));
-                    for(k=0;k<mesh->nParticles;k++){
+                    #if SET_SOLUTE
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nSolutes*sizeof(double*));
+                    for(k=0;k<mesh->nSolutes;k++){
                         mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     }
                     #endif
@@ -1397,8 +1385,8 @@ int readOpenBoundaryFile(
                         
                         mesh->in[countInlet].t[j] *= 3600.0;
 
-                        #if SET_SOLUTE || SET_SED
-                        for(k=0;k<mesh->nParticles;k++){
+                        #if SET_SOLUTE
+                        for(k=0;k<mesh->nSolutes;k++){
                             fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
                         }
                         #endif
@@ -1414,9 +1402,9 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].q=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     mesh->in[countInlet].hZ=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
-                    #if SET_SOLUTE || SET_SED
-                    mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*sizeof(double*));
-                    for(k=0;k<mesh->nParticles;k++){
+                    #if SET_SOLUTE
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nSolutes*sizeof(double*));
+                    for(k=0;k<mesh->nSolutes;k++){
                         mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     }
                     #endif
@@ -1426,8 +1414,8 @@ int readOpenBoundaryFile(
                         
                         mesh->in[countInlet].t[j] *= 3600.0;
 
-                        #if SET_SOLUTE || SET_SED
-                        for(k=0;k<mesh->nParticles;k++){
+                        #if SET_SOLUTE
+                        for(k=0;k<mesh->nSolutes;k++){
                             fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
                         }
                         #endif
@@ -1661,7 +1649,7 @@ int readSoluteFile(
 
 
 ////////////////////////////////////////////////////////////////
-int createParticleStructures(
+int createSoluteStructures(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
     t_mesh *mesh,    
@@ -1670,16 +1658,11 @@ int createParticleStructures(
 
     int i,j;
     Peka2D_SoluteGroup *soluteGroup;
-    Peka2D_SedimentGroup *sedimentGroup,
     soluteGroup = pksetup->soluteGroup;
-    sedimentGroup = pksetup->sedimentGroup;
 
     int nSolutes = soluteGroup->nSolutes;
-    int nSediments = sedimentGroup->nSediments;
-    int nParticles = soluteGroup->nSolutes + sedimentGroup->nSediments;
     t_c_cell *c1;
 
-    #if SET_SOLUTE
     //solute flag in mesh
     mesh->nSolutes = nSolutes;
 
@@ -1704,48 +1687,8 @@ int createParticleStructures(
 
             mesh->solutes->solute[j].iniConc=soluteGroup->solute[j].iniConc;            
         }
-    }
 
-
-
-    #endif
-
-    #if SET_SED
-    //sediment flag in mesh
-    mesh->nSediments = nSediments;
-
-    if(mesh->nSediments){
-        
-        //sediment data in mesh
-        mesh->sediments = (l_sediments*) malloc(sizeof(l_sediments));
-
-        mesh->sediments->n = nSediments;
-        mesh->solutes->flagErosion = soluteGroup->flagErosion;
-
-        mesh->sediments->sediment=(t_sediment*) malloc(nSediments*sizeof(t_sediment));
-        for(j=0;j<nSediments;j++){
-            sprintf(mesh->sediments->sediment[j].name,"%s",sedimentGroup->sediment[j].name);
-            
-
-            mesh->sediments->sediment[j].typeDiff=sedimentGroup->sediment[j].typeDiff;
-
-            mesh->sediments->sediment[j].dsp = sedimentGroup->sediment[j].dsp;
-            mesh->sediments->sediment[j].Fsp = sedimentGroup->sediment[j].Fsp;
-            mesh->sediments->sediment[j].CriticSS = sedimentGroup->sediment[j].CriticSS;
-            mesh->sediments->sediment[j].rhoS = sedimentGroup->sediment[j].rhoS;
-
-            mesh->sediments->sediment[j].maxConc=sedimentGroup->sediment[j].maxConc;
-
-            
-        }
-    
-    }
-
-
-    #endif
-    //particles variable 
-    mesh->nParticles = nParticles;
-    if(mesh->nParticles){
+        //solute variables in c_cells
         for(i=0;i<mesh->ncells;i++){
             c1=&(mesh->c_cells->cells[i]);
             c1->hphi=(double*) malloc(nSolutes*sizeof(double));
@@ -1760,7 +1703,7 @@ int createParticleStructures(
 
 
 ////////////////////////////////////////////////////////////////
-int setInitialParticleState(
+int setInitialSoluteState(
     Peka2D_Setup *pksetup,
     t_parameters *spar,
     t_mesh *mesh, 
@@ -1769,31 +1712,26 @@ int setInitialParticleState(
 
     int i,j;
     Peka2D_SoluteGroup *soluteGroup;
-    Peka2D_SedimentGroup *sedimentGroup,
     soluteGroup = pksetup->soluteGroup;
 
-    
-    int nSediments = sedimentGroup->nSediments;
+    int nSolutes = soluteGroup->nSolutes;
 
     t_c_cell *c1;
     char filename[1024],temp[1024];
     FILE *fp;
 
-    double aux1, dataSolute, dataSediment;
+    double aux1, dataSolute;
 
     if(pksetup->pkrun.hotStart){ //hotstart initialization
 
         sprintf(filename,"%s%s.HOTSTART",spar->dir,spar->proj);
-        if(!readHotstartSoluteState(filename, mesh, nSolutes, nSediments e)){
+        if(!readHotstartSoluteState(filename, mesh, nSolutes, e)){
             sprintf(temp,"Hotstart solute initialization failed");
 		    Notify(temp,MSG_ERROR,e);
 		    return 0;
         }
 
     }else{ //user initialization    
-
-        #if SET_SOLUTE
-        int nSolutes = soluteGroup->nSolutes;
 
         fp=NULL;
         fp=fopen(soluteGroup->initialFile,"r");
@@ -1839,54 +1777,6 @@ int setInitialParticleState(
             sprintf(temp,"Solute initial concentration set uniform");
             Notify(temp,MSG_L1,e);
         } 
-
-        #endif
-
-        #if SET_SED
-        int nSediments = sedimentGroup->nSediments;
-
-        fp1=NULL;
-        fp1=fopen(sedimentGroup->initialFile,"r");
-
-        if(fp1){
-
-            for(i=0;i<mesh->ncells;i++){
-                c1=&(mesh->c_cells->cells[i]);
-
-                for(j=0;j<nSediments;j++){  
-                    fscanf(fp,"%lf",&dataSediment);         
-
-                    if(c1->h > TOL12){
-                        c1->phi[nSolutes+j] = MAX(0.0,dataSediment);
-                        c1->hphi[nSolutes+j] = c1->h * c1->phi[nSolutes+j];
-                    }else{
-                        c1->phi[nSolutes+j] = 0.0;
-                        c1->hphi[nSolutes+j] = 0.0;
-                    }
-                
-                } 
-
-            } // end cell loop
-            fclose(fp1);
-
-            sprintf(temp,"Sediment initial concentration set from file %s",sedimentGroup->initialFile);
-            Notify(temp,MSG_L1,e);
-        }else{
-
-            for(i=0;i<mesh->ncells;i++){
-                c1=&(mesh->c_cells->cells[i]);
-
-                for(j=0;j<nSediments;j++){  
-                    c1->phi[nSolutes+j] = 0.0;
-                    c1->hphi[nSolutes+j] = 0.0;
-                } 
-
-            } // end cell loop        
-            sprintf(temp,"File %s not found - Initial concentration set to 0.0",sedimentGroup->initialFile);
-            Notify(temp,MSG_WARN,e);
-        }        
-
-        #endif
 
     }       
 
@@ -1940,7 +1830,13 @@ int readHotstartSoluteState(
 
                 if(c1->h > TOL12){
                     c1->phi[j] = MAX(0.0,dataSolute);
+
+                    #if SET_MULTILAYER
+                    c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
+                    #else
                     c1->hphi[j] = c1->h * c1->phi[j];
+                    #endif
+
                 }else{
                     c1->phi[j] = 0.0;
                     c1->hphi[j] = 0.0;
@@ -1952,198 +1848,6 @@ int readHotstartSoluteState(
     fclose(fp);
 
     sprintf(temp,"Hotstart solute initialization completed");
-    Notify(temp,MSG_L1,e);
-    return(1);
-}
-
-
-#endif
-
-#if SET_SED
-////////////////////////////////////////////////////////////////
-EXPORT_DLL int loadSedimentData(
-    Peka2D_Setup *pksetup, 
-    t_parameters *spar, 
-    t_mesh *mesh, 
-    t_message *msg){
-/*----------------------------*/
-
-    char filename[1024], temp[1024];
-    int sediment_enabled_by_run=0;
-
-    Peka2D_SedimentGroup *sedimentGroup;
-    sedimentGroup = (Peka2D_SedimentGroup*) malloc(sizeof(Peka2D_SedimentGroup));
-
-    //initialize default
-    sedimentGroup->nSediments=0;
-    sprintf(sedimentGroup->initialFile,"%s%s.SEDINITIAL",spar->dir,spar->proj);
-
-    //Load sediments if activated
-    sediment_enabled_by_run = pksetup->pkrun.sediments;
-    if(sediment_enabled_by_run){
-
-        //Read sediment file
-        sprintf(filename,"%s%s.SEDIMENTS",spar->dir,spar->proj);
-        if(readSedimentFile(filename, sedimentGroup, msg)){
-            sprintf(temp,"Reading sediment file completed");
-            Notify(temp,MSG_L1,msg);		
-        }
-
-        //associted sedimentGroup to pksetup
-        pksetup->sedimentGroup = sedimentGroup; 
-
-        //Create sediment structures
-        if(createSedimentStructures(sedimentGroup, spar, mesh, msg)){
-            sprintf(temp,"Sediment structures completed");
-            Notify(temp,MSG_L1,msg);		
-        }
-
-        //Initialize sediment concentration
-        if(setInitialSedimentState(sedimentGroup, spar, mesh, msg)){
-            sprintf(temp,"Set initial sediment state completed");
-            Notify(temp,MSG_L1,msg);		
-        }  
-
-    }
-
-	return 1;
-	
-}
-
-
-////////////////////////////////////////////////////////////////
-int readSedimentFile(
-    char *filename,
-    Peka2D_SedimentGroup *sedimentGroup,   
-    t_message *e){
-/*----------------------------*/
-
-    int i;
-    FILE *fp;
-    char temp[1024];
-    int nSediments=0;
-    int release=0;
-
-
-    fp = fopen(filename,"r");
-    if(!fp){
-        sprintf(temp,"%s file not found",filename);
-        Notify(temp,MSG_ERROR,e);
-        return 0;
-    }
-
-    fscanf(fp,"%d",&release); //line 1
-    if(release!=202407){
-        sprintf(temp,"The Sediment file version should be 202407. Current version: %d",release);
-        Notify(temp,MSG_ERROR,e);
-        return(0);
-    }    
-
-    fscanf(fp,"%d",&nSediments); //line 2
-
-    if(nSediments>0){
-
-        sedimentGroup->nSediments=nSediments;
-        sedimentGroup->sediment = (Peka2D_Sediment*) malloc(nSediments*sizeof(Peka2D_Sediment));
-
-        fscanf(fp,"%d",&sedimentGroup->flagErosion); //line 3 
-
-        for(i=0;i<nSediments;i++){ //line 4
-            fscanf(fp,"%d",&sedimentGroup->sediment[i].typeDiff);
-        }
-
-        for(i=0;i<nSediments;i++){ //line 5 to +nSediments
-            fscanf(fp,"%lf %lf",
-                &sedimentGroup->sediment[i].dsp,
-                &sedimentGroup->sediment[i].Fsp,
-                &sedimentGroup->sediment[i].CriticSS,
-                &sedimentGroup->sediment[i].rhoS);
-        }
-
-        for(i=0;i<nSediments;i++){ //line 6 to +nSediments
-            fscanf(fp,"%s",&sedimentGroup->sediment[i].name);
-            //printf("Cname %s\n",sedimentGroup->sediment[i].name);
-        }
-
-        for(i=0;i<nSediments*nSediments;i++){ //line 7 to +nSediments - skip
-            fscanf(fp,"%*f");
-            
-        }
-
-        for(i=0;i<nSediments;i++){ //line 8
-            fscanf(fp,"%lf",&sedimentGroup->sediment[i].maxConc);
-            //printf("Cmax %lf\n",sedimentGroup->sediment[i].maxConc);
-        }
-
-    }else{
-        sprintf(temp,"Sediments are not defined in file %s - Runing simulation without sediments",filename);
-        Notify(temp,MSG_WARN,e);
-        return(0);
-    }
-
-	fclose(fp);
-    
-    return(1);
-
-}
-
-////////////////////////////////////////////////////////////////
-int readHotstartSedimentState(
-    char *filename,
-    t_mesh *mesh, 
-    int nSediments,
-    t_message *e){
-/*----------------------------*/
-
-    FILE *fp;
-    int i,j;
-    t_c_cell *c1;
-
-    double aux1, dataSediment;
-    char temp[1024];
-
-    int nhydro, nsed;
-
-    fp = fopen(filename,"r");
-    if(!fp){
-        sprintf(temp,"%s file not found",filename);
-        Notify(temp,MSG_ERROR,e);
-        return 0;
-
-    }else{
-        //headers
-        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(nsed));  
-        if(nsed!=nSediments){
-            fclose(fp);
-            sprintf(temp,"Unconsistent number of sediment data in %s",filename);
-            Notify(temp,MSG_ERROR,e);
-            return 0;             
-        }
-
-        for(i=0;i<mesh->ncells;i++){
-            c1=&(mesh->c_cells->cells[i]);
-
-            //skip hydro data
-            fscanf(fp,"%*lf %*lf %*lf %*lf");
-
-            //read nsedimnets data
-            for(j=0;j<nSediments;j++){  
-                fscanf(fp,"%lf",&dataSediment);         
-
-                if(c1->h > TOL12){
-                    c1->phi[nSolutes+j] = MAX(0.0,dataSediment);
-                    c1->hphi[nSolutes+j] = c1->h * c1->phi[nSolutes+j];
-                }else{
-                    c1->phi[nSolutes+j] = 0.0;
-                    c1->hphi[nSolutes+j] = 0.0;
-                } 
-            }      
-
-        } // end cell loop
-    }
-    fclose(fp);
-
-    sprintf(temp,"Hotstart sediment initialization completed");
     Notify(temp,MSG_L1,e);
     return(1);
 }
