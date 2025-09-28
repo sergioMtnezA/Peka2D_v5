@@ -397,8 +397,8 @@ EXPORT_DLL void generateTimeStep(
 	g_initialize_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
 
 
-    #if SET_SOLUTE
-    nTasks=carrays->nWallCell*carrays->nSolutes;
+    #if SET_SOLUTE  
+    nTasks=carrays->nWallCell*carrays->nSolutes;  
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_initialize_solute_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     #endif
@@ -411,14 +411,20 @@ EXPORT_DLL void generateTimeStep(
 
 
     #if SET_SOLUTE
-    //nTasks=carrays->nActWalls; //compact 
+    #if SET_SOLUTE_UNROLL==0  //compact 
+    nTasks=carrays->nActWalls;
+    #elif SET_SOLUTE_UNROLL==1  //unroll    
     nTasks=carrays->nActWalls*carrays->nSolutes;
+    #endif
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_wall_solute_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
 
     if(carrays->nOBC){
-        //nTasks=carrays->nTotalBoundCells;
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        nTasks=carrays->nTotalBoundCells;
+        #elif SET_SOLUTE_UNROLL==1  //unroll  
         nTasks=carrays->nTotalBoundCells*carrays->nSolutes;
+        #endif
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_bound_solute_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     }
@@ -436,8 +442,11 @@ EXPORT_DLL void generateTimeStep(
 
 
     #if SET_SOLUTE
-    //nTasks=carrays->nActCells; //compact
+    #if SET_SOLUTE_UNROLL==0  //compact 
+    nTasks=carrays->nActCells; 
+    #elif SET_SOLUTE_UNROLL==1  //unroll  
     nTasks=carrays->nActCells*carrays->nSolutes;
+    #endif 
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_update_solute_contributions <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     #endif
@@ -485,8 +494,11 @@ EXPORT_DLL void generateTimeStep(
     cudaMemcpy(&(carrays->nActWalls), &(garrays->nActWalls), sizeof(int), cudaMemcpyDeviceToHost );
 
     #if SET_SOLUTE
-    //nTasks=carrays->nActCells;
+    #if SET_SOLUTE_UNROLL==0  //compact 
+    nTasks=carrays->nActCells; 
+    #elif SET_SOLUTE_UNROLL==1  //unroll  
     nTasks=carrays->nActCells*carrays->nSolutes;
+    #endif     
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     #endif
@@ -529,11 +541,19 @@ EXPORT_DLL void generateTimeStep(
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_initialize_solute_diffusion_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
 
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        nTasks=carrays->nActWalls;
+        #elif SET_SOLUTE_UNROLL==1  //unroll  
         nTasks=carrays->nActWalls*carrays->nSolutes;
+        #endif  
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_wall_solute_diffusion_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
 
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        nTasks=carrays->nActCells;
+        #elif SET_SOLUTE_UNROLL==1  //unroll  
         nTasks=carrays->nActCells*carrays->nSolutes;
+        #endif  
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_update_solute_diffusion_contributions <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays,cuPtr->localDtd);
 
@@ -550,7 +570,11 @@ EXPORT_DLL void generateTimeStep(
             cudaMemcpy((cuPtr->dtAux), &(dtAux), sizeof(double), cudaMemcpyHostToDevice );
             //printf("iter %d dtDifR %lf dtAux %lf\n",i, dtDifR, dtAux);
 
+            #if SET_SOLUTE_UNROLL==0  //compact 
+            nTasks=carrays->nActCells;
+            #elif SET_SOLUTE_UNROLL==1  //unroll  
             nTasks=carrays->nActCells*carrays->nSolutes;
+            #endif  
             blocksPerGrid = nTasks/threadsPerBlock + 1;                 
             g_update_solute_diffusion_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->dtAux);            
         }   
@@ -684,7 +708,7 @@ EXPORT_DLL void generateTimeStep(
 
 
     // Reconstruct actCells and actWalls arrays 
-    #if RECONSTRUC_ACTIVE
+    #if RECONSTRUC_ACTIVE && UPDATE_ACTIVE_ARRAYS
     //Start wetDryFix time .....................................
 	stime1=clock();
 

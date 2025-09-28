@@ -234,13 +234,19 @@ EXPORT_DLL int initilizeMeshArrays(
         carrays->mass[i]=c1->h*g1->area;		
 
         // initial active cells -------------------------------------------
-        carrays->activeC[i]=0;
-        carrays->actCells[i]=-1;
-        if(c1->h > TOL12){
+        #if  RECONSTRUC_ACTIVE
+            carrays->activeC[i]=0;
+            carrays->actCells[i]=-1;
+            if(c1->h > TOL12){
+                carrays->activeC[i]=1;
+                carrays->actCells[nActCells]=g1->id;
+                nActCells++;
+            }
+        #else
             carrays->activeC[i]=1;
             carrays->actCells[nActCells]=g1->id;
-            nActCells++;
-        }
+            nActCells++;        
+        #endif
         // ---------------------------------------------------------------
 
     }
@@ -314,13 +320,21 @@ EXPORT_DLL int initilizeMeshArrays(
         carrays->localDt[i]=1e6;
 
         // initial active walls -------------------------------------------
-        carrays->activeW[i]=0;
-        carrays->actWalls[i]=-1;
-        if((w1->ccells[0]->h > TOL12) || (w1->ccells[1]->h > TOL12)){
+        #if  RECONSTRUC_ACTIVE
+            carrays->activeW[i]=0;
+            carrays->actWalls[i]=-1;
+            if((w1->ccells[0]->h > TOL12) || (w1->ccells[1]->h > TOL12)){
+                carrays->activeW[i]=1;
+                carrays->actWalls[nActWalls]=w1->idWall;
+                nActWalls++;
+            } 
+        #else
             carrays->activeW[i]=1;
             carrays->actWalls[nActWalls]=w1->idWall;
-            nActWalls++;
-        }  
+            nActWalls++;     
+        #endif
+
+ 
         // ----------------------------------------------------------------   
 
 	}

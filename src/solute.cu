@@ -45,14 +45,18 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
         
-        //idx=arrays->actWalls[i]; //compact 
+        #if SET_SOLUTE_UNROLL==0  //compact
+        //wall index
+        idx=arrays->actWalls[i]; 
 
+        #elif SET_SOLUTE_UNROLL==1  //unroll 
         //solute index
         jphi=(int)(i/nActWalls);
         
         //wall index
         iactWall=i-jphi*nActWalls;
         idx=arrays->actWalls[iactWall];
+        #endif
         
         //cells index
         id1=arrays->idx1[idx];
@@ -66,7 +70,9 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
         areaR = arrays->area[id2];
 
         //cccccccccccccccccccccccccccccccccccccccccccccccccc Convective Solute Transport
-        //for(jphi=0;jphi<arrays->nSolutes;jphi++){ //compact      
+        #if SET_SOLUTE_UNROLL==0  //compact
+        for(jphi=0;jphi<arrays->nSolutes;jphi++){
+        #endif    
 
             //cccccccccccccccccccccccccccccccccccccccccccccc solute wall flux
             sid1 = jphi*ncells+id1;
@@ -90,8 +96,10 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
             
             arrays->dhphi[siw1] = - dhphi*aux1;
             arrays->dhphi[siw2] = dhphi*aux2;
-            
-        //} //compact 
+        
+        #if SET_SOLUTE_UNROLL==0  //compact
+        }
+        #endif
 
 
 	} // end iwall loop
@@ -122,15 +130,19 @@ __global__ void g_bound_solute_calculus(int nTasks, t_arrays *arrays){
 	int i = threadIdx.x+(blockIdx.x*blockDim.x);  
     if(i<nTasks){
 
-        //cidx=arrays->cidxBound[i]; //compact
-        //iBoundCell=i;
+        #if SET_SOLUTE_UNROLL==0  //compact
+        //cell index
+        iBoundCell=i;
+        cidx=arrays->cidxBound[i];
 
+        #elif SET_SOLUTE_UNROLL==1   //unroll 
         //solute index
         jphi=(int)(i/nBoundCells);
 
         //cell index
         iBoundCell=i-jphi*nBoundCells;
         cidx=arrays->cidxBound[iBoundCell];
+        #endif
 
 		hu=arrays->hu[cidx];
 		hv=arrays->hv[cidx];
@@ -139,14 +151,18 @@ __global__ void g_bound_solute_calculus(int nTasks, t_arrays *arrays){
         hun = hu*arrays->nxWallBound[iBoundCell] + hv*arrays->nyWallBound[iBoundCell];
         length = arrays->lWallBound[iBoundCell];
 
-        //for(jphi=0;jphi<nSolutes;jphi++){ //compact
+        #if SET_SOLUTE_UNROLL==0  //compact
+        for(jphi=0;jphi<nSolutes;jphi++){
+        #endif
 
             sid = jphi*ncells+cidx;
             siw0 = jphi*(ncells*NCwall)+cidx;
 
             arrays->dhphi[siw0] -= hun*arrays->phi[sid]*length/area;
 
-        //} //compact
+        #if SET_SOLUTE_UNROLL==0  //compact
+        }
+        #endif
 
 	}
 	//__syncthreads(); // Sincronizar todos los hilos del bloque
@@ -172,16 +188,22 @@ __global__ void g_update_solute_contributions(int nTasks, t_arrays *arrays){
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
 
-        //idx=arrays->actCells[i]; //compact
-        
+        #if SET_SOLUTE_UNROLL==0  //compact
+        //cell index
+        idx=arrays->actCells[i];
+
+        #elif SET_SOLUTE_UNROLL==1   //unroll 
         //solute index
         jphi=(int)(i/nActCells);
 
         //cell index
         iactCell=i-jphi*nActCells;
         idx=arrays->actCells[iactCell];
+        #endif        
 
-        //for(jphi=0;jphi<arrays->nSolutes;jphi++){ //compact
+        #if SET_SOLUTE_UNROLL==0  //compact
+        for(jphi=0;jphi<arrays->nSolutes;jphi++){
+        #endif
 
             siw0=jphi*(ncells*NCwall)+idx;
 
@@ -197,8 +219,9 @@ __global__ void g_update_solute_contributions(int nTasks, t_arrays *arrays){
             }
             arrays->dhphi[siw0]=total;                
                 
-
-        //} //compact
+        #if SET_SOLUTE_UNROLL==0  //compact
+        }
+        #endif
 
         
     }
@@ -226,18 +249,25 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
 
-        //idx=arrays->actCells[i]; //compact
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        //cell index
+        idx=arrays->actCells[i];
 
+        #elif SET_SOLUTE_UNROLL==1  //unroll  
         //solute index
         jphi=(int)(i/nActCells);
 
         //cell index
         iactCell=i-jphi*nActCells;
         idx=arrays->actCells[iactCell];
+        #endif 
+
 
         if(arrays->h[idx]>TOL12){ //wet cells
 
-            //for(jphi=0;jphi<arrays->nSolutes;jphi++){ //compact
+            #if SET_SOLUTE_UNROLL==0  //compact 
+            for(jphi=0;jphi<arrays->nSolutes;jphi++){
+            #endif
 
                 siw0 = jphi*(ncells*NCwall)+idx;
                 sid = jphi*ncells+idx;
@@ -249,7 +279,9 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
                 
                 arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
 
-            //} //compact
+            #if SET_SOLUTE_UNROLL==0  //compact 
+            }
+            #endif
 
         }
     }
@@ -331,12 +363,18 @@ __global__ void g_wall_solute_diffusion_calculus(int nTasks, t_arrays *arrays){
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
 
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        //wall index
+        idx=arrays->actWalls[i];
+
+        #elif SET_SOLUTE_UNROLL==1  //unroll  
         //solute index
         jphi=(int)(i/nActWalls);
         
         //wall index
         iactWall=i-jphi*nActWalls;
-        idx=arrays->actWalls[iactWall];        
+        idx=arrays->actWalls[iactWall];
+        #endif         
 
         //cells index
         id1=arrays->idx1[idx];
@@ -382,8 +420,10 @@ __global__ void g_wall_solute_diffusion_calculus(int nTasks, t_arrays *arrays){
             length = arrays->length[idx];
 
 
-            //for(j=0;j<arrays->nSolutes;j++){
-
+            #if SET_SOLUTE_UNROLL==0  //compact 
+            for(jphi=0;jphi<arrays->nSolutes;jphi++){
+            #endif
+            
                 //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc diffusion contribution calculation
                 if(arrays->typeDiff[jphi]==NON_DIFF){
                     kL = 0.0;
@@ -440,7 +480,9 @@ __global__ void g_wall_solute_diffusion_calculus(int nTasks, t_arrays *arrays){
                 arrays->Bwall[siw1] = (contrib/hL)*aux1;
                 arrays->Bwall[siw2] = (contrib/hR)*aux2;
 
-            //}
+            #if SET_SOLUTE_UNROLL==0  //compact 
+            }
+            #endif
 
         } //end if(hL>minh && hR>minh){ //wet-wet walls
 
@@ -469,17 +511,24 @@ __global__ void g_update_solute_diffusion_contributions(int nTasks, t_arrays *ar
     
     int i = threadIdx.x+(blockIdx.x*blockDim.x);
     if(i<nTasks){
-        
-        //idx=arrays->actCells[i]; //compact
 
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        //cell index
+        idx=arrays->actCells[i];
+
+        #elif SET_SOLUTE_UNROLL==1  //unroll  
         //solute index
         jphi=(int)(i/nActCells);
 
         //cell index
         iactCell=i-jphi*nActCells;
         idx=arrays->actCells[iactCell]; 
-
-        //for(jphi=0;jphi<arrays->nSolutes;jphi++){  //compact
+        #endif           
+        
+  
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        for(jphi=0;jphi<arrays->nSolutes;jphi++){
+        #endif
             
             siw0=jphi*(ncells*NCwall)+idx;
             total = arrays->Bwall[siw0];
@@ -501,7 +550,9 @@ __global__ void g_update_solute_diffusion_contributions(int nTasks, t_arrays *ar
             //store solute concentration
             arrays->dhphi[sid] = arrays->phi[sid]; //phi is stored in [sid]-position of dhphi           
 
-        //} //compact
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        }
+        #endif
 
     }
 
@@ -544,16 +595,23 @@ __global__ void g_update_solute_diffusion_cells(int nTasks, t_arrays *arrays, do
     int i = threadIdx.x+(blockIdx.x*blockDim.x);
     if(i<nTasks){
 
-        //idx=arrays->actCells[i]; //compact
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        //cell index
+        idx=arrays->actCells[i];
 
+        #elif SET_SOLUTE_UNROLL==1  //unroll  
         //solute index
         jphi=(int)(i/nActCells);
 
         //cell index
         iactCell=i-jphi*nActCells;
         idx=arrays->actCells[iactCell]; 
-
-        //for(jphi=0;jphi<arrays->nSolutes;jphi++){  //compact
+        #endif           
+        
+  
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        for(jphi=0;jphi<arrays->nSolutes;jphi++){
+        #endif
 
             sid = jphi*ncells+idx;
             contrib1 = arrays->dhphi[sid]*(1.0-arrays->BTcell[sid]*(*Dtd)); //phi is stored in dhphi[sid]
@@ -571,7 +629,10 @@ __global__ void g_update_solute_diffusion_cells(int nTasks, t_arrays *arrays, do
             //update conservative variable
             arrays->hphi[sid]=arrays->phi[sid]*arrays->h[idx]; 
 
-        //}  //compact
+        #if SET_SOLUTE_UNROLL==0  //compact 
+        }
+        #endif
+
     }
 
 }
