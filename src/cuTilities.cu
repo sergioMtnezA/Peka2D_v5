@@ -77,10 +77,14 @@ EXPORT_DLL int getCoresPerSM(int major, int minor) {
 		case 6: // Pascal
 			if (minor == 1) return 128;  // sm_6.1 = 128 CUDA cores por SM
 			else if (minor == 0) return 64;  // sm_6.0 = 64 CUDA cores por SM
-		case 7: // Volta y Turing
+		case 7: // Volta/Turing
 			return 64;                   // sm_7.x = 64 CUDA cores por SM
-		case 8: // Ampere
+		case 8: // Ampere/Ada
 			return 128;                  // sm_8.x = 128 CUDA cores por SM
+		case 9: // Hopper
+			return 128;                  // sm_9.x = 128 CUDA cores por SM			
+		case 12: // Blackwell
+			return 128;                  // sm_12.x = 128 CUDA cores por SM			
 		default:
 			printf("Arquitectura GPU desconocida\n");
 			return -1;

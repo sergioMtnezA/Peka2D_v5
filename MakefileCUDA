@@ -25,7 +25,7 @@ C_PROFILE_FLAGS = -pg
 C_WARN_FLAGS = -Wall
 C_OMP_FLAGS = -fopenmp
 
-CULIB_REQ_FLAGS = --compiler-bindir=g++ -w -m64 -arch sm_86 -Xptxas -dlcm=ca --use_fast_math -lcuda -lcudart -lcublas -lrt -lm
+CULIB_REQ_FLAGS = --compiler-bindir=g++ -w -m64 -arch sm_120 -Xptxas -dlcm=ca --use_fast_math -lcuda -lcudart -lcublas -lrt -lm
 CULIB_OPT_FLAGS = -O3 -w
 CULIB_DEBUG_FLAGS = -O3 -G -g -Xcompiler -rdynamic
 #additional flags for cuda-memcheck: (release version) -Xcompiler -rdynamic -lineinfo   (debug version) -G -g -Xcompiler -rdynamic
