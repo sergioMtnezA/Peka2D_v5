@@ -346,6 +346,33 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 
 
     if(flagInitialized==0){
+
+        if(typebc==HYD_INFLOW_Q){ //Q(t) 
+        
+            //Interpolate time series value
+            if(ithread==0){ //Q(t)   
+                tidx = d_get_index(arrays->t, npts, ip0, arrays->tSeriesOBC);
+                qt = d_interpolate_vector(arrays->t, npts, ip0, tidx, arrays->tSeriesOBC, arrays->qSeriesOBC);
+                
+                if(qt<0.0) qt=0.0;
+                qt *= arrays->blockSectionOBC[iblock];
+
+                //printf("qt %lf\n", qt);
+            }
+            __syncthreads();
+
+            //distribute discharge by cells
+            if(qt>TOL12){
+                if(ithread<nbc){
+                    aux1 = qt/arrays->totalLengthOBC[iblock];
+                    aux2 = aux1*aux1/(_g_*inletFroude*inletFroude);
+                    localh[ithread] = cbrt(aux2);										
+                }		
+            }
+            __syncthreads();
+
+        }
+
         if(ithread<nbc){
             tempDa1[ithread]=localh[ithread];
         }else{
@@ -858,18 +885,16 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 				if(ithread<nbc){
 					if(localh[ithread] >= arrays->minh){
 						hun = localhu[ithread]*arrays->nxWallBound[idx] + localhv[ithread]*arrays->nyWallBound[idx];
-						if(hun>TOL12){ //outflow
+						if(hun < 0.0){ // prevent back flow
+							localhu[ithread]=0.0;
+							localhv[ithread]=0.0;
+						}else{ //outflow
 							aux1=localh[ithread]*sqrt(localh[ithread]*_g_); //critical discharge					
 							if(hun<aux1){ //subcritical outflow
 								hun=aux1;
+                                localhu[ithread]=hun*arrays->nxWallBound[idx];
+                                localhv[ithread]=hun*arrays->nyWallBound[idx];                                
 							}
-							
-							localhu[ithread]=hun*arrays->nxWallBound[idx];
-							localhv[ithread]=hun*arrays->nyWallBound[idx];
-
-						}else{ // prevent back flow
-							localhu[ithread]=0.0;
-							localhv[ithread]=0.0;
 						}
 					}
 				}
