@@ -540,6 +540,9 @@ int readMeshFile(
             mesh->g_cells->cells[i].nodes[3]=&(mesh->nodes->nodes[n4]);            
         }
 
+        //Reconstruct depth
+        mesh->c_cells->cells[i].h -= mesh->c_cells->cells[i].z;
+
         mesh->g_cells->n++;
         mesh->c_cells->n++;
     }

@@ -180,6 +180,9 @@ EXPORT_DLL int initilizeMeshArrays(
     t_wall *w1;
 
     size_t free_mem, total_mem;
+
+    char filename[1024];
+    FILE *fp;
 	
 	//Local variables just for the function
     NCwall=mesh->NCwall;
@@ -252,13 +255,15 @@ EXPORT_DLL int initilizeMeshArrays(
     }
     carrays->nActCells=nActCells;
 	
-
+    sprintf(filename,"%scellConectivity.out",spar.dir,spar.proj);
+    fp=fopen(filename,"w");
 	for(i=0;i<nWallCell;i++){
 		carrays->dh[i]=0.0;
 		carrays->dhu[i]=0.0;
 		carrays->dhv[i]=0.0;
 	}
     for(i=0;i<ncells;i++){
+        fprintf(fp,"%d ",carrays->cidx[i]);
         for(j=0;j<NCwall;j++){
             g1=&(mesh->g_cells->cells[i]);
             c1=&(mesh->c_cells->cells[i]);
@@ -282,10 +287,15 @@ EXPORT_DLL int initilizeMeshArrays(
                 carrays->normalYbyCell[j*ncells+i]=g1->neigwall[j]->normal[_Y_];                
             }
             //printf("wall %d cell %d neighCell %d neighWall %d\n",j,i,carrays->neighCell[j*ncells+i],carrays->neighWall[j*ncells+i]);
+            fprintf(fp,"%d %d ",carrays->neighCell[j*ncells+i],carrays->neighWall[j*ncells+i]);
 		}
+        fprintf(fp,"\n");
 	}
+    fclose(fp);
 
 	//Copy array values by walls
+    sprintf(filename,"%swallConectivity.out",spar.dir,spar.proj);
+    fp=fopen(filename,"w");   
     nActWalls=0;
 	for(i=0;i<nwc;i++){
         w1=&(mesh->w_calc->wall[i]);
@@ -333,13 +343,16 @@ EXPORT_DLL int initilizeMeshArrays(
             carrays->actWalls[nActWalls]=w1->idWall;
             nActWalls++;     
         #endif
-
- 
         // ----------------------------------------------------------------   
 
+        fprintf(fp,"%d ",carrays->widx[i]);
+        fprintf(fp,"%d %d ",carrays->idx1[i],carrays->idw1[i]);
+        fprintf(fp,"%d %d ",carrays->idx2[i],carrays->idw2[i]);
+        fprintf(fp,"\n");
 	}
     carrays->nActWalls=nActWalls;
     //printf("nActWalls %d \n",nActWalls);
+    fclose(fp);
 	
     return 1;
 
