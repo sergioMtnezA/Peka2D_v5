@@ -970,13 +970,9 @@ EXPORT_DLL int initilizeSoluteArrays(
         for(j=0;j<nSolutes;j++){        
             for(i=0;i<ncells;i++){
                 idx = j*ncells+i;
-                c1=&(mesh->c_cells->cells[i]);
-
-                #if SET_MULTILAYER
-                carrays->hphi[idx] = c1->hphi[j]/nSolutes;
-                #else
+                c1=&(mesh->c_cells->cells[i]); 
+               
                 carrays->hphi[idx] = c1->hphi[j];
-                #endif
                 carrays->phi[idx] = c1->phi[j]; 
                 carrays->localDtd[idx]= 1e6;
                 carrays->BTcell[idx]=0.0;

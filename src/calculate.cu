@@ -190,8 +190,10 @@ EXPORT_DLL int computeSimulation(
         //     sprintf(temp,"Prueba VTK file written");
         //     Notify(temp,MSG_L1,msg);	
         // }  
-        // getchar();
-
+        //if(carrays->nIter >= 2180){
+            //getchar();
+        //}
+        
 
 	}
 	/////////////////////////////////////////////////////////////////////////
@@ -492,9 +494,15 @@ EXPORT_DLL void generateTimeStep(
     #endif
 
     #if SET_MULTILAYER
+    #if SET_MULTILAYER_IMPLICIT
     nTasks=carrays->nActCells;
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
-    g_multilayer_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    g_multilayer_implicit_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    // #else
+    // nTasks=carrays->nActCells;
+    // blocksPerGrid = nTasks/threadsPerBlock + 1; 
+    // g_multilayer_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    #endif
     #endif
 
     // Sincronizar la CPU con la GPU

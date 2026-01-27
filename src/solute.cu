@@ -38,6 +38,12 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
     double dhphi;
     double dphi;
 
+    double u,v, moduloU;
+    double hlayer;
+    double nman2wall;
+    double ustar;
+
+
     double aux1,aux2;
 
     int nActWalls = arrays->nActWalls;
@@ -79,8 +85,78 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
 
             dphi=0.5*(phiL+phiR)-SIGN(qnormalL)*0.5*(phiR-phiL);
             #if SET_MULTILAYER
-            dhphi=(qnormalL/nSolutes)*dphi;
+
+            #if SET_MULTILAYER_VELOCITY
+
+            double k = 0.41;
+            double z_normalized;
+            double ks;
+            double Re = 2800;
+            double U_fonc, u_prom;
+            double A[12];
+
+            // u = arrays->u[idx];
+            // v = arrays->v[idx];
+                
+            // moduloU = sqrt(u*u + v*v);
+
+            // hlayer = arrays->h[idx]/(nSolutes);
+            
+            // nman2wall = arrays->nman2wall[idx];
+            // ustar = nman2wall*sqrt(_g_*moduloU*moduloU/cbrt(arrays->h[idx]));
+            
+            // z_normalized = 0.5*(1./nSolutes) + jphi/nSolutes;
+            // ks = 3.5*0.0005;
+
+            // U_fonc = ustar/k * log(z_normalized) + ustar/k * log((arrays->h[idx]*30.)/ks);
+            // u_prom = ustar*(log(30.*arrays->h[idx]/ks)-1.)/(k);
+
+            // MODEL LINEAR
+            // A[0] = 0.0833333;
+            // A[1] = 0.25;
+            // A[2] = 0.416667;
+            // A[3] = 0.583333;
+            // A[4] = 0.75;
+            // A[5] = 0.916667;
+            // A[6] = 1.08333;
+            // A[7] = 1.25;
+            // A[8] = 1.41667;
+            // A[9] = 1.58333;
+            // A[10] = 1.75;
+            // A[11] = 1.91667;
+
+            // MODEL LOG
+            
+            A[0]=	0.6325546093710857;
+            A[1]=	0.8178943911224351;
+            A[2]=	0.9040724819724524;
+            A[3]=	0.9608365392691058;
+            A[4]=	1.0032341728737848;
+            A[5]=	1.0370880294931535;
+            A[6]=	1.0652706448812252;
+            A[7]=	1.089412263723802;
+            A[8]=	1.1105277289681712;
+            A[9]=	1.1292918873060287;
+            A[10]=	1.1461763210204554;
+            A[11]=	1.1615235820078802;
+
+            
+
+            // if(idx == 195917){
+            //     printf("jphi%d A %.12lf qnormal %.12lf\n", jphi, A[jphi], qnormalL);
+            // } 
+            
+            dhphi=(qnormalL*A[jphi]/nSolutes)*dphi;
+
+            // if(idx == 195917){
+            //     printf("dhphi %.12lf\n", dhphi);
+            // } 
             #else
+            
+            dhphi=(qnormalL/nSolutes)*dphi;
+            #endif
+            #else
+            
             dhphi=qnormalL*dphi;
             #endif
             
@@ -126,6 +202,7 @@ __global__ void g_bound_solute_calculus(int nTasks, t_arrays *arrays){
     int nBoundCells=arrays->nTotalBoundCells;    
 
 	int i = threadIdx.x+(blockIdx.x*blockDim.x);  
+            
     if(i<nTasks){
 
         //cidx=arrays->cidxBound[i]; //compact
@@ -143,19 +220,23 @@ __global__ void g_bound_solute_calculus(int nTasks, t_arrays *arrays){
         area=arrays->area[cidx];
 
         #if SET_MULTILAYER
+
         hun = hu*arrays->nxWallBound[iBoundCell] + hv*arrays->nyWallBound[iBoundCell];
         hun /= nSolutes;
+    
         #else
         hun = hu*arrays->nxWallBound[iBoundCell] + hv*arrays->nyWallBound[iBoundCell];
         #endif        
+
+      
         length = arrays->lWallBound[iBoundCell];
 
         //for(jphi=0;jphi<nSolutes;jphi++){ //compact
 
             sid = jphi*ncells+cidx;
             siw0 = jphi*(ncells*NCwall)+cidx;
-
             arrays->dhphi[siw0] -= hun*arrays->phi[sid]*length/area;
+            
 
         //} //compact
 
@@ -272,41 +353,491 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
                 arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
                 #endif
 
+                
             //} //compact
         }
     }
 
 }
 
+// ////////////////////////////////////////////////////
+// __global__ void g_multilayer_update_solute_cells(int nTasks, t_arrays *arrays){
+// /*----------------------------*/
+//     int idx;
+//     int sid1,sid2;
+//     int jphi;
+
+//     int ncells=arrays->ncells;
+//     int nSolutes=arrays->nSolutes;
+//     int nInterfaces= arrays->nSolutes-1;
+
+//     double phij1, phij2;
+//     double hphi1, hphi2;
+//     double aux1;
+//     double hlayer;
+
+//     double dt;
+    
+//     double uestrelia;
+
+//     double nman2wall;
+//     double u,v, moduloU;
+//     double epsis1 = 5e-6;
+//     double epsis2;
+//     double cumule;
+//     double max_concentration;
+//     double modU2;
+//     double sigmaD, sigmap, sigmah, sigmaMax;
+//     double As, Ai, Asigma;
+//     double ustar;
+//     double Ri;
+//     double ra = 0.25;
+//     double n = 2.;
+//     double k = 0.41;
+
+//     dt=arrays->dt;
+    
+//     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
+//     if(i<nTasks){
+//         idx=arrays->actCells[i]; //compact
+
+//         if(arrays->h[idx] >= arrays->minh){
+//             hlayer = arrays->h[idx]/nSolutes;
+
+//             #if EDDY_VISCOSITY
+//             nman2wall = arrays->nman2wall[idx];
+//             u = arrays->u[idx];
+//             v = arrays->v[idx];
+//             moduloU = sqrt(u*u + v*v);
+//             aux1 = 0.0;
+//             ustar = _g_*sqrt(nman2wall*nman2wall*moduloU*moduloU/cbrt(arrays->h[idx]));
+//             cumule = 0.0;
+
+//             sigmap = -0.5;
+//             sigmah = -0.7;
+
+//             //calculation of the parameters needed
+//             sigmaMax = ((1+sigmap)*(1+sigmap))/4.;
+            
+//             As = ra*sigmaMax;
+//             Ai = (sigmah + 1)*(sigmap-sigmah);
+
+//             #endif
+           
+//             for(jphi=0;jphi<nInterfaces;jphi++){
+
+//                 sid1 = jphi*ncells+idx;
+//                 sid2 = (jphi+1)*ncells+idx; //j+1
+
+//                 phij1 = arrays->phi[sid1];
+//                 phij2 = arrays->phi[sid2]; //j-1 aux2
+
+//                 hphi1 = arrays->hphi[sid1];
+//                 hphi2 = arrays->hphi[sid2];
+
+//                 #if EDDY_VISCOSITY
+
+//                 sigmaD = (hlayer*(jphi + 0.5))/arrays->h[idx] - 1;
+
+//                 if(sigmaD < sigmah){
+//                     Asigma = (sigmaD + 1)*(sigmap - sigmaD);
+
+//                 }else if (sigmaD >sigmah && n == 1.){
+//                     Asigma = (Ai-As)*fabs(sigmaD/sigmah) + As;
+
+//                 }else if (sigmaD >sigmah && n == 2.){
+//                     Asigma = (Ai-As)*fabs(sigmaD/sigmah)*fabs(sigmaD/sigmah) + As;
+//                 }
+
+//                 epsis2 = k*ustar*arrays->h[idx]*Asigma;
+//                 aux1 = dt*((ws*phij2)+ epsis2*((phij2-phij1)/hlayer));
+
+//                 #else if 
+//                 //aux1 = dt*(ws*((phij1+phij2)/2.) + epsis1*((phij2-phij1)/hlayer));
+//                 aux1 = dt*((ws*phij2)+ epsis1*((phij2-phij1)/hlayer));
+//                 #endif
+                
+//                 if((fabs(aux1)>TOL14)){
+
+                    
+//                     if(aux1>0 && aux1>(arrays->hphi[sid2])){
+//                         aux1 = arrays->hphi[sid2];
+//                     }else if(aux1<0 && fabs(aux1)>(arrays->hphi[sid1])){
+//                         aux1 = arrays->hphi[sid1];
+//                     }
+
+//                     arrays->hphi[sid1] += aux1;
+//                     arrays->hphi[sid2] -= aux1;
+
+               
+//                 }
+
+                
+//                 // if(idx == 12513){
+//                 //     printf("Asigma %lf\n",aux1);
+//                 //     //printf("h %lf\n",hlayer);
+//                 //     printf("phi %lf\n",arrays->hphi[ncells+idx]);
+//                 // }
+//             }
+           
+//             //printf("phi %lf\n",arrays->hphi[sid1]);
+            
+//             for(jphi=0;jphi<nSolutes;jphi++){
+//                 sid1 = jphi*ncells+idx;
+//                 arrays->phi[sid1] = arrays->hphi[sid1]/hlayer;
+
+//                 if(std::isnan(arrays->phi[sid1])){
+//                     printf("cell %d layer %f\n",idx, jphi);
+//                     //printf("h %lf\n",hlayer);
+//                     printf("hphi %lf phi %lf hlayer %lf\n ",arrays->hphi[sid1], arrays->phi[sid1], hlayer);
+//                 }
+            
+//             }
+                
+//         }
+        
+//     }
+// }
+
 ////////////////////////////////////////////////////
-__global__ void g_multilayer_update_solute_cells(int nTasks, t_arrays *arrays){
+__global__ void g_multilayer_implicit_update_solute_cells(int nTasks, t_arrays *arrays){
 /*----------------------------*/
-    int idx;
-    int sid1,sid2;
-    int jphi;
 
-    int ncells=arrays->ncells;
-    int nSolutes=arrays->nSolutes;
-    int nInterfaces= arrays->nSolutes-1;
+int idx1,idx2,idx;
+int sid1,sid2,sid3;
+int jphi;
 
-    double phij1, phij2;
-    double aux1;
-    double hlayer;
+int ncells=arrays->ncells;
+int nInterfaces= arrays->nSolutes;
 
-    double dt;
+double phij1, phij2;
+double hphi1, hphi2;
+double aux1,aux2;
+double hlayer;
+double sqrhL, sqrhR;
 
-    dt=arrays->dt;
+double dt;
+double epsis1 = 2e-5;
+
+//double A,C,B;
+double Bi,Ci;
+double Af,Bf;
+double Bbis [21];
+double u,v,moduloU;
+double uL, uR, vL, vR, hL, hR;
+double modU2;
+double ustar;
+double nman2wall;
+double gp;
+double hbar, ubar,vbar;
+
+
+double sigmaD, sigmap, sigmah, sigmaMax;
+double As, Ai, Asigma;
+double Ri;
+double ra = 0.99;
+double n = 2;
+double k = 0.41;
+double z_depth;
+
+#if EDDY_VISCOSITY || EDDY_VISCOSITY_LINEAR
+double A [20];
+double B [20];
+double C [20];
+double epsia;
+double epsib;
+double epsis2[20];
+#else
+double A;
+double B;
+double C;
+#endif
+
+
+dt=arrays->dt;
     
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
         idx=arrays->actCells[i]; //compact
+        
+        double r [21];
+        double rbis [21];
 
-        hlayer = arrays->h[idx]/nSolutes;
+        //cells index
+        idx1=arrays->idx1[idx];
+        idx2=arrays->idx2[idx];
 
         if(arrays->h[idx] >= arrays->minh){
-            aux1 = 0.0;
+
+            sqrhL=arrays->sqrh[idx1];
+            sqrhR=arrays->sqrh[idx2];
+
+            u = arrays->u[idx];
+            v = arrays->v[idx];
+
+            uL = arrays->u[idx1];
+            uR = arrays->u[idx2];
+
+            vL = arrays->u[idx1];
+            vR = arrays->u[idx2];
+
+            hL = arrays->h[idx1];
+            hR = arrays->h[idx2];
+
+            hbar = 0.5*(hL+hR);
+
+            aux1 = sqrhL + sqrhR;
+            ubar = (uL*sqrhL + uR*sqrhR)/aux1;
+            vbar = (vL*sqrhL + vR*sqrhR)/aux1;
+
+            if(fabs(ubar) < TOL12) ubar = 0.0;
+            if(fabs(vbar) < TOL12) vbar = 0.0;            
+
+            modU2 = ubar*ubar+vbar*vbar;
+
+            u = arrays->u[idx];
+            v = arrays->v[idx];
+                
+            moduloU = sqrt(u*u + v*v);
+
+            hlayer = arrays->h[idx]/(nInterfaces);
+            gp = arrays->gp[idx];   
+            nman2wall = arrays->nman2wall[idx];
+            ustar = nman2wall*sqrt(_g_*moduloU*moduloU/cbrt(arrays->h[idx]));
+
+            #if EDDY_VISCOSITY
+                
+                sigmap = -0.5;
+                sigmah = -0.73;
+
+                //calculation of the parameters needed
+                sigmaMax = ((1+sigmap)*(1+sigmap))/4.;
+                
+                As = ra*sigmaMax;
+                Ai = (sigmah + 1)*(sigmap-sigmah);
+
+                //first values of eddy viscosity
+            
+                ustar = nman2wall*sqrt(_g_*moduloU*moduloU/cbrt(arrays->h[idx]));
+
+                for(jphi=0;jphi<nInterfaces;jphi++){
+                    sigmaD = (jphi*hlayer + hlayer/2.)/(arrays->h[idx]) - 1;
+
+                    if(sigmaD <= sigmah){
+                        Asigma = (sigmaD + 1)*(sigmap - sigmaD);
+                    }else if (sigmaD >sigmah && n == 1.){
+                        Asigma = (Ai-As)*fabs(sigmaD/sigmah) + As;
+                    }else if (sigmaD >sigmah && n == 2.){
+                        Asigma = (Ai-As)*fabs(sigmaD/sigmah)*fabs(sigmaD/sigmah) + As;
+                    }
+
+                    epsis2[jphi] = k*ustar*arrays->h[idx]*Asigma;
+
+                    if(idx == 195917){
+                        printf("epsis %.12lf sigmaD %.12lf\n", epsis2[jphi], sigmaD);
+                    } 
+
+                }
+
+                // sigmaD = (hlayer/2.)/(arrays->h[idx]) - 1.;
+
+                // if(sigmaD <= sigmah){
+                //     Asigma = (sigmaD + 1)*(sigmap - sigmaD);
+
+                // }else if (sigmaD >sigmah && n == 1.){
+                //     Asigma = (Ai-As)*fabs(sigmaD/sigmah) + As;
+
+                // }else if (sigmaD >sigmah && n == 2.){
+                //     Asigma = (Ai-As)*fabs(sigmaD/sigmah)*fabs(sigmaD/sigmah) + As;
+
+                // }else if (sigmaD >sigmah && n == 0.){
+                //     Asigma = Ai;
+                // }
+
+                //ustar = nman2wall*sqrt(_g_*modU2/cbrt(hbar));
+
+                //epsis2 = k*ustar*arrays->h[idx]*Asigma;
+
+                //epsis2 = epsia;
+
+                // if(idx == 195917){
+                //     printf("epsis0 %.12lf sigmaD %.12lf\n", epsis2, sigmaD);
+                // } 
+
+                // Bi = 1+dt/(hlayer*hlayer)*epsis2;
+                // Ci = -(dt*epsis2)/(hlayer*hlayer);
+
+                Bi = 1.+dt/(hlayer*hlayer)*((epsis2[1]+epsis2[0])/2.);
+                Ci = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
+
+                B[0] = Bi;
+                C[0] = Ci;
+
+                //sigmaD = (hlayer+hlayer/2.)/(arrays->h[idx]) - 1;
+
+                // if(sigmaD <= sigmah){
+                //     Asigma = (sigmaD + 1)*(sigmap - sigmaD);
+
+                // }else if (sigmaD >sigmah && n == 1.){
+                //     Asigma = (Ai-As)*fabs(sigmaD/sigmah) + As;
+
+                // }else if (sigmaD >sigmah && n == 2.){
+                //     Asigma = (Ai-As)*fabs(sigmaD/sigmah)*fabs(sigmaD/sigmah) + As;
+                // }
+
+               
+                // //epsis2 = k*ustar*arrays->h[idx]*Asigma;
+                // epsis2 = epsia;
+
+                // if(idx == 195917){
+                //     printf("epsis1 %.12lf sigmaD %.12lf\n", epsis2, sigmaD);
+                // } 
+
+                A[1] = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
+                B[1] = 1.+((epsis2[2]+2.*epsis2[1]+epsis2[0])/2.)*(dt/(hlayer*hlayer));
+                C[1] = -((epsis2[2]+epsis2[1])/2.)*dt/(hlayer*hlayer);
+
+                Bbis[0] = Bi;
+                r[0] = arrays->phi[idx];
+                r[1] = arrays->phi[ncells+idx];
+                rbis[0] = r[0];
+                rbis[1] = arrays->phi[ncells+idx] - (A[1]/Bi)*r[0];
+                Bbis[1] = B[1]-(A[1]*Ci)/Bi;
+            #else
+
+            #if EDDY_VISCOSITY_LINEAR
 
             for(jphi=0;jphi<nInterfaces;jphi++){
+                z_depth = hlayer/2 + hlayer*jphi;
+                epsis2[jphi] = 10*k*ustar*(z_depth+5e-6);
+
+            }
+
+            Bi = 1.+dt/(hlayer*hlayer)*((epsis2[1]+epsis2[0])/2.);
+            Ci = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
+
+            B[0] = Bi;
+            C[0] = Ci;
+
+            A[1] = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
+            B[1] = 1.+((epsis2[2]+2.*epsis2[1]+epsis2[0])/2.)*(dt/(hlayer*hlayer));
+            C[1] = -((epsis2[2]+epsis2[1])/2.)*dt/(hlayer*hlayer);
+
+            Bbis[0] = Bi;
+            r[0] = arrays->phi[idx];
+            r[1] = arrays->phi[ncells+idx];
+            rbis[0] = r[0];
+            rbis[1] = arrays->phi[ncells+idx] - (A[1]/Bi)*r[0];
+            Bbis[1] = B[1]-(A[1]*Ci)/Bi;
+            
+            #else
+            
+            A = -epsis1*dt/(hlayer*hlayer);
+            B = 1+2*epsis1*(dt/(hlayer*hlayer));
+            C = -epsis1*dt/(hlayer*hlayer);
+
+            Bi = 1+dt/(hlayer*hlayer)*epsis1;
+            Ci = -(dt*epsis1)/(hlayer*hlayer);
+
+        
+            #if EDDY_VISCOSITY_PARABOLIC
+            z_depth = hlayer/2+hlayer;
+            epsis1 = k*ustar*arrays->h[idx]*(1-z_depth/arrays->h[idx]);
+            #endif
+
+
+            Af = dt/(hlayer*hlayer)*(-epsis1);
+            Bf = 1+dt/(hlayer*hlayer)*epsis1;
+
+            Bbis[0] = Bi;
+            r[0] = arrays->phi[idx];
+            r[1] = arrays->phi[ncells+idx];
+            rbis[0] = r[0];
+            rbis[1] = arrays->phi[ncells+idx] - (A/Bi)*r[0];
+            Bbis[1] = B-(A*Ci)/Bi;
+
+            #endif
+
+            #endif
+
+
+            for(jphi=2;jphi<nInterfaces;jphi++){
+                sid1 = jphi*ncells+idx; 
+                r[jphi] = arrays->phi[sid1];
+
+                #if EDDY_VISCOSITY || EDDY_VISCOSITY_LINEAR
+
+                    A[jphi] = -((epsis2[jphi]+epsis2[jphi-1])/2.)*dt/(hlayer*hlayer);
+                    B[jphi] = 1.+((epsis2[jphi+1]+2.*epsis2[jphi]+epsis2[jphi-1])/2.)*(dt/(hlayer*hlayer));
+                    C[jphi] = -((epsis2[jphi+1]+epsis2[jphi])/2.)*dt/(hlayer*hlayer);
+
+                    Bbis[jphi] = B[jphi] - (A[jphi]*C[jphi-1])/Bbis[jphi-1] ;
+                    rbis[jphi] = r[jphi] - (A[jphi]/Bbis[jphi-1])*rbis[jphi-1];  
+
+                #else
+                   
+                    #if EDDY_VISCOSITY_PARABOLIC
+                    z_depth = hlayer/2 + hlayer*jphi;
+                    epsis1 = k*ustar*arrays->h[idx]*(1-z_depth/arrays->h[idx]);
+                    #endif
+
+                    // if(idx == 195917){
+                    //     printf("vt %.12lf\n ",epsis1);
+                    // }  
+                        
+                    Bbis[jphi] = B - (A*C)/Bbis[jphi-1] ;
+                    rbis[jphi] = r[jphi]- (A/Bbis[jphi-1])*rbis[jphi-1];  
+
+                    
+                #endif
+                    
+            } 
+
+            //celdas internas
+
+            //Version 3
+            #if EDDY_VISCOSITY || EDDY_VISCOSITY_LINEAR
+
+            Af = -((epsis2[nInterfaces-1]+epsis2[nInterfaces-2])/2.)*dt/(hlayer*hlayer);
+            Bf = 1+((epsis2[nInterfaces-1]+epsis2[nInterfaces-2])/2.)*dt/(hlayer*hlayer);
+
+            A[nInterfaces-1] = Af;
+            B[nInterfaces-1] = Bf;
+
+            Bbis[nInterfaces-1] = Bf-(Af*C[nInterfaces-2])/Bbis[nInterfaces-2];
+            #else
+            Bbis[nInterfaces-1] = Bf-(Af*C)/Bbis[nInterfaces-2];
+            #endif
+
+            rbis[nInterfaces-1] = r[nInterfaces-1]-(Af/Bbis[nInterfaces-2])*rbis[nInterfaces-2];
+            arrays->phi[(nInterfaces-1)*ncells+idx] = rbis[nInterfaces-1]/Bbis[nInterfaces-1];
+            
+
+            for(jphi=nInterfaces-2; jphi>0; jphi--){
+                sid1 = jphi*ncells+idx;
+                sid2 = (jphi+1)*ncells+idx;
+                
+                #if EDDY_VISCOSITY || EDDY_VISCOSITY_LINEAR
+                arrays->phi[sid1] = (rbis[jphi] - C[jphi]*arrays->phi[sid2])/Bbis[jphi];
+                #else
+                arrays->phi[sid1] = (rbis[jphi] - C*arrays->phi[sid2])/Bbis[jphi];
+                #endif
+                
+            }
+
+            jphi = 0;
+            sid1 = jphi*ncells+idx;
+            sid2 = (jphi+1)*ncells+idx;
+            arrays->phi[sid1] = (rbis[jphi] - Ci*arrays->phi[sid2])/Bbis[jphi];
+
+            
+            for(jphi=0; jphi<nInterfaces; jphi++){
+                sid1 = jphi*ncells+idx;
+                arrays->hphi[sid1] = arrays->phi[sid1]*hlayer;
+
+            }
+
+            for(jphi=0;jphi<nInterfaces-1;jphi++){
 
                 sid1 = jphi*ncells+idx;
                 sid2 = (jphi+1)*ncells+idx; //j+1
@@ -314,26 +845,44 @@ __global__ void g_multilayer_update_solute_cells(int nTasks, t_arrays *arrays){
                 phij1 = arrays->phi[sid1];
                 phij2 = arrays->phi[sid2]; //j-1 aux2
 
-                aux1 = dt*(ws*((phij1+phij2)/2.) + epsis1*((phij2-phij1)/hlayer));
-        
-                if(fabs(aux1)>TOL14){
+                hphi1 = arrays->hphi[sid1];
+                hphi2 = arrays->hphi[sid2];
 
-                    if(aux1>0 && aux1>arrays->hphi[sid2]){
+                aux1 = dt*(ws*phij2);
+                
+                if((fabs(aux1)>TOL14)){
+
+                    
+                    if(aux1>0 && aux1>(arrays->hphi[sid2])){
                         aux1 = arrays->hphi[sid2];
-                    }else if(aux1<0 && fabs(aux1)>arrays->hphi[sid1]){
+                    }else if(aux1<0 && fabs(aux1)>(arrays->hphi[sid1])){
                         aux1 = arrays->hphi[sid1];
                     }
+
                     arrays->hphi[sid1] += aux1;
                     arrays->hphi[sid2] -= aux1;
-
-                    arrays->phi[sid1] = arrays->hphi[sid1]/hlayer;
-                    arrays->phi[sid2] = arrays->hphi[sid2]/hlayer;
+               
                 }
                 
             }
-        }
+
+            for(jphi=0;jphi<nInterfaces;jphi++){
+                sid1 = jphi*ncells+idx;
+                arrays->phi[sid1] = arrays->hphi[sid1]/hlayer;
+
+                if(std::isnan(arrays->phi[sid1])){
+                    printf("cell %d layer %f\n",idx, jphi);
+                    //printf("h %lf\n",hlayer);
+                    printf("hphi %lf phi %lf hlayer %lf\n ",arrays->hphi[sid1], arrays->phi[sid1], hlayer);
+                }
+            
+            }
+
         
+        }
     }
+
+
 }
 
 
@@ -381,6 +930,7 @@ __global__ void g_wall_solute_diffusion_calculus(int nTasks, t_arrays *arrays){
     int typeDiff;
 
     int nActWalls = arrays->nActWalls;
+    int nInterfaces= arrays->nSolutes;
     int jphi;
     int iactWall;
 
@@ -427,6 +977,11 @@ __global__ void g_wall_solute_diffusion_calculus(int nTasks, t_arrays *arrays){
         hL = arrays->h[id1];
         hR = arrays->h[id2];
 
+        #if SET_MULTILAYER
+        hL = arrays->h[id1]/nInterfaces;
+        hR = arrays->h[id2]/nInterfaces;
+        #endif
+
         if(hL>minh && hR>minh){ //wet-wet walls
 		
             sqrhL=arrays->sqrh[id1];
@@ -444,6 +999,7 @@ __global__ void g_wall_solute_diffusion_calculus(int nTasks, t_arrays *arrays){
 
             //ccccccccccccccccccccccccccccccccccccccccccccccccc Wall-averaged values		 
             hbar = 0.5*(hL+hR);
+
 
             aux1 = sqrhL + sqrhR;
             ubar = (uL*sqrhL + uR*sqrhR)/aux1;
@@ -614,6 +1170,7 @@ __global__ void g_update_solute_diffusion_cells(int nTasks, t_arrays *arrays, do
     int ncells=arrays->ncells;
     int NCwall=arrays->NCwall;
     int nw_calc=arrays->nw_calc;
+    int nInterfaces= arrays->nSolutes;
 
     double dtd;
 	double total;
@@ -651,7 +1208,11 @@ __global__ void g_update_solute_diffusion_cells(int nTasks, t_arrays *arrays, do
             arrays->phi[sid]=contrib1+contrib2;
 
             //update conservative variable
-            arrays->hphi[sid]=arrays->phi[sid]*arrays->h[idx]; 
+            arrays->hphi[sid]=arrays->phi[sid]*(arrays->h[idx]); 
+
+            #if SET_MULTILAYER
+            arrays->hphi[sid]=arrays->phi[sid]*(arrays->h[idx]/nInterfaces); 
+            #endif
 
         //}  //compact
     }
