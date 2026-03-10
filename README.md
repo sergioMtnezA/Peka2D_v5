@@ -6,11 +6,11 @@ PeKa2D-v5.0 is a numerical model for the simulation of hydro-morphodynamical sur
 ## Documentation
 Code documentation for developers can be found:
 * [online](https://sergiomtneza.github.io/Peka2D_v5/)
-* [repo](./docs/index.html)
+* [repository](./docs/index.html)
 
 ## Numerical method
 Find a detailed explanation on the implemented numerical method:
-* [repo](./docs/water_Riemann_solver.pdf).
+* [repository](./docs/water_Riemann_solver.pdf)
 
 ---
 
@@ -18,10 +18,10 @@ Find a detailed explanation on the implemented numerical method:
 To enable GPU computation, set `SET_SIMGPU=1` in define.h
 
 Compile with:
-`make -f MakefileCUDA`
+```make -f MakefileCUDA```
 
 Run with:
-`./gpeka pathFolder/ caseName`
+```./gpeka pathFolder/ caseName```
 
 **Options:**
 - `RECONSTRUC_ACTIVE=1` 
@@ -38,8 +38,8 @@ To enable solute transport computation, set `SET_SOLUTE=1` in define.h
 
 ## DEBUG mode
 Compile in debug mode with:
-`make -f MakefileCUDA DEBUG=yes`
+```make -f MakefileCUDA DEBUG=yes```
 
 Run using NVIDIA Compute Sanitizer:
-`compute-sanitizer --tool memcheck --leak-check full ./peka pathFolder/ caseName`
+```compute-sanitizer --tool memcheck --leak-check full ./peka pathFolder/ caseName```
 
