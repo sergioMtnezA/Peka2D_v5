@@ -12,6 +12,7 @@ EXPORT_DLL int createArraysCudaMemory(
     int NCwall;
 	int ncells,nwc,nwb;
     int nWallCell;
+    int nSolutes;
 
     int nInlet, nOutlet, nOBC;
     int nTotalBoundCells, nTotalInnerCells;
@@ -36,6 +37,8 @@ EXPORT_DLL int createArraysCudaMemory(
     nTotalInnerCells = carrays->nTotalInnerCells;
     nTotalPointSeries = carrays->nTotalPointSeries;
 
+    //Solute variables for allocation
+    nSolutes=carrays->nSolutes;
 
     //Transfer computation arrays 
     if(!copyComputationControls(
@@ -117,6 +120,7 @@ EXPORT_DLL int createArraysCudaMemory(
         nOBC, nInlet, nOutlet,
         nTotalBoundCells, nTotalInnerCells, 
         nTotalPointSeries,
+        nSolutes,
         cuPtr) 
     ) return 0; 
 
@@ -173,6 +177,41 @@ EXPORT_DLL int createArraysCudaMemory(
         cuPtr->mInByInlet, 
         cuPtr->mOutByOutlet
     );     
+
+    cudaDeviceSynchronize();
+    //getCudaMemoryState(&free_mem, &total_mem);  
+
+
+    #if SET_SOLUTE
+    if(!allocateSoluteArraysCudaMem( 
+        nSolutes,
+        NCwall, ncells, nWallCell, nwc, nwb, 
+        cuPtr)
+    ) return 0;
+
+
+    if(!copySoluteArraysCudaMem(
+        nSolutes, 
+        carrays, garrays, cuPtr)
+    ) return 0;        
+
+    assignSoluteArraysToCudaMem <<<1,1>>> (nSolutes, garrays,
+        //------------------------solutes
+        cuPtr->typeDiff,
+        cuPtr->k_xx,
+        cuPtr->k_yy,
+        //------------------------solutes*cells
+        cuPtr->hphi,
+        cuPtr->phi,
+        cuPtr->localDtd,
+        cuPtr->BTcell,
+        //------------------------solutes*cells*NCwall
+        cuPtr->dhphi,
+        cuPtr->Bwall
+    );
+    // cudaDeviceSynchronize();
+    // //getCudaMemoryState(&free_mem, &total_mem); 
+    #endif
 
     //Chech final CUDA memory
     cudaDeviceSynchronize();
@@ -684,7 +723,8 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr){
 EXPORT_DLL int allocateBoundArraysCudaMem(
     int nOBC, int nInlet, int nOutlet, 
     int nTotalBoundCells, int nTotalInnerCells,
-    int nTotalPointSeries,
+    int nTotalPointSeries, 
+    int nSolutes,
     t_cuPtr *cuPtr){
 /*----------------------------*/
 
@@ -719,6 +759,9 @@ EXPORT_DLL int allocateBoundArraysCudaMem(
         // cudaMalloc((void**) &(cuPtr->localh), nTotalBoundCells*sizeof(double));
         // cudaMalloc((void**) &(cuPtr->localhu), nTotalBoundCells*sizeof(double));
         // cudaMalloc((void**) &(cuPtr->localhv), nTotalBoundCells*sizeof(double));
+        // #if SET_SOLUTE
+        // cudaMalloc((void**) &(cuPtr->localhphi), nSolutes*nTotalBoundCells*sizeof(double));
+        // #endif
         
         //inner cells
         // if(nTotalInnerCells){
@@ -733,6 +776,10 @@ EXPORT_DLL int allocateBoundArraysCudaMem(
         cudaMalloc((void**) &(cuPtr->qSeriesOBC), nTotalPointSeries*sizeof(double));
         cudaMalloc((void**) &(cuPtr->hzSeriesOBC), nTotalPointSeries*sizeof(double));
         cudaMalloc((void**) &(cuPtr->frSeriesOBC), nTotalPointSeries*sizeof(double));
+
+        #if SET_SOLUTE
+        cudaMalloc((void**) &(cuPtr->phiSeriesOBC), nSolutes*nTotalPointSeries*sizeof(double));
+        #endif
 
         //mass balance pointers
         cudaMalloc((void**) &(cuPtr->qBoundByCell), nTotalBoundCells*sizeof(double));
@@ -779,6 +826,7 @@ EXPORT_DLL int copyBoundSetupArraysCudaMem(
     int nInlet = carrays->nInlet;
     int nOutlet = carrays->nOutlet;
     int nTotalPointSeries = carrays->nTotalPointSeries;
+    int nSolutes = carrays->nSolutes;
 
     int i;
     double *aux1s;
@@ -826,6 +874,10 @@ EXPORT_DLL int copyBoundSetupArraysCudaMem(
         cudaMemcpy((cuPtr->qSeriesOBC), (carrays->qSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->hzSeriesOBC), (carrays->hzSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->frSeriesOBC), (carrays->frSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
+
+        #if SET_SOLUTE
+        cudaMemcpy((cuPtr->phiSeriesOBC), (carrays->phiSeriesOBC), nSolutes*nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
+        #endif
 
         //mass balance pointers  
         if(nInlet){
@@ -984,6 +1036,10 @@ __global__ void assignBoundArraysToCudaMem(t_arrays *garrays,
         garrays->hzSeriesOBC=hzSeriesOBC;
         garrays->frSeriesOBC=frSeriesOBC;
 
+        #if SET_SOLUTE
+        garrays->phiSeriesOBC=phiSeriesOBC;
+        #endif
+
         //mass balance pointers
         garrays->qBoundByCell=qBoundByCell;
         garrays->mBoundByCell=mBoundByCell;
@@ -1048,7 +1104,12 @@ EXPORT_DLL int freeBoundaCudaMemory(
         cudaFree(cuPtr->tSeriesOBC);
         cudaFree(cuPtr->qSeriesOBC);
         cudaFree(cuPtr->hzSeriesOBC);
-        cudaFree(cuPtr->frSeriesOBC);      
+        cudaFree(cuPtr->frSeriesOBC);
+
+
+        #if SET_SOLUTE
+        cudaFree(cuPtr->phiSeriesOBC);
+        #endif        
 
         cudaFree(cuPtr->qBoundByCell);
         cudaFree(cuPtr->mBoundByCell);
@@ -1082,3 +1143,153 @@ EXPORT_DLL int freeBoundaCudaMemory(
 }
 
 
+
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateSoluteArraysCudaMem(
+    int nSolutes, 
+    int NCwall, int ncells, int nWallCell, int nwc, int nwb, 
+    t_cuPtr *cuPtr){
+/*----------------------------*/
+
+    if(nSolutes){
+        cudaMalloc((void**) &(cuPtr->Dtd), sizeof(double));
+        cudaMalloc((void**) &(cuPtr->dtAux), sizeof(double));
+
+        //solute control arrays
+        cudaMalloc((void**) &(cuPtr->typeDiff), nSolutes*sizeof(int));
+        cudaMalloc((void**) &(cuPtr->k_xx), nSolutes*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->k_yy), nSolutes*sizeof(double));
+
+        //cells
+        cudaMalloc((void**) &(cuPtr->hphi), nSolutes*ncells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->phi), nSolutes*ncells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->localDtd), nSolutes*ncells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->BTcell), nSolutes*ncells*sizeof(double));
+
+        //cells*NCwall
+        cudaMalloc((void**) &(cuPtr->dhphi), nSolutes*nWallCell*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->Bwall), nSolutes*nWallCell*sizeof(double));
+    }
+
+    return(1);
+
+}
+
+
+
+////////////////////////////////////////////////////////////////
+int copySoluteArraysCudaMem(
+    int nSolutes,
+    t_arrays *carrays,
+    t_arrays *garrays,
+    t_cuPtr *cuPtr){
+/*----------------------------*/
+    
+	int i,j;
+    int NCwall;
+	int ncells,nwc,nwb;
+    int nWallCell;
+
+	//Local variables just for allocation
+    NCwall=carrays->NCwall;	//walls per cell
+	ncells=carrays->ncells;
+    nWallCell=NCwall*ncells;
+	nwc=carrays->nw_calc;
+	nwb=carrays->nw_bound;
+
+    if(nSolutes){
+        cudaMemcpy(&(garrays->flagDiffusion), &(carrays->flagDiffusion), sizeof(int), cudaMemcpyHostToDevice);
+        cudaMemcpy(cuPtr->Dtd, &(carrays->Dtd), sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(&(garrays->Dtd), &(carrays->Dtd), sizeof(double), cudaMemcpyHostToDevice);
+
+        //solutes
+        cudaMemcpy((cuPtr->typeDiff), (carrays->typeDiff), nSolutes*sizeof(int), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->k_xx), (carrays->k_xx), nSolutes*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->k_yy), (carrays->k_yy), nSolutes*sizeof(double), cudaMemcpyHostToDevice );        
+
+        //solutes*cells    
+        cudaMemcpy((cuPtr->hphi), (carrays->hphi), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->phi), (carrays->phi), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->localDtd), (carrays->localDtd), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->BTcell), (carrays->BTcell), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
+    
+        //solutes*cells*NCwall
+        cudaMemcpy((cuPtr->dhphi), (carrays->dhphi), nSolutes*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->Bwall), (carrays->Bwall), nSolutes*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
+    }
+
+    return(1);
+
+}  
+
+
+
+////////////////////////////////////////////////////////////////
+__global__ void assignSoluteArraysToCudaMem(int nSolutes, t_arrays *garrays,
+	//------------------------cells
+	int *typeDiff,
+	double *k_xx,
+	double *k_yy,
+	double *hphi,
+	double *phi,
+    double *localDtd,
+    double *BTcell,
+	double *dhphi,
+    double *Bwall){
+/*----------------------------*/
+
+    if(nSolutes){    
+        //solute controls
+        garrays->typeDiff=typeDiff;
+        garrays->k_xx=k_xx;
+        garrays->k_yy=k_yy;
+
+        //mesh
+        garrays->hphi=hphi;
+        garrays->phi=phi;
+        garrays->localDtd=localDtd;
+        garrays->BTcell=BTcell;
+
+        //cells*NCwall
+        garrays->dhphi=dhphi;
+        garrays->Bwall=Bwall;
+    }
+
+}
+
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int freeSoluteCudaMemory(
+    int nSolutes, 
+    t_cuPtr *cuPtr){
+/*----------------------------*/
+
+    if(nSolutes){
+        
+        cudaFree(cuPtr->Dtd);
+        cudaFree(cuPtr->dtAux);
+
+        //solute control arrays
+        cudaFree(cuPtr->typeDiff);
+        cudaFree(cuPtr->k_xx);
+        cudaFree(cuPtr->k_yy);
+
+        //cells
+        cudaFree(cuPtr->hphi);
+        cudaFree(cuPtr->phi);
+        cudaFree(cuPtr->localDtd);
+        cudaFree(cuPtr->BTcell);
+
+        //cells*NCwall
+        cudaFree(cuPtr->dhphi);
+        cudaFree(cuPtr->Bwall);
+    }
+
+    return(1);
+
+}
+
+#endif

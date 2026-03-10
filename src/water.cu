@@ -104,8 +104,9 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
         hL = arrays->h[id1];
         hR = arrays->h[id2];
 		
-	    //if ((hL>TOL12)||(hR>TOL12)){
-
+        #if !RECONSTRUC_ACTIVE
+	    if ((hL>TOL12)||(hR>TOL12)){ //-------------------------------
+        #endif
 	  
         if(hL<TOL12){ wetWall=0; }				
         if(hR<TOL12){ wetWall=0; }	
@@ -521,8 +522,9 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
         arrays->dhu[iw2]=dUR[1]*aux2;
         arrays->dhv[iw2]=dUR[2]*aux2;
 
-        //} //end ((hL>TOL12)||(hR>TOL12)){ // Bucle de paredes mojadas
-
+        #if !RECONSTRUC_ACTIVE
+        } //end ((hL>TOL12)||(hR>TOL12)){ // Bucle de paredes mojadas
+        #endif
 
         //ccccccccccccccccccccccccccccccccccccccccccccccc update aux arrays
 		arrays->qnormalL[idx] = qnormalL;
@@ -534,12 +536,12 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
 
 
         //ccccccccccccccccccccccccccccccccccccccccccccccc update active cell list
-        //#if RECONSTRUC_ACTIVE
+        #if  RECONSTRUC_ACTIVE
  		if(wetWall==0){
             g_add_active_cells(arrays, id1);
             g_add_active_cells(arrays, id2);
 		}
-        //#endif 
+        #endif 
 
 	} // end iwall loop
 
@@ -742,9 +744,10 @@ __global__ void g_update_cells(int nTasks, t_arrays *arrays){
 
 
             //add walls to active-wall-array
-            g_add_active_walls(arrays, idx);  
-
-
+            #if RECONSTRUC_ACTIVE
+            g_add_active_walls(arrays, idx); 
+            #endif
+             
         }else{ //dry cell
             arrays->h[idx] = 0.0;
             arrays->sqrh[idx] = 0.0;

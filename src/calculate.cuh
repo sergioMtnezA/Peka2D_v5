@@ -17,6 +17,10 @@
 #include "boundary.cuh"
 #include "cuTilities.cuh"
 
+#if SET_SOLUTE
+#include "solute.cuh"
+#endif
+
 
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int computeSimulation(

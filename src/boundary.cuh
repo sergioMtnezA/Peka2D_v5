@@ -39,3 +39,15 @@ __device__ double d_interpolate_vector(double valor,
 	int tidx, 
 	double *x, 
 	double *y);
+
+
+/**
+ * @brief This function updates the open boundaries.
+ * @param arrays This pointer variable passes the arrays structure.
+ */
+__device__ double d_interpolate_matrix(double valor, 
+	int line, int nPointsLine,
+	int n, int idx0,
+	int tidx, 
+	double *x, 
+	double *y);

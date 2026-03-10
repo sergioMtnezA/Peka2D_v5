@@ -56,3 +56,22 @@ EXPORT_DLL int initilizeBoundaryMeshArrays(
     t_arrays *carrays,
     t_message *msg);
 /*----------------------------*/
+
+
+#if SET_SOLUTE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocateSoluteArraysMem(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int initilizeSoluteArrays(
+    t_parameters spar, 
+    t_mesh *mesh,
+    t_arrays *carrays,   
+    t_message *msg);
+/*----------------------------*/
+#endif

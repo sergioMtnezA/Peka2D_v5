@@ -41,6 +41,8 @@
 	*/
 	#ifndef SET_SOLUTE
 		#define SET_SOLUTE 0
+		#define SET_SOLUTE_UNROLL 0
+		#define SET_MULTILAYER 0
 	#endif		
 
 #endif
@@ -50,7 +52,8 @@
  * 1 Enabled
  */
 #ifndef RECONSTRUC_ACTIVE
-	#define RECONSTRUC_ACTIVE 1
+	#define RECONSTRUC_ACTIVE 0  //Enable active elements reconstruction
+	#define UPDATE_ACTIVE_ARRAYS 0 //Update active arrays each nIterArrangeActElem iterations
 	#define nIterArrangeActElem 1000
 #endif
 
