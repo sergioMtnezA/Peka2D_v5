@@ -574,6 +574,7 @@ EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg){
 		fprintf(fp,"__initGPU          %12.6lf %12.3lf\n", timers.initGPU, (timers.initGPU/timers.total)*100.);
 		fprintf(fp,"__computeSim       %12.6lf %12.3lf\n", timers.computeSim, (timers.computeSim/timers.total)*100.);
 		fprintf(fp,"____wallCalculus   %12.6lf %12.3lf\n", timers.wallCalculus, (timers.wallCalculus/timers.computeSim)*100.);
+		fprintf(fp,"__multilayerCalc   %12.6lf %12.3lf\n", timers.multilayer_calculus, (timers.multilayer_calculus/timers.computeSim)*100.);
 		fprintf(fp,"____cellUpdating   %12.6lf %12.3lf\n", timers.cellUpdating, (timers.cellUpdating/timers.computeSim)*100.);
 		fprintf(fp,"____boundConditon  %12.6lf %12.3lf\n", timers.boundConditon, (timers.boundConditon/timers.computeSim)*100.);
 		fprintf(fp,"____wetDryFix      %12.6lf %12.3lf\n", timers.wetDryFix, (timers.wetDryFix/timers.computeSim)*100.);

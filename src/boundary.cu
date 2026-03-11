@@ -1039,7 +1039,11 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 		if(ithread<nbc){	
 			if(localh[ithread] > TOL12){
 				for(j=0;j<nSolutes;j++){				
-					arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
+                    #if SET_MULTILAYER
+                    arrays->hphi[j*ncells+cidx] = (localh[ithread]/nSolutes)*arrays->phi[j*ncells+cidx];
+                    #else
+                    arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
+                    #endif
 				}
 			}else{
 				for(j=0;j<nSolutes;j++){

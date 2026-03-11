@@ -639,6 +639,7 @@ struct t_timers_{
 	double initGPU=0.0;
 	double computeSim=0.0;
 	double wallCalculus=0.0;
+	double multilayer_calculus=0.0;
 	double cellUpdating=0.0;
 	double boundConditon=0.0;
 	double wetDryFix=0.0;
@@ -646,6 +647,7 @@ struct t_timers_{
 	double memoryTransfer=0.0;
 	double writeOut=0.0;
 	double closeSim=0.0;
+
 };
 
 

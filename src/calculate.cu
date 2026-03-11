@@ -17,7 +17,7 @@ EXPORT_DLL int computeSimulation(
     double t;
     int nIter;
 
-    clock_t stime1, stime2;
+    clock_t stime1, stime2, stime3;
     clock_t start0, end0;
 
     t_arrays *garrays;
@@ -378,7 +378,7 @@ EXPORT_DLL void generateTimeStep(
     int obcPerGrid;
     size_t memPerOBC;
 
-    clock_t stime1, stime2;
+    clock_t stime1, stime2, stime3, stime4;
 
     carrays->massOld = carrays->massNew;
     cudaMemcpy(&(garrays->massOld), &(garrays->massNew), sizeof(double), cudaMemcpyDeviceToDevice );
@@ -502,6 +502,24 @@ EXPORT_DLL void generateTimeStep(
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     #endif
+
+    //Start multilayer time .....................................
+	stime3=clock();
+
+    #if SET_MULTILAYER
+    #if SET_MULTILAYER_IMPLICIT
+    nTasks=carrays->nActCells;
+    blocksPerGrid = nTasks/threadsPerBlock + 1; 
+    g_multilayer_implicit_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    // #else
+    // nTasks=carrays->nActCells;
+    // blocksPerGrid = nTasks/threadsPerBlock + 1; 
+    // g_multilayer_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    #endif
+    #endif
+
+    stime4=clock();
+	timers->multilayer_calculus += double(stime4-stime3)/CLOCKS_PER_SEC;
 
     // Sincronizar la CPU con la GPU
     cudaDeviceSynchronize();

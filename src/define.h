@@ -40,9 +40,12 @@
 	 * 1 Enabled
 	*/
 	#ifndef SET_SOLUTE
-		#define SET_SOLUTE 0
+		#define SET_SOLUTE 1
 		#define SET_SOLUTE_UNROLL 0
-		#define SET_MULTILAYER 0
+		#define SET_MULTILAYER 1
+		#define SET_EDDYVISCOSITY 0
+		#define SET_MULTILAYER_IMPLICIT 1
+		#define SET_MULTILAYER_VELOCITY 1
 	#endif		
 
 #endif
