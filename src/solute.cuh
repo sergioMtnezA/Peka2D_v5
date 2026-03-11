@@ -10,7 +10,7 @@
 #define EDDY_VISCOSITY_LINEAR 0
 #define EDDY_VISCOSITY_PARABOLIC 0
 #define _Dm_ 0.0 //Molecular diffusion
-#define ws 0.0
+#define ws 0.00075
 
 /**
  * @brief This function initializes the variation of conserved variables in the arrays structure to 0.0 and the array solidWallByCell to 0.

@@ -581,6 +581,7 @@ EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg){
 		fprintf(fp,"____memoryTransfer %12.6lf %12.3lf\n", timers.memoryTransfer, (timers.memoryTransfer/timers.computeSim)*100.);
 		fprintf(fp,"____writeOut       %12.6lf %12.3lf\n", timers.writeOut, (timers.writeOut/timers.computeSim)*100.);
 		fprintf(fp,"__closeSim         %12.6lf %12.3lf\n", timers.closeSim, (timers.closeSim/timers.total)*100.);
+		fprintf(fp,"__multilayerCalc   %12.6lf %12.3lf\n", timers.multilayer_calculus, (timers.multilayer_calculus/timers.total)*100.);
 		fclose(fp);		
 	}else{
         sprintf(temp,"Computation time file not reacheable");

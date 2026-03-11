@@ -84,6 +84,22 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
             phiR = arrays->phi[sid2];
 
             dphi=0.5*(phiL+phiR)-SIGN(qnormalL)*0.5*(phiR-phiL);
+
+            // GET friction Velocity for the log velocity vertical model
+            // u = arrays->u[idx];
+            // v = arrays->v[idx];
+                
+            // moduloU = sqrt(u*u + v*v);
+
+            // hlayer = arrays->h[idx]/(nSolutes);
+            
+            // nman2wall = arrays->nman2wall[idx];
+            // ustar = nman2wall*sqrt(_g_*moduloU*moduloU/cbrt(arrays->h[idx]));
+
+            // if(idx == 195917){
+            //     printf("ustar %.12lf h %.12lf\n", ustar, arrays->h[idx]);
+            // } 
+            //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc LOGARITHMIC VERTICAL VELOCITY
             #if SET_MULTILAYER
 
             #if SET_MULTILAYER_VELOCITY
@@ -94,22 +110,6 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
             double Re = 2800;
             double U_fonc, u_prom;
             double A[12];
-
-            // u = arrays->u[idx];
-            // v = arrays->v[idx];
-                
-            // moduloU = sqrt(u*u + v*v);
-
-            // hlayer = arrays->h[idx]/(nSolutes);
-            
-            // nman2wall = arrays->nman2wall[idx];
-            // ustar = nman2wall*sqrt(_g_*moduloU*moduloU/cbrt(arrays->h[idx]));
-            
-            // z_normalized = 0.5*(1./nSolutes) + jphi/nSolutes;
-            // ks = 3.5*0.0005;
-
-            // U_fonc = ustar/k * log(z_normalized) + ustar/k * log((arrays->h[idx]*30.)/ks);
-            // u_prom = ustar*(log(30.*arrays->h[idx]/ks)-1.)/(k);
 
             // MODEL LINEAR
             // A[0] = 0.0833333;
@@ -126,38 +126,46 @@ __global__ void g_wall_solute_calculus(int nTasks, t_arrays *arrays, double *loc
             // A[11] = 1.91667;
 
             // MODEL LOG
-            
-            A[0]=	0.6325546093710857;
-            A[1]=	0.8178943911224351;
-            A[2]=	0.9040724819724524;
-            A[3]=	0.9608365392691058;
-            A[4]=	1.0032341728737848;
-            A[5]=	1.0370880294931535;
-            A[6]=	1.0652706448812252;
-            A[7]=	1.089412263723802;
-            A[8]=	1.1105277289681712;
-            A[9]=	1.1292918873060287;
-            A[10]=	1.1461763210204554;
-            A[11]=	1.1615235820078802;
+            // EXP BORJA LATORRE
+            // A[0]=	0.6325546093710857;
+            // A[1]=	0.8178943911224351;
+            // A[2]=	0.9040724819724524;
+            // A[3]=	0.9608365392691058;
+            // A[4]=	1.0032341728737848;
+            // A[5]=	1.0370880294931535;
+            // A[6]=	1.0652706448812252;
+            // A[7]=	1.089412263723802;
+            // A[8]=	1.1105277289681712;
+            // A[9]=	1.1292918873060287;
+            // A[10]=	1.1461763210204554;
+            // A[11]=	1.1615235820078802;
 
-            
+            //Guadalquivir
+            A[0]=	0.8223322102639082;
+            A[1]=	0.9119480013820693;
+            A[2]=	0.953616971290203;
+            A[3]=	0.9810636201081068;
+            A[4]=	1.0015637925002303;
+            A[5]=	1.0179328640221537;
+            A[6]=	1.031559767808893;
+            A[7]=	1.043232762408364;
+            A[8]=	1.0534425463242685;
+            A[9]=	1.0625154225207534;
+            A[10]=	1.0706794112262679;
+            A[11]=	1.0781001436879587;
 
-            // if(idx == 195917){
-            //     printf("jphi%d A %.12lf qnormal %.12lf\n", jphi, A[jphi], qnormalL);
-            // } 
-            
+
             dhphi=(qnormalL*A[jphi]/nSolutes)*dphi;
 
-            // if(idx == 195917){
-            //     printf("dhphi %.12lf\n", dhphi);
-            // } 
             #else
             
             dhphi=(qnormalL/nSolutes)*dphi;
+
             #endif
             #else
             
             dhphi=qnormalL*dphi;
+
             #endif
             
             //ccccccccccccccccccccccccccccccccccccccccccccccc Add solute contributions
@@ -335,7 +343,8 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
         if(arrays->h[idx]>TOL12){ //wet cells
 
             hlayer=arrays->h[idx]/nSolutes;
-            
+
+                
             //for(jphi=0;jphi<arrays->nSolutes;jphi++){ //compact
         
                 siw0 = jphi*(ncells*NCwall)+idx;
@@ -353,7 +362,7 @@ __global__ void g_update_solute_cells(int nTasks, t_arrays *arrays){
                 arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
                 #endif
 
-                
+            
             //} //compact
         }
     }
@@ -563,37 +572,8 @@ dt=arrays->dt;
         double r [21];
         double rbis [21];
 
-        //cells index
-        idx1=arrays->idx1[idx];
-        idx2=arrays->idx2[idx];
 
         if(arrays->h[idx] >= arrays->minh){
-
-            sqrhL=arrays->sqrh[idx1];
-            sqrhR=arrays->sqrh[idx2];
-
-            u = arrays->u[idx];
-            v = arrays->v[idx];
-
-            uL = arrays->u[idx1];
-            uR = arrays->u[idx2];
-
-            vL = arrays->u[idx1];
-            vR = arrays->u[idx2];
-
-            hL = arrays->h[idx1];
-            hR = arrays->h[idx2];
-
-            hbar = 0.5*(hL+hR);
-
-            aux1 = sqrhL + sqrhR;
-            ubar = (uL*sqrhL + uR*sqrhR)/aux1;
-            vbar = (vL*sqrhL + vR*sqrhR)/aux1;
-
-            if(fabs(ubar) < TOL12) ubar = 0.0;
-            if(fabs(vbar) < TOL12) vbar = 0.0;            
-
-            modU2 = ubar*ubar+vbar*vbar;
 
             u = arrays->u[idx];
             v = arrays->v[idx];
@@ -605,6 +585,8 @@ dt=arrays->dt;
             nman2wall = arrays->nman2wall[idx];
             ustar = nman2wall*sqrt(_g_*moduloU*moduloU/cbrt(arrays->h[idx]));
 
+            //cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc NON CONSTANT VERTICAL DIFFUSION 
+            //ccccccccccccccccccccccccccc ESTUARY VERSION
             #if EDDY_VISCOSITY
                 
                 sigmap = -0.5;
@@ -660,10 +642,6 @@ dt=arrays->dt;
 
                 //epsis2 = epsia;
 
-                // if(idx == 195917){
-                //     printf("epsis0 %.12lf sigmaD %.12lf\n", epsis2, sigmaD);
-                // } 
-
                 // Bi = 1+dt/(hlayer*hlayer)*epsis2;
                 // Ci = -(dt*epsis2)/(hlayer*hlayer);
 
@@ -689,9 +667,6 @@ dt=arrays->dt;
                 // //epsis2 = k*ustar*arrays->h[idx]*Asigma;
                 // epsis2 = epsia;
 
-                // if(idx == 195917){
-                //     printf("epsis1 %.12lf sigmaD %.12lf\n", epsis2, sigmaD);
-                // } 
 
                 A[1] = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
                 B[1] = 1.+((epsis2[2]+2.*epsis2[1]+epsis2[0])/2.)*(dt/(hlayer*hlayer));
@@ -704,7 +679,7 @@ dt=arrays->dt;
                 rbis[1] = arrays->phi[ncells+idx] - (A[1]/Bi)*r[0];
                 Bbis[1] = B[1]-(A[1]*Ci)/Bi;
             #else
-
+            //cccccccccccccccccccccccccc LINEAR VERSION
             #if EDDY_VISCOSITY_LINEAR
 
             for(jphi=0;jphi<nInterfaces;jphi++){
@@ -739,7 +714,7 @@ dt=arrays->dt;
             Bi = 1+dt/(hlayer*hlayer)*epsis1;
             Ci = -(dt*epsis1)/(hlayer*hlayer);
 
-        
+            //cccccccccccccccccccccccccccccccc PARABOLIC VERSION (Not finished)
             #if EDDY_VISCOSITY_PARABOLIC
             z_depth = hlayer/2+hlayer;
             epsis1 = k*ustar*arrays->h[idx]*(1-z_depth/arrays->h[idx]);
@@ -780,10 +755,6 @@ dt=arrays->dt;
                     z_depth = hlayer/2 + hlayer*jphi;
                     epsis1 = k*ustar*arrays->h[idx]*(1-z_depth/arrays->h[idx]);
                     #endif
-
-                    // if(idx == 195917){
-                    //     printf("vt %.12lf\n ",epsis1);
-                    // }  
                         
                     Bbis[jphi] = B - (A*C)/Bbis[jphi-1] ;
                     rbis[jphi] = r[jphi]- (A/Bbis[jphi-1])*rbis[jphi-1];  
@@ -879,7 +850,15 @@ dt=arrays->dt;
             }
 
         
+        }else{
+            for(jphi=0;jphi<nInterfaces;jphi++){
+                sid1 = jphi*ncells+idx;
+                arrays->phi[sid1] = 0.0;
+                arrays->hphi[sid1] = 0.0;
+            
+            }
         }
+
     }
 
 

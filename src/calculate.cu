@@ -493,6 +493,9 @@ EXPORT_DLL void generateTimeStep(
     g_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     #endif
 
+    //Start multilayer time .....................................
+	stime1=clock();
+
     #if SET_MULTILAYER
     #if SET_MULTILAYER_IMPLICIT
     nTasks=carrays->nActCells;
@@ -504,6 +507,10 @@ EXPORT_DLL void generateTimeStep(
     // g_multilayer_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     #endif
     #endif
+
+    stime2=clock();
+	timers->multilayer_calculus += double(stime2-stime1)/CLOCKS_PER_SEC;
+    //End wetDryFix time .....................................    
 
     // Sincronizar la CPU con la GPU
     cudaDeviceSynchronize();
