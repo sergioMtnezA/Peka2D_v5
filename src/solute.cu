@@ -776,6 +776,7 @@ __global__ void g_wall_solute_diffusion_calculus(int nTasks, t_arrays *arrays){
     int nActWalls = arrays->nActWalls;
     int jphi;
     int iactWall;
+    int nInterfaces= arrays->nSolutes;
 
 	double hL,hR;
 	double sqrhL,sqrhR; 
@@ -825,6 +826,11 @@ __global__ void g_wall_solute_diffusion_calculus(int nTasks, t_arrays *arrays){
     
         hL = arrays->h[id1];
         hR = arrays->h[id2];
+
+        #if SET_MULTILAYER
+        hL = arrays->h[id1]/nInterfaces;
+        hR = arrays->h[id2]/nInterfaces;
+        #endif
 
         if(hL>minh && hR>minh){ //wet-wet walls
 		
