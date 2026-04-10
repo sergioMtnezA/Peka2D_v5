@@ -220,9 +220,10 @@ EXPORT_DLL int computeSimulation(
     }    
 
     // Free CUDA memory
-    #if SET_SOLUTE
-    freeSoluteCudaMemory(carrays->nSolutes,&(cuPtr));
+    #if SET_SOLUTE || SET_SED
+    freeParticleCudaMemory(carrays->nSolutes, carrays->nSediments,&(cuPtr));
     #endif
+    
     freeBoundaCudaMemory(carrays->nOBC, carrays->nInlet, carrays->nOutlet,
         carrays->nTotalBoundCells, carrays->nTotalInnerCells, 
         carrays->nTotalPointSeries,
@@ -274,8 +275,8 @@ EXPORT_DLL int computeInitialBoundaryConditions(
         nTasks=carrays->nTotalBoundCells;
         obcPerGrid = carrays->nOBC; 
         memPerOBC = 4*carrays->nMaxBoundCells*sizeof(double);
-        #if SET_SOLUTE
-        memPerOBC += carrays->nSolutes*sizeof(double);
+        #if SET_SOLUTE || SET_SED
+        memPerOBC += (carrays->nSolutes + carrays->nSediments)*sizeof(double);
         #endif
         sprintf(temp,"Shared memory: nMaxBoundCells %d - Reserved %zu KB",carrays->nMaxBoundCells,(memPerOBC/1024));
         Notify(temp,MSG_L0,msg);
@@ -369,6 +370,7 @@ EXPORT_DLL void generateTimeStep(
     int ncells=carrays->ncells;
     int nwc=carrays->nw_calc;
     int nSolutes=carrays->nSolutes;
+    int nSediments = carrays->nSediments;
     int nSteps;
     double dtDifR, dtAux;
 
@@ -410,12 +412,13 @@ EXPORT_DLL void generateTimeStep(
     cudaMemcpy(&(carrays->nActCells), &(garrays->nActCells), sizeof(int), cudaMemcpyDeviceToHost );
 
 
-    #if SET_SOLUTE
+    #if SET_SOLUTE || SET_SED
     #if SET_SOLUTE_UNROLL==0  //compact 
     nTasks=carrays->nActWalls;
     #elif SET_SOLUTE_UNROLL==1  //unroll    
-    nTasks=carrays->nActWalls*carrays->nSolutes;
+    nTasks=carrays->nActWalls*(carrays->nSolutes + carrays->nSediments);
     #endif
+
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_wall_solute_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
 
@@ -423,7 +426,7 @@ EXPORT_DLL void generateTimeStep(
         #if SET_SOLUTE_UNROLL==0  //compact 
         nTasks=carrays->nTotalBoundCells;
         #elif SET_SOLUTE_UNROLL==1  //unroll  
-        nTasks=carrays->nTotalBoundCells*carrays->nSolutes;
+        nTasks=carrays->nTotalBoundCells*(carrays->nSolutes + carrays->nSediments);
         #endif
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_bound_solute_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
@@ -441,11 +444,11 @@ EXPORT_DLL void generateTimeStep(
     g_update_contributions <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
 
 
-    #if SET_SOLUTE
+    #if SET_SOLUTE || SET_SED
     #if SET_SOLUTE_UNROLL==0  //compact 
     nTasks=carrays->nActCells; 
     #elif SET_SOLUTE_UNROLL==1  //unroll  
-    nTasks=carrays->nActCells*carrays->nSolutes;
+    nTasks=carrays->nActCells*(carrays->nSolutes + carrays->nSediments);
     #endif 
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_update_solute_contributions <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
@@ -497,7 +500,7 @@ EXPORT_DLL void generateTimeStep(
     #if SET_SOLUTE_UNROLL==0  //compact 
     nTasks=carrays->nActCells; 
     #elif SET_SOLUTE_UNROLL==1  //unroll  
-    nTasks=carrays->nActCells*carrays->nSolutes;
+    nTasks=carrays->nActCells*(carrays->nSolutes + carrays->nSediments);
     #endif     
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
@@ -708,9 +711,9 @@ EXPORT_DLL void generateTimeStep(
         cudaMemcpy((carrays->modulou), (cuPtr->modulou), ncells*sizeof(double), cudaMemcpyDeviceToHost );          
 
         
-        #if SET_SOLUTE
+        #if SET_SOLUTE || SET_SED
         // Transfer solute arrays from GPU to CPU 
-        if(carrays->nSolutes){
+        if(carrays->nParticles){
             cudaMemcpy((carrays->phi), (cuPtr->phi), nSolutes*ncells*sizeof(double), cudaMemcpyDeviceToHost );
         }
         #endif

@@ -137,12 +137,12 @@ int loadSimulationDomain(
 
 
     //Load solute data
-	#if SET_SOLUTE
+	#if SET_SOLUTE || SET_SED
 	if(msg->error){
 		return 0;
 	}else{
-		if(loadSoluteData(pksetup, spar, mesh, msg)){
-			sprintf(temp,"Solute loading completed");
+		if(loadParticleData(pksetup, spar, mesh, msg)){
+			sprintf(temp,"Solute/sediment loading completed");
 			Notify(temp,MSG_L1,msg);		
 		}        
 	} 
@@ -255,22 +255,22 @@ int initializeComputationArrays(
 
 
 	//Create solute CPU arrays
-	#if SET_SOLUTE
+	#if SET_SOLUTE || SET_SED
 	if(msg->error){
 		return 0;
 	}else{
 
 		//allocate RAM memory
-		if(allocateSoluteArraysMem(spar, mesh, carrays, msg)){
+		if(allocateParticleArraysMem(spar, mesh, carrays, msg)){
 			sprintf(temp,"Solute arrays memory allocation completed");
 			Notify(temp,MSG_L2,msg);		
 		}
 
 		//reconstruct mesh data
-		if(initilizeSoluteArrays(spar, mesh, carrays, msg)){
+		if(initilizeParticleArrays(spar, mesh, carrays, msg)){
 			sprintf(temp,"Initialize solute mesh arrays completed");
 			Notify(temp,MSG_L2,msg);		
-		} 
+		}
 
 	} 	
 	#endif

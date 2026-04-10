@@ -218,6 +218,8 @@ EXPORT_DLL int setControlParameters(
 
     //initialize configuration parameters
     mesh->nSolutes=0;
+    mesh->nSediments=0;
+    mesh->nParticles=0;
 
     return 1;
 
@@ -1342,9 +1344,9 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].t=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     mesh->in[countInlet].q=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
-                    #if SET_SOLUTE
-                    mesh->in[countInlet].phi=(double**) malloc(mesh->nSolutes*sizeof(double*));
-                    for(k=0;k<mesh->nSolutes;k++){
+                    #if SET_SOLUTE || SET_SED
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*sizeof(double*));
+                    for(k=0;k<mesh->nParticles;k++){
                         mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     }
                     #endif
@@ -1356,8 +1358,8 @@ int readOpenBoundaryFile(
 
                         mesh->in[countInlet].t[j] *= 3600.0;
 
-                        #if SET_SOLUTE
-                        for(k=0;k<mesh->nSolutes;k++){
+                        #if SET_SOLUTE || SET_SED
+                        for(k=0;k<mesh->nParticles;k++){
                             fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
                             //printf("file id %d sol %d phi %lf \n",countInlet,k,mesh->in[countInlet].phi[k][j]);
                         }
@@ -1375,9 +1377,9 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].t=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     mesh->in[countInlet].hZ=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
-                    #if SET_SOLUTE
-                    mesh->in[countInlet].phi=(double**) malloc(mesh->nSolutes*sizeof(double*));
-                    for(k=0;k<mesh->nSolutes;k++){
+                    #if SET_SOLUTE || SET_SED
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*sizeof(double*));
+                    for(k=0;k<mesh->nParticles;k++){
                         mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     }
                     #endif
@@ -1387,8 +1389,8 @@ int readOpenBoundaryFile(
                         
                         mesh->in[countInlet].t[j] *= 3600.0;
 
-                        #if SET_SOLUTE
-                        for(k=0;k<mesh->nSolutes;k++){
+                        #if SET_SOLUTE || SET_SED
+                        for(k=0;k<mesh->nParticles;k++){
                             fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
                         }
                         #endif
@@ -1404,9 +1406,9 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].q=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     mesh->in[countInlet].hZ=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
-                    #if SET_SOLUTE
-                    mesh->in[countInlet].phi=(double**) malloc(mesh->nSolutes*sizeof(double*));
-                    for(k=0;k<mesh->nSolutes;k++){
+                    #if SET_SOLUTE || SET_SED
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*sizeof(double*));
+                    for(k=0;k<mesh->nParticles;k++){
                         mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
                     }
                     #endif
@@ -1416,8 +1418,8 @@ int readOpenBoundaryFile(
                         
                         mesh->in[countInlet].t[j] *= 3600.0;
 
-                        #if SET_SOLUTE
-                        for(k=0;k<mesh->nSolutes;k++){
+                        #if SET_SOLUTE || SET_SED
+                        for(k=0;k<mesh->nParticles;k++){
                             fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
                         }
                         #endif
@@ -1523,9 +1525,9 @@ int readOpenBoundaryFile(
 
 
 
-#if SET_SOLUTE
+#if SET_SOLUTE || SET_SED
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int loadSoluteData(
+EXPORT_DLL int loadParticleData(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
     t_mesh *mesh, 
@@ -1533,14 +1535,21 @@ EXPORT_DLL int loadSoluteData(
 /*----------------------------*/
 
     char filename[1024], temp[1024];
-    int solute_enabled_by_run=0;
+
+    Peka2D_ParticleGroup *particleGroup;
+    particleGroup = (Peka2D_ParticleGroup*) malloc(sizeof(Peka2D_ParticleGroup));
+
+    sprintf(particleGroup->initialFile,"%s%s.SOLINITIAL",spar->dir,spar->proj);
+
+    #if SET_SOLUTE
 
     Peka2D_SoluteGroup *soluteGroup;
     soluteGroup = (Peka2D_SoluteGroup*) malloc(sizeof(Peka2D_SoluteGroup));
 
-    //initialize default
+    //initialize default solute
     soluteGroup->nSolutes=0;
-    sprintf(soluteGroup->initialFile,"%s%s.SOLINITIAL",spar->dir,spar->proj);
+
+    int solute_enabled_by_run=0;
 
     //Load solutes if activated
     solute_enabled_by_run = pksetup->pkrun.solutes;
@@ -1556,19 +1565,51 @@ EXPORT_DLL int loadSoluteData(
         //associted soluteGroup to pksetup
         pksetup->soluteGroup = soluteGroup; 
 
+    }
+    #endif
+
+    #if SET_SED
+    //initialize default solute
+
+    Peka2D_SedGroup *sedGroup;
+    sedGroup = (Peka2D_SedGroup*) malloc(sizeof(Peka2D_SedGroup));
+
+    sedGroup->nSediments=0;
+    int sediment_enabled_by_run=0;
+
+    //Load sediments if activated
+    sediment_enabled_by_run = pksetup->pkrun.sediments;
+    if(sediment_enabled_by_run){
+
+        //Read sediment file
+        sprintf(filename,"%s%s.SED",spar->dir,spar->proj);
+        if(readSedimentFile(filename, sedGroup, msg)){
+            sprintf(temp,"Reading sediment file completed");
+            Notify(temp,MSG_L1,msg);		
+        }
+
+        //associted sedimentGroup to pksetup
+        pksetup->sedGroup = sedGroup; 
+
+    }
+
+    #endif
+
+    if(sediment_enabled_by_run || solute_enabled_by_run){
         //Create solute structures
-        if(createSoluteStructures(pksetup, spar, mesh, msg)){
+        if(createParticleStructures(pksetup, spar, mesh, msg)){
             sprintf(temp,"Solute structures completed");
             Notify(temp,MSG_L1,msg);		
         }
 
         //Initialize solute concentration
-        if(setInitialSoluteState(pksetup, spar, mesh, msg)){
+        if(setInitialParticleState(pksetup, spar, mesh, msg)){
             sprintf(temp,"Set initial solute state completed");
             Notify(temp,MSG_L1,msg);		
         }  
 
     }
+
 
 	return 1;
 	
@@ -1611,7 +1652,7 @@ int readSoluteFile(
         soluteGroup->nSolutes=nSolutes;
         soluteGroup->solute = (Peka2D_Solute*) malloc(nSolutes*sizeof(Peka2D_Solute));
 
-        fscanf(fp,"%d",&soluteGroup->flagDiffussion); //line 3 
+        fscanf(fp,"%d",&soluteGroup->flagDiffusion); //line 3 
 
         for(i=0;i<nSolutes;i++){ //line 4
             fscanf(fp,"%d",&soluteGroup->solute[i].typeDiff);
@@ -1649,9 +1690,110 @@ int readSoluteFile(
 
 }
 
+////////////////////////////////////////////////////////////////
+int readSedimentFile(
+    char *filename,
+    Peka2D_SedGroup *sedGroup,   
+    t_message *e){
+/*----------------------------*/
+
+    int i,j;
+    FILE *fp;
+    char temp[1024];
+    int nSediments=0;
+    int release=0;
+
+
+    fp = fopen(filename,"r");
+    if(!fp){
+        sprintf(temp,"%s file not found",filename);
+        Notify(temp,MSG_ERROR,e);
+        return 0;
+    }
+
+    fscanf(fp,"%d",&release); //line 1: Suspended sediment option switch
+    if(release!=202407){
+        sprintf(temp,"The Sediment file version should be 202407. Current version: %d",release);
+        Notify(temp,MSG_ERROR,e);
+        return(0);
+    }    
+
+    fscanf(fp,"%d",&nSediments); //line 2: Number of suspended sediment classes/fractions.
+    //printf("nsol %d\n",nSolutes);
+
+    if(nSediments>0){
+
+        sedGroup->nSediments=nSediments;
+        sedGroup->sediment = (Peka2D_Sediment*) malloc(nSediments*sizeof(Peka2D_Sediment));
+
+
+        for(i=0;i<nSediments;i++){ //line 3: Equilibrium concentration formula.
+            fscanf(fp,"%d",&sedGroup->sediment[i].EquConcF);
+        }
+
+        for(i=0;i<nSediments;i++){ //line 4 to +nSediments: Sediment density for each fraction
+            fscanf(fp,"%lf", &sedGroup->sediment[i].rhoS);
+        }
+
+        for(i=0;i<nSediments;i++){ //line 5 to +nSediments: Initial suspended sediment concentration for each sediment class/fraction
+            fscanf(fp,"%lf",&sedGroup->sediment[i].iniConc);
+        }
+
+        fscanf(fp,"%d",&sedGroup->flagErosion); //line 6: Flag erosion
+
+        for(i=0;i<nSediments;i++){ //line 7 to +nSediments: Suspended sediment D50 size for each sediment class/fraction
+            fscanf(fp,"%lf", &sedGroup->sediment[i].dsp);
+        }
+
+        fscanf(fp,"%d",&sedGroup->flagDiffusionS); //line 6: Flag diffusion
+
+        for(i=0;i<nSediments;i++){ //line 9 to +nSediments: Porosity for each fraction.
+            fscanf(fp,"%lf", &sedGroup->sediment[i].pd);
+        }
+
+        for(i=0;i<nSediments;i++){ //line 10 to +nSediments: Critical Shield Stress for each sediment class/fraction
+            fscanf(fp,"%lf", &sedGroup->sediment[i].Css);
+        }
+
+        for(i=0;i<nSediments;i++){ //line 11 to +nSediments: Friction angle for each fraction
+            fscanf(fp,"%lf", &sedGroup->sediment[i].fAngle);
+        }
+
+        for(i=0;i<nSediments;i++){ //line 12: Equilibrium concentration formula factor for each sediment class/fraction.
+            fscanf(fp,"%lf",&sedGroup->sediment[i].EquConcFF);
+        }
+
+        for(i=0;i<nSediments;i++){ //line 13: Settling velocity formula.
+            fscanf(fp,"%d",&sedGroup->sediment[i].WsF);
+        }
+
+        for(i=0;i<nSediments;i++){ //line 14: Settling velocity formula factors for each sediment class/fraction.
+            fscanf(fp,"%lf",&sedGroup->sediment[i].WsFF);
+            //printf("Cini %lf\n",soluteGroup->solute[i].iniConc);
+        }
+
+        for(i=0;i<nSediments;i++){ //line 15 to +nSolutes  Longitudinal and transversal dispersion coefficients.
+            fscanf(fp,"%lf %lf",
+                &sedGroup->sediment[i].ks_xx,
+                &sedGroup->sediment[i].ks_yy);
+        }
+
+    }else{
+        sprintf(temp,"Sediments are not defined in file %s - Runing simulation without sediments",filename);
+        Notify(temp,MSG_WARN,e);
+        return(0);
+    }
+
+	fclose(fp);
+    
+    return(1);
+
+}
+
+
 
 ////////////////////////////////////////////////////////////////
-int createSoluteStructures(
+int createParticleStructures(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
     t_mesh *mesh,    
@@ -1660,21 +1802,30 @@ int createSoluteStructures(
 
     int i,j;
     Peka2D_SoluteGroup *soluteGroup;
+    Peka2D_SedGroup * sedGroup;
+
     soluteGroup = pksetup->soluteGroup;
+    sedGroup = pksetup->sedGroup;
 
     int nSolutes = soluteGroup->nSolutes;
+    int nSediments = sedGroup->nSediments;
+    int nParticles = nSolutes + nSediments;
+
     t_c_cell *c1;
 
     //solute flag in mesh
     mesh->nSolutes = nSolutes;
-
+    mesh->nSediments = nSediments;
+    mesh->nParticles = nSolutes + nSediments;
+    
+    #if SET_SOLUTE
     if(mesh->nSolutes){
         
         //solute data in mesh
         mesh->solutes = (l_solutes*) malloc(sizeof(l_solutes));
 
         mesh->solutes->n = nSolutes;
-        mesh->solutes->flagDiffussion = soluteGroup->flagDiffussion;
+        mesh->solutes->flagDiffusion = soluteGroup->flagDiffusion;
         //printf("flagDiffusion %d\n",mesh->solutes->flagDiffussion);
 
         mesh->solutes->solute=(t_solute*) malloc(nSolutes*sizeof(t_solute));
@@ -1690,11 +1841,45 @@ int createSoluteStructures(
             mesh->solutes->solute[j].iniConc=soluteGroup->solute[j].iniConc;            
         }
 
+    }    
+    #endif
+    #if SET_SED
+    if(mesh->nSediments){
+        
+        //sediment data in mesh
+        mesh->sediments = (l_sediments*) malloc(sizeof(l_sediments));
+
+        mesh->sediments->n = nSediments;
+        mesh->sediments->flagErosion = sedGroup->flagErosion;
+        mesh->sediments->flagDiffusionS = sedGroup->flagDiffusionS;
+
+        mesh->sediments->sediment=(t_sediment*) malloc(nSediments*sizeof(t_sediment));
+        for(j=0;j<nSediments;j++){
+            
+            mesh->sediments->sediment[j].EquConcF = sedGroup->sediment[j].EquConcF;
+            mesh->sediments->sediment[j].WsF = sedGroup->sediment[j].WsF;
+            mesh->sediments->sediment[j].dsp = sedGroup->sediment[j].dsp;
+            mesh->sediments->sediment[j].pd = sedGroup->sediment[j].pd;
+            mesh->sediments->sediment[j].rhoS = sedGroup->sediment[j].rhoS;
+            mesh->sediments->sediment[j].Css = sedGroup->sediment[j].Css;
+            mesh->sediments->sediment[j].fAngle = sedGroup->sediment[j].fAngle;
+            mesh->sediments->sediment[j].EquConcFF = sedGroup->sediment[j].EquConcFF;
+            mesh->sediments->sediment[j].WsFF = sedGroup->sediment[j].WsFF;
+            mesh->sediments->sediment[j].ks_xx = sedGroup->sediment[j].ks_xx;
+            mesh->sediments->sediment[j].ks_yy = sedGroup->sediment[j].ks_yy;
+            mesh->sediments->sediment[j].iniConc=sedGroup->sediment[j].iniConc;
+
+        }
+
+    }
+    #endif
+
+    if(mesh->nParticles){
         //solute variables in c_cells
         for(i=0;i<mesh->ncells;i++){
             c1=&(mesh->c_cells->cells[i]);
-            c1->hphi=(double*) malloc(nSolutes*sizeof(double));
-            c1->phi=(double*) malloc(nSolutes*sizeof(double));
+            c1->hphi=(double*) malloc(mesh->nParticles*sizeof(double));
+            c1->phi=(double*) malloc(mesh->nParticles*sizeof(double));
         }
     
     }
@@ -1705,7 +1890,7 @@ int createSoluteStructures(
 
 
 ////////////////////////////////////////////////////////////////
-int setInitialSoluteState(
+int setInitialParticleState(
     Peka2D_Setup *pksetup,
     t_parameters *spar,
     t_mesh *mesh, 
@@ -1714,20 +1899,27 @@ int setInitialSoluteState(
 
     int i,j;
     Peka2D_SoluteGroup *soluteGroup;
+    Peka2D_SedGroup *sedGroup;
+    Peka2D_ParticleGroup *particleGroup;
+
     soluteGroup = pksetup->soluteGroup;
+    sedGroup = pksetup->sedGroup;
+    particleGroup = pksetup->particleGroup;
 
     int nSolutes = soluteGroup->nSolutes;
+    int nSediments = sedGroup->nSediments;
+    int nParticles = nSolutes + nSediments;
 
     t_c_cell *c1;
     char filename[1024],temp[1024];
     FILE *fp;
 
-    double aux1, dataSolute;
+    double aux1, dataParticle;
 
     if(pksetup->pkrun.hotStart){ //hotstart initialization
 
         sprintf(filename,"%s%s.HOTSTART",spar->dir,spar->proj);
-        if(!readHotstartSoluteState(filename, mesh, nSolutes, e)){
+        if(!readHotstartParticleState(filename, mesh, nSolutes, nParticles, e)){
             sprintf(temp,"Hotstart solute initialization failed");
 		    Notify(temp,MSG_ERROR,e);
 		    return 0;
@@ -1736,17 +1928,17 @@ int setInitialSoluteState(
     }else{ //user initialization    
 
         fp=NULL;
-        fp=fopen(soluteGroup->initialFile,"r");
+        fp=fopen(particleGroup->initialFile,"r");
         if(fp){
 
             for(i=0;i<mesh->ncells;i++){
                 c1=&(mesh->c_cells->cells[i]);
 
-                for(j=0;j<nSolutes;j++){  
-                    fscanf(fp,"%lf",&dataSolute);         
+                for(j=0;j<nParticles;j++){  
+                    fscanf(fp,"%lf",&dataParticle);         
 
                     if(c1->h > TOL12){
-                        c1->phi[j] = MAX(0.0,dataSolute);
+                        c1->phi[j] = MAX(0.0,dataParticle);
                         #if SET_MULTILAYER
                         c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
                         #else
@@ -1761,7 +1953,7 @@ int setInitialSoluteState(
 
             } // end cell loop
             fclose(fp);
-            sprintf(temp,"Solute initial concentration set from file %s",soluteGroup->initialFile);
+            sprintf(temp,"Particle initial concentration set from file %s",particleGroup->initialFile);
             Notify(temp,MSG_L1,e);
 
         }else{
@@ -1769,9 +1961,15 @@ int setInitialSoluteState(
             for(i=0;i<mesh->ncells;i++){
                 c1=&(mesh->c_cells->cells[i]);
 
-                for(j=0;j<nSolutes;j++){  
+                for(j=0;j<nParticles;j++){  
                     if(c1->h > TOL12){
-                        c1->phi[j] = mesh->solutes->solute[j].iniConc;
+                        if(j<nSolutes){
+                            c1->phi[j] = mesh->solutes->solute[j].iniConc;
+                        }else if (j>=nSolutes){
+                            c1->phi[j] = mesh->sediments->sediment[j].iniConc;
+                        }
+                        
+                        //c1->phi[j] = mesh->solutes->solute[j].iniConc;
                         #if SET_MULTILAYER
                         c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
                         #else
@@ -1784,7 +1982,7 @@ int setInitialSoluteState(
                 } 
 
             } // end cell loop        
-            sprintf(temp,"Solute initial concentration set uniform");
+            sprintf(temp,"Particle initial concentration set uniform");
             Notify(temp,MSG_L1,e);
         } 
 
@@ -1796,10 +1994,11 @@ int setInitialSoluteState(
 
 
 ////////////////////////////////////////////////////////////////
-int readHotstartSoluteState(
+int readHotstartParticleState(
     char *filename,
     t_mesh *mesh, 
     int nSolutes,
+    int nParticles,
     t_message *e){
 /*----------------------------*/
 
@@ -1807,10 +2006,10 @@ int readHotstartSoluteState(
     int i,j;
     t_c_cell *c1;
 
-    double aux1, dataSolute;
+    double aux1, dataParticle;
     char temp[1024];
 
-    int nhydro, nsol;
+    int nhydro, npart;
 
     fp = fopen(filename,"r");
     if(!fp){
@@ -1820,10 +2019,10 @@ int readHotstartSoluteState(
 
     }else{
         //headers
-        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(nsol));  
-        if(nsol!=nSolutes){
+        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(npart));  
+        if(npart!=nParticles){
             fclose(fp);
-            sprintf(temp,"Unconsistent number of solute data in %s",filename);
+            sprintf(temp,"Unconsistent number of particle data in %s",filename);
             Notify(temp,MSG_ERROR,e);
             return 0;             
         }
@@ -1835,11 +2034,11 @@ int readHotstartSoluteState(
             fscanf(fp,"%*lf %*lf %*lf %*lf");
 
             //read nsolutes data
-            for(j=0;j<nSolutes;j++){  
-                fscanf(fp,"%lf",&dataSolute);         
+            for(j=0;j<nParticles;j++){  
+                fscanf(fp,"%lf",&dataParticle);         
 
                 if(c1->h > TOL12){
-                    c1->phi[j] = MAX(0.0,dataSolute);
+                    c1->phi[j] = MAX(0.0,dataParticle);
                     #if SET_MULTILAYER
                     c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
                     #else
@@ -1855,7 +2054,7 @@ int readHotstartSoluteState(
     }
     fclose(fp);
 
-    sprintf(temp,"Hotstart solute initialization completed");
+    sprintf(temp,"Hotstart particle initialization completed");
     Notify(temp,MSG_L1,e);
     return(1);
 }

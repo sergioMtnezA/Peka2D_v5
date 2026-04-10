@@ -1,6 +1,6 @@
 #include "solute.cuh"
 
-#if SET_SOLUTE
+#if SET_SOLUTE || SET_SED
 ////////////////////////////////////////////////////
 __global__ void g_initialize_solute_delta(int nTasks, t_arrays *arrays){
 /*----------------------------*/

@@ -46,7 +46,12 @@
 		#define SET_EDDYVISCOSITY 0
 		#define SET_MULTILAYER_IMPLICIT 1
 		#define SET_MULTILAYER_VELOCITY 1
-	#endif		
+	#endif
+
+	#ifndef SET_SED
+		#define SET_SED 1
+		#define SET_MULTILAYER_SED 0
+	#endif
 
 #endif
 

@@ -58,9 +58,9 @@ EXPORT_DLL int initilizeBoundaryMeshArrays(
 /*----------------------------*/
 
 
-#if SET_SOLUTE
+#if SET_SOLUTE || SET_SED
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int allocateSoluteArraysMem(
+EXPORT_DLL int allocateParticleArraysMem(
     t_parameters spar, 
     t_mesh *mesh,
     t_arrays *carrays,
@@ -68,7 +68,7 @@ EXPORT_DLL int allocateSoluteArraysMem(
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int initilizeSoluteArrays(
+EXPORT_DLL int initilizeParticleArrays(
     t_parameters spar, 
     t_mesh *mesh,
     t_arrays *carrays,   
