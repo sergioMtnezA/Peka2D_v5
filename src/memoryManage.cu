@@ -210,29 +210,30 @@ EXPORT_DLL int createArraysCudaMemory(
         cuPtr->k_yy,
         //------------------------solutes*cells
         //cuPtr->localDtd,
-        cuPtr->BTcell,
+        //cuPtr->BTcell,
         //------------------------solutes*cells*NCwalls
-        cuPtr->Bwall,
+        //cuPtr->Bwall,
         //------------------------sediment
-        cuPtr->EquConcF,
-        cuPtr->WsF,
         cuPtr->dsp,
-        cuPtr->pd,
-        cuPtr->rhoS,
+        cuPtr->Fsp,
         cuPtr->Css,
         cuPtr->fAngle,
         cuPtr->EquConcFF,
         cuPtr->WsFF,
         cuPtr->ks_xx,
         cuPtr->ks_yy,
-        cuPtr->Ns,
+        cuPtr->WsFs,
         //------------------------sediment*cells
+        cuPtr->Ns,
         cuPtr->Nb,
+        cuPtr->phiZero,
         //------------------------(solutes+sediment)*cells
         cuPtr->localDtd,
+        cuPtr->BTcell,
         cuPtr->hphi,
         cuPtr->phi,
         //------------------------(solutes+sediments)*cells*NCwalls
+        cuPtr->Bwall,
         cuPtr->dhphi
     );
     // cudaDeviceSynchronize();
@@ -310,8 +311,8 @@ EXPORT_DLL int copyComputationControls(
 
     //solute permanent flag
     cudaMemcpy(&(garrays->nSolutes), &(carrays->nSolutes), sizeof(int), cudaMemcpyHostToDevice );
-
-
+    cudaMemcpy(&(garrays->nSediments), &(carrays->nSediments), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nParticles), &(carrays->nParticles), sizeof(int), cudaMemcpyHostToDevice );
 
     // CONTROL POINTERS ////////////////////////////////
     cudaMalloc((void**) &(cuPtr->index), sizeof(int));
@@ -1194,31 +1195,32 @@ EXPORT_DLL int allocateParticleArraysCudaMem(
 
         //cells
         //cudaMalloc((void**) &(cuPtr->localDtd), nSolutes*ncells*sizeof(double));
-        cudaMalloc((void**) &(cuPtr->BTcell), nSolutes*ncells*sizeof(double));
+        //cudaMalloc((void**) &(cuPtr->BTcell), nSolutes*ncells*sizeof(double));
 
         //cells*NCwall
-        cudaMalloc((void**) &(cuPtr->Bwall), nSolutes*nWallCell*sizeof(double));
+        //cudaMalloc((void**) &(cuPtr->Bwall), nSolutes*nWallCell*sizeof(double));
     }
     #endif
 
     #if SET_SED
     if(nSediments){
         //sediment control arrays
-        cudaMalloc((void**) &(cuPtr->EquConcF), nSediments*sizeof(int));
-        cudaMalloc((void**) &(cuPtr->WsF), nSediments*sizeof(int));
+        //cudaMalloc((void**) &(cuPtr->EquConcF), sizeof(int));
+        //cudaMalloc((void**) &(cuPtr->WsF), sizeof(int));
         cudaMalloc((void**) &(cuPtr->dsp), nSediments*sizeof(double));
-        cudaMalloc((void**) &(cuPtr->pd), nSediments*sizeof(double));
-        cudaMalloc((void**) &(cuPtr->rhoS), nSediments*sizeof(double));
+        //cudaMalloc((void**) &(cuPtr->rhoS), nSediments*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->Fsp), nSediments*sizeof(double));
         cudaMalloc((void**) &(cuPtr->Css), nSediments*sizeof(double));
         cudaMalloc((void**) &(cuPtr->fAngle), nSediments*sizeof(double));
         cudaMalloc((void**) &(cuPtr->EquConcFF), nSediments*sizeof(double));
         cudaMalloc((void**) &(cuPtr->WsFF), nSediments*sizeof(double));
         cudaMalloc((void**) &(cuPtr->ks_xx), nSediments*sizeof(double));
         cudaMalloc((void**) &(cuPtr->ks_yy), nSediments*sizeof(double));
-        cudaMalloc((void**) &(cuPtr->Ns), nSediments*sizeof(double));
-
+        cudaMalloc((void**) &(cuPtr->WsFs), nSediments*sizeof(double));
         //cells
-        cudaMalloc((void**) &(cuPtr->Nb), nSediments*ncells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->Ns), nSediments*ncells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->Nb), ncells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->phiZero), ncells*sizeof(double));
 
     }
     #endif
@@ -1228,9 +1230,11 @@ EXPORT_DLL int allocateParticleArraysCudaMem(
         cudaMalloc((void**) &(cuPtr->dtAux), sizeof(double));
         //(nSolutes + nSediments)*cells
         cudaMalloc((void**) &(cuPtr->localDtd), (nSolutes + nSediments)*ncells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->BTcell), (nSolutes+nSediments)*ncells*sizeof(double));
         cudaMalloc((void**) &(cuPtr->hphi), (nSolutes+nSediments)*ncells*sizeof(double));
         cudaMalloc((void**) &(cuPtr->phi), (nSolutes+nSediments)*ncells*sizeof(double));
         //(nSolutes + nSediments)*cells*NCwall
+        cudaMalloc((void**) &(cuPtr->Bwall), (nSolutes+nSediments)*nWallCell*sizeof(double));
         cudaMalloc((void**) &(cuPtr->dhphi), (nSolutes+nSediments)*nWallCell*sizeof(double));
     }
     return(1);
@@ -1272,10 +1276,10 @@ int copyParticleArraysCudaMem(
 
         //solutes*cells    
         //cudaMemcpy((cuPtr->localDtd), (carrays->localDtd), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
-        cudaMemcpy((cuPtr->BTcell), (carrays->BTcell), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        //cudaMemcpy((cuPtr->BTcell), (carrays->BTcell), nSolutes*ncells*sizeof(double), cudaMemcpyHostToDevice );
     
         //solutes*cells*NCwall
-        cudaMemcpy((cuPtr->Bwall), (carrays->Bwall), nSolutes*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
+        //cudaMemcpy((cuPtr->Bwall), (carrays->Bwall), nSolutes*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
     }
     #endif
 
@@ -1283,20 +1287,24 @@ int copyParticleArraysCudaMem(
     if(nSediments){
         cudaMemcpy(&(garrays->flagErosion), &(carrays->flagErosion), sizeof(int), cudaMemcpyHostToDevice);
         cudaMemcpy(&(garrays->flagDiffusionS), &(carrays->flagDiffusionS), sizeof(int), cudaMemcpyHostToDevice);
+        cudaMemcpy(&(garrays->pd), &(carrays->pd),sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(&(garrays->rhoS), &(carrays->rhoS),sizeof(double), cudaMemcpyHostToDevice);
         
-        //solutes
-        cudaMemcpy((cuPtr->EquConcF), (carrays->EquConcF), nSediments*sizeof(int), cudaMemcpyHostToDevice );
-        cudaMemcpy((cuPtr->WsF), (carrays->WsF), nSediments*sizeof(int), cudaMemcpyHostToDevice );
+        //sediments
+        cudaMemcpy(&(garrays->EquConcF), &(carrays->EquConcF), sizeof(int), cudaMemcpyHostToDevice );
+        cudaMemcpy(&(garrays->WsF), &(carrays->WsF), sizeof(int), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->dsp), (carrays->dsp), nSediments*sizeof(double), cudaMemcpyHostToDevice );     
-        cudaMemcpy((cuPtr->pd), (carrays->pd), nSediments*sizeof(double), cudaMemcpyHostToDevice );
-        cudaMemcpy((cuPtr->rhoS), (carrays->rhoS), nSediments*sizeof(double), cudaMemcpyHostToDevice );
+        //cudaMemcpy((cuPtr->rhoS), (carrays->rhoS), nSediments*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->Fsp), (carrays->Fsp), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->Css), (carrays->Css), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->fAngle), (carrays->fAngle), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->ks_xx), (carrays->ks_xx), nSediments*sizeof(double), cudaMemcpyHostToDevice );
-        cudaMemcpy((cuPtr->ks_yy), (carrays->ks_yy), nSediments*sizeof(double), cudaMemcpyHostToDevice );          
-        cudaMemcpy((cuPtr->Ns), (carrays->Ns), nSediments*sizeof(double), cudaMemcpyHostToDevice );
-        //solutes*cells    
-        cudaMemcpy((cuPtr->Nb), (carrays->Nb), nSediments*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->ks_yy), (carrays->ks_yy), nSediments*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->WsFs), (carrays->WsFs), nSediments*sizeof(double), cudaMemcpyHostToDevice );
+        //solutes*cells           
+        cudaMemcpy((cuPtr->Ns), (carrays->Ns), nSediments*ncells*sizeof(double), cudaMemcpyHostToDevice );   
+        cudaMemcpy((cuPtr->Nb), (carrays->Nb), ncells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->phiZero), (carrays->phiZero), ncells*sizeof(double), cudaMemcpyHostToDevice );
 
     }
     #endif
@@ -1307,9 +1315,11 @@ int copyParticleArraysCudaMem(
         cudaMemcpy(&(garrays->Dtd), &(carrays->Dtd), sizeof(double), cudaMemcpyHostToDevice);
         //solutes*cells
         cudaMemcpy((cuPtr->localDtd), (carrays->localDtd), (nSolutes+nSediments)*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->BTcell), (carrays->BTcell), (nSolutes+nSediments)*ncells*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->hphi), (carrays->hphi), (nSediments+nSolutes)*ncells*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->phi), (carrays->phi), (nSediments+nSolutes)*ncells*sizeof(double), cudaMemcpyHostToDevice );
         //solutes*cells*NCwall
+        cudaMemcpy((cuPtr->Bwall), (carrays->Bwall), (nSolutes+nSediments)*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->dhphi), (carrays->dhphi), (nSediments+nSolutes)*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
     }
 
@@ -1325,24 +1335,23 @@ __global__ void assignParticleArraysToCudaMem(int nSolutes,int nSediments, t_arr
 	int *typeDiff,
 	double *k_xx,
 	double *k_yy,
-    double *BTcell,
-    double *Bwall,
-    int *EquConcF,
-    int *WsF,
     double *dsp,
-    double *pd,
-    double *rhoS,
+    double *Fsp,
     double *Css,
     double *fAngle,
     double *EquConcFF,
     double *WsFF,
     double *ks_xx,
 	double *ks_yy,
+    double *WsFs,
     double *Ns,
     double *Nb,
+    double *phiZero,
     double *localDtd,
+    double *BTcell,
 	double *hphi,
 	double *phi,
+    double *Bwall,
 	double *dhphi){
 /*----------------------------*/
     int nParticles = nSolutes + nSediments;
@@ -1356,38 +1365,39 @@ __global__ void assignParticleArraysToCudaMem(int nSolutes,int nSediments, t_arr
 
         //mesh
         //garrays->localDtd=localDtd;
-        garrays->BTcell=BTcell;
+        //garrays->BTcell=BTcell;
 
         //cells*NCwall
-        garrays->Bwall=Bwall;
+        //garrays->Bwall=Bwall;
     }
     #endif
     #if SET_SED
     if(nSediments){    
         //solute controls
-        garrays->EquConcF=EquConcF;
-        garrays->WsF=WsF;
         garrays->dsp=dsp;
-        garrays->pd=pd;
-        garrays->rhoS=rhoS;
+        garrays->Fsp=Fsp;
         garrays->Css=Css;
         garrays->fAngle=fAngle;
         garrays->EquConcFF=EquConcFF;
         garrays->WsFF=WsFF;
         garrays->ks_xx=ks_xx;
         garrays->ks_yy=ks_yy;
-        garrays->Ns=Ns;
+        garrays->WsFs=WsFs;
         //cells
+        garrays->Ns=Ns;
         garrays->Nb=Nb;
+        garrays->phiZero=phiZero;
     }
     #endif
 
     if(nParticles){
         //mesh
         garrays->localDtd=localDtd;
+        garrays->BTcell=BTcell;
         garrays->hphi=hphi;
         garrays->phi=phi;
         //cells*NCwall
+        garrays->Bwall=Bwall;
         garrays->dhphi=dhphi;
 
     }
@@ -1414,30 +1424,29 @@ EXPORT_DLL int freeParticleCudaMemory(
 
         //cells
         //cudaFree(cuPtr->localDtd);
-        cudaFree(cuPtr->BTcell);
+        //cudaFree(cuPtr->BTcell);
 
         //cells*NCwall
-        cudaFree(cuPtr->Bwall);
+        //cudaFree(cuPtr->Bwall);
     }
     #endif
     #if SET_SED
     if(nSediments){
         
         //solute control arrays
-        cudaFree(cuPtr->EquConcF);
-        cudaFree(cuPtr->WsF);
         cudaFree(cuPtr->dsp);
-        cudaFree(cuPtr->pd);
-        cudaFree(cuPtr->rhoS);
+        cudaFree(cuPtr->Fsp);
         cudaFree(cuPtr->Css);
         cudaFree(cuPtr->fAngle);
         cudaFree(cuPtr->EquConcFF);
         cudaFree(cuPtr->WsFF);
         cudaFree(cuPtr->ks_xx);
         cudaFree(cuPtr->ks_yy);
-        cudaFree(cuPtr->Ns);
+        cudaFree(cuPtr->WsFs);
         //cells
+        cudaFree(cuPtr->Ns);
         cudaFree(cuPtr->Nb);
+        cudaFree(cuPtr->phiZero);
     }
     #endif
     
@@ -1447,10 +1456,12 @@ EXPORT_DLL int freeParticleCudaMemory(
         
         //cells
         cudaFree(cuPtr->localDtd);
+        cudaFree(cuPtr->BTcell);
         cudaFree(cuPtr->hphi);
         cudaFree(cuPtr->phi);
 
         //cells*NCwall
+        cudaFree(cuPtr->Bwall);
         cudaFree(cuPtr->dhphi);
     }
 

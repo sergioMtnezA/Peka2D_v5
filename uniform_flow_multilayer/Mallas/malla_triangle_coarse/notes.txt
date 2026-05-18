@@ -1,0 +1,18 @@
+Instruciones actuales
+######################
+//execute triangle
+triangle -pne -q32 -a0.8191 mesh_triangle.poly
+
+//for refining mesh
+#./refine mesh_triangle.1 polygons.bln NO
+#triangle -pnera -q32 mesh_triangle.1.poly NO
+
+//convert Triangle to Peka
+
+g++ convertTRIANGLE2PEKA.c -o convertT2P
+./convertT2P
+
+
+
+
+

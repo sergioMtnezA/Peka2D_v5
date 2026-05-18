@@ -336,16 +336,14 @@ struct t_solute_{
  * @brief Passive sediment
 */
 struct t_sediment_{
-	int EquConcF; /**< @brief model of sediment*/
-	int WsF;
 	double dsp;
-	double pd;
-	double rhoS;
+	double Fsp;
 	double Css;
 	double fAngle;
 	double EquConcFF; /**< @brief model of sediment*/
 	double WsFF;
 	double ks_xx,ks_yy; /**< @brief Longitudinal and transversal diffusion coefficients*/
+	double WsFs;
 	double iniConc;
 };
 
@@ -366,6 +364,10 @@ struct l_sediments_{
 	int n;
 	int flagErosion; //flag to determine if it is necessary to go inside erosion subroutines
 	int flagDiffusionS; //flag to determine if it is necessary to go inside diffusion subroutines
+	double pd;
+	double rhoS;
+	int EquConcF; /**< @brief model of sediment*/
+	int WsF;
 	t_sediment *sediment;
 };
 
@@ -416,10 +418,10 @@ struct t_arrays_{
 	int nSolutes; /**< @brief Number of solutes */
 
 	//sediment controls
-	int nSediments; /**< @brief Number of solutes */
+	int nSediments; /**< @brief Number of sediments */
 
 	//particle controls
-	int nParticles; /**< @brief Number of solutes */
+	int nParticles; /**< @brief Number of Particles */
 
 	
 	//ARRAY DE CELDA
@@ -547,42 +549,46 @@ struct t_arrays_{
 	#if SET_SOLUTE || SET_SED
 		int flagDiffusion; /**< @brief Solute diffusion activation flag */
 		//double Dtd; /**< @brief Solute global dt*/
-
 		//solute data
 		int *typeDiff; //nsol
 		double *k_xx, *k_yy; //nsol	
 
 		//solute conservative
 		//double *localDtd; /**< @brief [NSOL x NCELLS] Solute local dt in cells*/
-		double *BTcell;/**< @brief [NSOL x NCELLS] Solute coefficient in cells*/
+		//double *BTcell;/**< @brief [NSOL x NCELLS] Solute coefficient in cells*/
 		//solute contributions
-		double *Bwall;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute coefficient*/
+		//double *Bwall;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute coefficient*/
 
 		int flagErosion;
 		int flagDiffusionS;
+		double pd;
 		//sediment data
-		int *EquConcF; //nsed
-		int *WsF;
+		int EquConcF; //nsed
+		int WsF;
 		double *dsp;
-		double *pd;
-		double *rhoS; //nsed
+		double rhoS; //nsed
+		double *Fsp;
 		double *Css;
 		double *fAngle;
 		double *EquConcFF; //nsed
 		double *WsFF;
 		double *ks_xx, *ks_yy; //nsed	
+		double *WsFs;
 		double *Ns;
 
 		//sediment conservative
 		double *Nb;
+		double *phiZero;
 
 		double Dtd; /**< @brief Solute global dt*/
 		//solute + sediment conservative
 		double *localDtd; /**< @brief [NSOL x NCELLS] Solute local dt in cells*/
+		double *BTcell;/**< @brief [NSOL x NCELLS] Solute coefficient in cells*/
 		double *hphi; /**< @brief [NSOL x NCELLS] Solute mass in cells*/
 		double *phi; /**< @brief [NSOL x NCELLS] Solute concentration in cells*/
 
 		//solute + sediment contributions
+		double *Bwall;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute coefficient*/
 		double *dhphi;/**< @brief [NSOL*NCELLS*NCWALL] Wall-contributions to cell solute mass*/
 		
 	#endif
@@ -682,31 +688,31 @@ struct t_cuPtr_{
 
 		//nsolutes*cells
 		//double *localDtd;
-		double *BTcell;
+		//double *BTcell;
 		//nsolutes*cells*NCwall
-		double *Bwall;
+		//double *Bwall;
 
 		//nsediments
-		int *EquConcF;
-		int *WsF;
 		double *dsp;
-		double *pd;
 		double *rhoS;
+		double *Fsp;
 		double *Css;
 		double *fAngle;
 		double *EquConcFF;
 		double *WsFF;
 		double *ks_xx, *ks_yy; 
-		double *Ns;
-
+		double *WsFs;
 		//nsediments*cells
+		double *Ns;
 		double *Nb;
-
+		double *phiZero;
 		double *Dtd,*dtAux;
 		//(nsolutes+nsediment)*cells
 		double *localDtd;
+		double *BTcell;
 		double *hphi, *phi;
 		//(nsolutes + nsediment)*cells*NCwall
+		double *Bwall;
 		double *dhphi;  
 
 	#endif

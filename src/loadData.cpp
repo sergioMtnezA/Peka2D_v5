@@ -83,6 +83,8 @@ EXPORT_DLL int readControlDataFile(
 			break;
 	}
 
+    printf("run->sediments %d\n",run->sediment);
+
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Line 4: Wet-dry
 	fscanf(fp,"%d",&run->itrash);
@@ -139,7 +141,7 @@ EXPORT_DLL int readControlDataFile(
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Line 14: Pollutant transport model switch
-	fscanf(fp,"%d",&run->solutes);
+	fscanf(fp,"%d",&run->solutes, &run->sediments);
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Line 15: Wind stress switch
@@ -664,7 +666,7 @@ int readHotstartState(
     double aux1, wse;
     char temp[1024];
 
-    int nhydro, nsolutes;
+    int nhydro, nParticles;
 
     fp = fopen(filename,"r");
     if(!fp){
@@ -674,7 +676,7 @@ int readHotstartState(
 
     }else{
         //headers
-        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(nsolutes));  
+        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(nParticles));  
         if(nhydro!=4){
             fclose(fp);
             sprintf(temp,"Unconsistent number of hydrodynamic data in %s",filename);
@@ -693,8 +695,8 @@ int readHotstartState(
                 &(c1->v));
 
             //skip nsolutes data
-            if(nsolutes){ 
-                for(j=0;j<nsolutes;j++){
+            if(nParticles){ 
+                for(j=0;j<nParticles;j++){
                     fscanf(fp,"%*lf");
                 }
             }  
@@ -1540,6 +1542,8 @@ EXPORT_DLL int loadParticleData(
     particleGroup = (Peka2D_ParticleGroup*) malloc(sizeof(Peka2D_ParticleGroup));
 
     sprintf(particleGroup->initialFile,"%s%s.SOLINITIAL",spar->dir,spar->proj);
+    //associted particleGroup to pksetup
+    pksetup->particleGroup = particleGroup;
 
     #if SET_SOLUTE
 
@@ -1578,10 +1582,15 @@ EXPORT_DLL int loadParticleData(
     int sediment_enabled_by_run=0;
 
     //Load sediments if activated
-    sediment_enabled_by_run = pksetup->pkrun.sediments;
-    if(sediment_enabled_by_run){
+    sediment_enabled_by_run = pksetup->pkrun.sediment;
+    sprintf(temp,"Reading pksetup for sediment file completed");
+    Notify(temp,MSG_L1,msg);
+    printf("sediment_enabled_by_run %d\n",sediment_enabled_by_run);
 
-        //Read sediment file
+    if(sediment_enabled_by_run){
+        sprintf(temp,"Inside sediment_enable loop");
+        Notify(temp,MSG_L1,msg);
+        //Read sediment filed
         sprintf(filename,"%s%s.SED",spar->dir,spar->proj);
         if(readSedimentFile(filename, sedGroup, msg)){
             sprintf(temp,"Reading sediment file completed");
@@ -1598,13 +1607,20 @@ EXPORT_DLL int loadParticleData(
     if(sediment_enabled_by_run || solute_enabled_by_run){
         //Create solute structures
         if(createParticleStructures(pksetup, spar, mesh, msg)){
-            sprintf(temp,"Solute structures completed");
+            sprintf(temp,"Particle structures completed");
             Notify(temp,MSG_L1,msg);		
         }
+        getchar();
+
+        if(ComputeSettlingVelocity(pksetup, spar, mesh, msg)){
+            sprintf(temp,"Settling Velocity computed");
+            Notify(temp,MSG_L1,msg);		
+        }
+        getchar();
 
         //Initialize solute concentration
         if(setInitialParticleState(pksetup, spar, mesh, msg)){
-            sprintf(temp,"Set initial solute state completed");
+            sprintf(temp,"Set initial particle state completed");
             Notify(temp,MSG_L1,msg);		
         }  
 
@@ -1726,14 +1742,17 @@ int readSedimentFile(
         sedGroup->nSediments=nSediments;
         sedGroup->sediment = (Peka2D_Sediment*) malloc(nSediments*sizeof(Peka2D_Sediment));
 
-
-        for(i=0;i<nSediments;i++){ //line 3: Equilibrium concentration formula.
-            fscanf(fp,"%d",&sedGroup->sediment[i].EquConcF);
+        // Line 3
+        fscanf(fp,"%d",&sedGroup->EquConcF);
+        if(sedGroup->EquConcF<1 || sedGroup->EquConcF>3) {
+            sprintf(temp,"The solid capaicty formula %d is not defined\n",sedGroup->EquConcF);
+            Notify(temp,MSG_ERROR,e);
+            return(0);
         }
-
-        for(i=0;i<nSediments;i++){ //line 4 to +nSediments: Sediment density for each fraction
-            fscanf(fp,"%lf", &sedGroup->sediment[i].rhoS);
-        }
+        
+        //line 4 to +nSediments: Sediment density for each fraction
+        fscanf(fp,"%lf", &sedGroup->rhoS);
+        
 
         for(i=0;i<nSediments;i++){ //line 5 to +nSediments: Initial suspended sediment concentration for each sediment class/fraction
             fscanf(fp,"%lf",&sedGroup->sediment[i].iniConc);
@@ -1742,14 +1761,18 @@ int readSedimentFile(
         fscanf(fp,"%d",&sedGroup->flagErosion); //line 6: Flag erosion
 
         for(i=0;i<nSediments;i++){ //line 7 to +nSediments: Suspended sediment D50 size for each sediment class/fraction
-            fscanf(fp,"%lf", &sedGroup->sediment[i].dsp);
+            fscanf(fp,"%lf %lf", 
+                &sedGroup->sediment[i].dsp,
+                &sedGroup->sediment[i].Fsp);
+            
+            printf("%lf %lf\n",sedGroup->sediment[i].dsp, sedGroup->sediment[i].Fsp);
         }
 
         fscanf(fp,"%d",&sedGroup->flagDiffusionS); //line 6: Flag diffusion
 
-        for(i=0;i<nSediments;i++){ //line 9 to +nSediments: Porosity for each fraction.
-            fscanf(fp,"%lf", &sedGroup->sediment[i].pd);
-        }
+        //line 9 to +nSediments: Porosity for each fraction.
+        fscanf(fp,"%lf", &sedGroup->pd);
+        
 
         for(i=0;i<nSediments;i++){ //line 10 to +nSediments: Critical Shield Stress for each sediment class/fraction
             fscanf(fp,"%lf", &sedGroup->sediment[i].Css);
@@ -1763,9 +1786,9 @@ int readSedimentFile(
             fscanf(fp,"%lf",&sedGroup->sediment[i].EquConcFF);
         }
 
-        for(i=0;i<nSediments;i++){ //line 13: Settling velocity formula.
-            fscanf(fp,"%d",&sedGroup->sediment[i].WsF);
-        }
+        //line 13: Settling velocity formula.
+        fscanf(fp,"%d",&sedGroup->WsF);
+        
 
         for(i=0;i<nSediments;i++){ //line 14: Settling velocity formula factors for each sediment class/fraction.
             fscanf(fp,"%lf",&sedGroup->sediment[i].WsFF);
@@ -1852,15 +1875,19 @@ int createParticleStructures(
         mesh->sediments->n = nSediments;
         mesh->sediments->flagErosion = sedGroup->flagErosion;
         mesh->sediments->flagDiffusionS = sedGroup->flagDiffusionS;
+        mesh->sediments->pd = sedGroup->pd;
+        mesh->sediments->EquConcF = sedGroup->EquConcF;
+        mesh->sediments->WsF = sedGroup->WsF;
+        mesh->sediments->rhoS = sedGroup->rhoS;
 
         mesh->sediments->sediment=(t_sediment*) malloc(nSediments*sizeof(t_sediment));
         for(j=0;j<nSediments;j++){
-            
-            mesh->sediments->sediment[j].EquConcF = sedGroup->sediment[j].EquConcF;
-            mesh->sediments->sediment[j].WsF = sedGroup->sediment[j].WsF;
+            printf("Inside Loop sediment %d\n", j);
+            //mesh->sediments->sediment[j].EquConcF = sedGroup->sediment[j].EquConcF;
+            //mesh->sediments->sediment[j].WsF = sedGroup->sediment[j].WsF;
             mesh->sediments->sediment[j].dsp = sedGroup->sediment[j].dsp;
-            mesh->sediments->sediment[j].pd = sedGroup->sediment[j].pd;
-            mesh->sediments->sediment[j].rhoS = sedGroup->sediment[j].rhoS;
+            //mesh->sediments->rhoS = sedGroup->rhoS;
+            mesh->sediments->sediment[j].Fsp = sedGroup->sediment[j].Fsp;
             mesh->sediments->sediment[j].Css = sedGroup->sediment[j].Css;
             mesh->sediments->sediment[j].fAngle = sedGroup->sediment[j].fAngle;
             mesh->sediments->sediment[j].EquConcFF = sedGroup->sediment[j].EquConcFF;
@@ -1869,6 +1896,7 @@ int createParticleStructures(
             mesh->sediments->sediment[j].ks_yy = sedGroup->sediment[j].ks_yy;
             mesh->sediments->sediment[j].iniConc=sedGroup->sediment[j].iniConc;
 
+            //printf("mesh->sediments->sediment[j].dsp %lf\n",mesh->sediments->sediment[j].dsp);
         }
 
     }
@@ -1886,6 +1914,55 @@ int createParticleStructures(
 
 	return 1;
 	
+}
+
+////////////////////////////////////////////////////////////////
+int ComputeSettlingVelocity(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e){
+/*----------------------------*/
+    int i,j;
+    Peka2D_SedGroup * sedGroup;
+
+    int nSediments = mesh->nSediments;
+    printf("nSediments %d\n", nSediments);
+    t_c_cell *c1;
+
+    double aux1, aux2, aux3;
+    double dsp;
+
+    double rhoS = mesh->sediments->rhoS;
+    int WsF;
+
+    #if SET_SED
+    if(mesh->nSediments){
+        WsF = mesh->sediments->WsF;
+        
+        //printf("Inside dsp lim loop %.12lf\n",3);
+        for(j=0;j<nSediments;j++){
+            printf("nSediments %d\n", nSediments);
+            printf("Inside Loop sediment %d\n", j);
+
+            dsp = mesh->sediments->sediment[j].dsp;
+            mesh->sediments->sediment[j].WsFs = 0.0;
+
+            if(WsF==1){
+                aux1 = 13.95*(_nu_/dsp);
+                aux2 = ((rhoS/_rhow_)-1.)*_g_*dsp;
+                aux3 = sqrt(aux1*aux1+1.09*aux2) - aux1;
+                //printf("aux1 %.12lf aux2 %.12lf aux3%.12lf\n",dsp, aux2, aux3);
+
+                mesh->sediments->sediment[j].WsFs = aux3;
+            }
+        }
+
+        
+    }
+    #endif
+    return 1;
+
 }
 
 
@@ -1929,6 +2006,7 @@ int setInitialParticleState(
 
         fp=NULL;
         fp=fopen(particleGroup->initialFile,"r");
+        printf("fp %d\n", fp);
         if(fp){
 
             for(i=0;i<mesh->ncells;i++){
@@ -1940,7 +2018,7 @@ int setInitialParticleState(
                     if(c1->h > TOL12){
                         c1->phi[j] = MAX(0.0,dataParticle);
                         #if SET_MULTILAYER
-                        c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
+                        c1->hphi[j] = c1->h/n * c1->phi[j];
                         #else
                         c1->hphi[j] = c1->h * c1->phi[j];
                         #endif
@@ -1985,6 +2063,7 @@ int setInitialParticleState(
             sprintf(temp,"Particle initial concentration set uniform");
             Notify(temp,MSG_L1,e);
         } 
+        getchar();
 
     }       
 

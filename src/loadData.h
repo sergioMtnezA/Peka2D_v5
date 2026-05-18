@@ -122,16 +122,14 @@ struct Peka2D_Solute_{
 };
 
 struct Peka2D_Sediment_{
-    int EquConcF;
-    int WsF;
     double dsp;
-    double pd;
-    double rhoS;
+    double Fsp;
     double Css;
     double fAngle;
     double EquConcFF;
     double WsFF;
     double ks_xx,ks_yy;
+    double WsFs;
     double iniConc;
 };
 
@@ -146,6 +144,10 @@ struct Peka2D_SedGroup_{
     int nSediments;
     int flagErosion;
     int flagDiffusionS;
+    int EquConcF;
+    int WsF;
+    double pd;
+    double rhoS;
     //char initialFile[STR_SIZE];
     Peka2D_Sediment *sediment;
 };
@@ -338,6 +340,14 @@ int readSedimentFile(
 
 ////////////////////////////////////////////////////////////////
 int createParticleStructures(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+int ComputeSettlingVelocity(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
     t_mesh *mesh,    

@@ -17,10 +17,10 @@
 #include "boundary.cuh"
 #include "cuTilities.cuh"
 
-#if SET_SOLUTE
-#include "solute.cuh"
+#if SET_SOLUTE || SET_SED
+#include "sediment.cuh"
+#include "particle.cuh"
 #endif
-
 
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int computeSimulation(

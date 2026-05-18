@@ -278,6 +278,8 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
         nSediments = arrays->nSediments;
         nParticles = nSolutes + nSediments;
 
+    
+
         //Bound index
         idb=arrays->idBoundOBC[iblock]; //bound ID: (-id) inlet  (+id) outlet
         nbc=arrays->nCellsOBC[iblock];

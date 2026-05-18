@@ -1,6 +1,6 @@
 #include "solute.cuh"
 
-#if SET_SOLUTE || SET_SED
+#if SET_SOLUTE
 ////////////////////////////////////////////////////
 __global__ void g_initialize_solute_delta(int nTasks, t_arrays *arrays){
 /*----------------------------*/
@@ -183,7 +183,7 @@ __global__ void g_bound_solute_calculus(int nTasks, t_arrays *arrays){
 	int cidx;
     int ncells = arrays->ncells;
     int NCwall = arrays->NCwall;
-	double nSolutes = arrays->nSolutes;
+	int nSolutes = arrays->nSolutes;
 
     int sid, siw0;
 
@@ -404,7 +404,7 @@ double u,v,moduloU;
 double uL, uR, vL, vR, hL, hR;
 double modU2;
 double ustar;
-double nman2wall;
+double nman;
 double gp;
 double hbar, ubar,vbar;
 
@@ -450,8 +450,8 @@ dt=arrays->dt;
 
             hlayer = arrays->h[idx]/(nInterfaces);
             gp = arrays->gp[idx];   
-            nman2wall = arrays->nman2wall[idx];
-            ustar = nman2wall*sqrt(_g_*moduloU*moduloU/cbrt(arrays->h[idx]));
+            nman = arrays->nman[idx];
+            ustar = nman*moduloU*sqrt(_g_/cbrt(arrays->h[idx]));
 
             //cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc NON CONSTANT VERTICAL DIFFUSION 
             //ccccccccccccccccccccccccccc ESTUARY VERSION

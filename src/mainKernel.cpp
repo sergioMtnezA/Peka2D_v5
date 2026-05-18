@@ -32,7 +32,6 @@ int runMainKernel (int argc, char * argv[]) {
         msg)
 	) return 0;
 
-    //getchar();    
 
     if(!initializeComputationArrays(
         spar, 
@@ -262,13 +261,13 @@ int initializeComputationArrays(
 
 		//allocate RAM memory
 		if(allocateParticleArraysMem(spar, mesh, carrays, msg)){
-			sprintf(temp,"Solute arrays memory allocation completed");
+			sprintf(temp,"Particle arrays memory allocation completed");
 			Notify(temp,MSG_L2,msg);		
 		}
 
 		//reconstruct mesh data
 		if(initilizeParticleArrays(spar, mesh, carrays, msg)){
-			sprintf(temp,"Initialize solute mesh arrays completed");
+			sprintf(temp,"Initialize particle mesh arrays completed");
 			Notify(temp,MSG_L2,msg);		
 		}
 

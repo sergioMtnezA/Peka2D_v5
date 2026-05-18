@@ -200,30 +200,27 @@ __global__ void assignParticleArraysToCudaMem(int nSolutes, int nSediments, t_ar
 	int *typeDiff,
 	double *k_xx,
 	double *k_yy,
-	//------------------------solutes*cells
-	double *BTcell,
-    //------------------------solutes*cells*NCwalls
-    double *Bwall,
     //------------------------sediment
-    int *EquConcF,
-    int *WsF,
     double *dsp,
-    double *pd,
-    double *rhoS,
+    double *Fsp,
     double *Css,
     double *fAngle,
     double *EquConcFF,
     double *WsFF,
     double *ks_xx,
 	double *ks_yy,
-    double *Ns,
+    double *WsFs,
     //------------------------sediment*cells
+    double *Ns,
     double *Nb,
+    double *phiZero,
     //------------------------(solutes+sediment)*cells
     double *localDtd,
+    double *BTcell,
     double *hphi,
 	double *phi,
 	//------------------------(solutes+sediments)*cells*NCwalls
+    double *Bwall,
 	double *dhphi);
 /*----------------------------*/
 
