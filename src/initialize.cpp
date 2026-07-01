@@ -692,7 +692,7 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                         #if SET_SOLUTE || SET_SED
                         for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
                             for(k=0;k<mesh->in[j].n;k++){
-                                idx = l*nTotalSeriesIn + countIdx0 + k;
+                                idx = l*nTotalPointSeries + countIdx0 + k;
                                 carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
                                 //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
@@ -713,7 +713,7 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                         #if SET_SOLUTE || SET_SED
                         for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
                             for(k=0;k<mesh->in[j].n;k++){
-                                idx = l*nTotalSeriesIn + countIdx0 + k;
+                                idx = l*nTotalPointSeries + countIdx0 + k;
                                 carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
                                 //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
@@ -733,7 +733,7 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                         #if SET_SOLUTE || SET_SED
                         for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
                             for(k=0;k<mesh->in[j].n;k++){
-                                idx = l*nTotalSeriesIn + countIdx0 + k;
+                                idx = l*nTotalPointSeries + countIdx0 + k;
                                 carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
                                 //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
@@ -779,8 +779,8 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
                         for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
-                            for(k=0;k<mesh->in[j].n;k++){
-                                idx = l*nTotalSeriesOut + countIdx0 + k;
+                            for(k=0;k<mesh->out[j].n;k++){
+                                idx = l*nTotalPointSeries + countIdx0 + k;
                                 carrays->phiSeriesOBC[idx] = mesh->out[j].phi[l][k];
                                 //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 

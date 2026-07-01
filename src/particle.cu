@@ -735,6 +735,11 @@ dt=arrays->dt;
                     arrays->hphi[sid2] -= aux1;
                
                 }
+
+                if(arrays->hphi[sid2]<0.0){
+                    arrays->hphi[sid2]=0.0;
+                    arrays->phi[sid2]=0.0;  
+                } 
                 
             }
 
@@ -753,12 +758,12 @@ dt=arrays->dt;
         
         }
         else{
-            for(jphi=0;jphi<nInterfaces;jphi++){
-                sid1 = jphi*ncells+idx;
-                arrays->phi[sid1] = 0.0;
-                arrays->hphi[sid1] = 0.0;
+            // for(jphi=0;jphi<nInterfaces;jphi++){
+            //     sid1 = jphi*ncells+idx;
+            //     arrays->phi[sid1] = 0.0;
+            //     arrays->hphi[sid1] = 0.0;
             
-            }
+            // }
         }
 
     }

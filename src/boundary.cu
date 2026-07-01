@@ -1013,7 +1013,7 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 				//interpolate time series value
 				if(ithread<(nParticles)){
 					tidx = d_get_index(arrays->t, npts, ip0, arrays->tSeriesOBC);
-					phit = d_interpolate_matrix(arrays->t, ithread, arrays->nTotalSeriesIn, 
+					phit = d_interpolate_matrix(arrays->t, ithread, arrays->nTotalPointSeries, 
 						npts, ip0, 
 						tidx, 
 						arrays->tSeriesOBC, arrays->phiSeriesOBC);
@@ -1067,7 +1067,7 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
                 //interpolate time series value
                 if(ithread<(nParticles)){
                     tidx = d_get_index(arrays->t, npts, ip0, arrays->tSeriesOBC);
-                    phit = d_interpolate_matrix(arrays->t, ithread, arrays->nTotalSeriesOut, 
+                    phit = d_interpolate_matrix(arrays->t, ithread, arrays->nTotalPointSeries, 
                         npts, ip0, 
                         tidx, 
                         arrays->tSeriesOBC, arrays->phiSeriesOBC);
