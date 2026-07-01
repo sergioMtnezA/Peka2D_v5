@@ -423,7 +423,9 @@ struct t_arrays_{
 	//particle controls
 	int nParticles; /**< @brief Number of Particles */
 
-	
+	double minZ;
+	double maxZ;
+
 	//ARRAY DE CELDA
     int nActCells; /**< @brief Run-control number of active cells*/
     int *actCells; /**< @brief [NCELLS] Active cell indexes*/
@@ -505,6 +507,8 @@ struct t_arrays_{
 
     //.........................................
     int nTotalPointSeries;
+	int nTotalSeriesIn;
+	int nTotalSeriesOut;
     int *nPointsSeriesOBC,*iniIndexSeriesOBC;
     double *tSeriesOBC, *qSeriesOBC, *hzSeriesOBC, *frSeriesOBC;
 	double *phiSeriesOBC;

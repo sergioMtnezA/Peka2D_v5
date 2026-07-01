@@ -545,7 +545,7 @@ int readMeshFile(
         }
 
         //Reconstruct depth
-        mesh->c_cells->cells[i].h -= mesh->c_cells->cells[i].z;
+        //mesh->c_cells->cells[i].h -= mesh->c_cells->cells[i].z;
 
         mesh->g_cells->n++;
         mesh->c_cells->n++;
@@ -1465,10 +1465,24 @@ int readOpenBoundaryFile(
                 mesh->out[countOutlet].hZ=(double*) malloc(mesh->out[countOutlet].n*sizeof(double));
                 mesh->out[countOutlet].t=(double*) malloc(mesh->out[countOutlet].n*sizeof(double));
 
+                #if SET_SOLUTE || SET_SED
+                    mesh->out[countOutlet].phi=(double**) malloc((mesh->nSolutes + mesh->nSediments)*sizeof(double*));
+                    for(k=0;k<(mesh->nSolutes + mesh->nSediments);k++){
+                        mesh->out[countOutlet].phi[k]=(double*) malloc(mesh->in[countOutlet].n*sizeof(double));
+                    }
+                #endif
+
                 for(j=0;j<mesh->out[countOutlet].n;j++){
                     fscanf(fdata,"%lf %lf",&(mesh->out[countOutlet].t[j]),&(mesh->out[countOutlet].hZ[j]));
                     
                     mesh->out[countOutlet].t[j] *= 3600.0;
+
+                    #if SET_SOLUTE || SET_SED
+                        for(k=0;k<(mesh->nSolutes + mesh->nSediments);k++){
+                            fscanf(fdata,"%lf",&(mesh->out[countOutlet].phi[k][j]));
+                            printf("file id %d sol %d phi %lf \n",countOutlet,k,mesh->out[countOutlet].phi[k][j]);
+                        }
+                    #endif
                 }
                 fclose(fdata);
                 break;
@@ -1623,9 +1637,8 @@ EXPORT_DLL int loadParticleData(
             sprintf(temp,"Set initial particle state completed");
             Notify(temp,MSG_L1,msg);		
         }  
-
+        getchar();
     }
-
 
 	return 1;
 	
@@ -1765,40 +1778,41 @@ int readSedimentFile(
                 &sedGroup->sediment[i].dsp,
                 &sedGroup->sediment[i].Fsp);
             
-            printf("%lf %lf\n",sedGroup->sediment[i].dsp, sedGroup->sediment[i].Fsp);
+            //printf("%lf %lf\n",sedGroup->sediment[i].dsp, sedGroup->sediment[i].Fsp);
         }
 
-        fscanf(fp,"%d",&sedGroup->flagDiffusionS); //line 6: Flag diffusion
+        fscanf(fp,"%d",&sedGroup->flagDiffusionS); //line 7 + nb_Sed: Flag diffusion
 
-        //line 9 to +nSediments: Porosity for each fraction.
+        //line 7 to +nSediments +1: Porosity for each fraction.
         fscanf(fp,"%lf", &sedGroup->pd);
         
 
-        for(i=0;i<nSediments;i++){ //line 10 to +nSediments: Critical Shield Stress for each sediment class/fraction
+        for(i=0;i<nSediments;i++){ //line 7 to +nSediments +2: Critical Shield Stress for each sediment class/fraction
             fscanf(fp,"%lf", &sedGroup->sediment[i].Css);
         }
 
-        for(i=0;i<nSediments;i++){ //line 11 to +nSediments: Friction angle for each fraction
+        for(i=0;i<nSediments;i++){ //line 7 to +nSediments +3: Friction angle for each fraction
             fscanf(fp,"%lf", &sedGroup->sediment[i].fAngle);
         }
 
-        for(i=0;i<nSediments;i++){ //line 12: Equilibrium concentration formula factor for each sediment class/fraction.
+        for(i=0;i<nSediments;i++){ //line 7 to +nSediments +4: Equilibrium concentration formula factor for each sediment class/fraction.
             fscanf(fp,"%lf",&sedGroup->sediment[i].EquConcFF);
         }
 
-        //line 13: Settling velocity formula.
+        //line 7 to +nSediments +5: Settling velocity formula.
         fscanf(fp,"%d",&sedGroup->WsF);
         
 
-        for(i=0;i<nSediments;i++){ //line 14: Settling velocity formula factors for each sediment class/fraction.
+        for(i=0;i<nSediments;i++){ //line 7 to +nSediments +6: Settling velocity formula factors for each sediment class/fraction.
             fscanf(fp,"%lf",&sedGroup->sediment[i].WsFF);
             //printf("Cini %lf\n",soluteGroup->solute[i].iniConc);
         }
 
-        for(i=0;i<nSediments;i++){ //line 15 to +nSolutes  Longitudinal and transversal dispersion coefficients.
+        for(i=0;i<nSediments;i++){ //line 7 +nSolutes +7  Longitudinal and transversal dispersion coefficients.
             fscanf(fp,"%lf %lf",
                 &sedGroup->sediment[i].ks_xx,
                 &sedGroup->sediment[i].ks_yy);
+                printf("Kxx %lf Kyy %lf\n",sedGroup->sediment[i].ks_xx, sedGroup->sediment[i].ks_yy);
         }
 
     }else{
@@ -1896,7 +1910,7 @@ int createParticleStructures(
             mesh->sediments->sediment[j].ks_yy = sedGroup->sediment[j].ks_yy;
             mesh->sediments->sediment[j].iniConc=sedGroup->sediment[j].iniConc;
 
-            //printf("mesh->sediments->sediment[j].dsp %lf\n",mesh->sediments->sediment[j].dsp);
+            printf("mesh->sediments->sediment[j].EquConcFF %lf\n",mesh->sediments->sediment[j].EquConcFF);
         }
 
     }
@@ -2006,14 +2020,14 @@ int setInitialParticleState(
 
         fp=NULL;
         fp=fopen(particleGroup->initialFile,"r");
-        printf("fp %d\n", fp);
+        //printf("fp %d\n", fp);
         if(fp){
 
             for(i=0;i<mesh->ncells;i++){
                 c1=&(mesh->c_cells->cells[i]);
 
                 for(j=0;j<nParticles;j++){  
-                    fscanf(fp,"%lf",&dataParticle);         
+                    fscanf(fp,"%lf",&dataParticle);  
 
                     if(c1->h > TOL12){
                         c1->phi[j] = MAX(0.0,dataParticle);
@@ -2026,6 +2040,11 @@ int setInitialParticleState(
                         c1->phi[j] = 0.0;
                         c1->hphi[j] = 0.0;
                     }
+
+                    if(i == 86499){
+                        printf("hphi %lf phi %lf j%d\n", c1->phi[j],c1->hphi[j],j);
+                    }
+                    //getchar();
                 
                 } 
 
@@ -2063,7 +2082,7 @@ int setInitialParticleState(
             sprintf(temp,"Particle initial concentration set uniform");
             Notify(temp,MSG_L1,e);
         } 
-        getchar();
+        //getchar();
 
     }       
 

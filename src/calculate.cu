@@ -222,10 +222,7 @@ EXPORT_DLL int computeSimulation(
     // Free CUDA memory
    
     #if SET_SOLUTE || SET_SED
-    int nSolutes = carrays->nSolutes;
-    int nSediments = carrays->nSediments;
-
-    freeParticleCudaMemory(nSolutes,nSediments,&(cuPtr));
+    freeParticleCudaMemory(carrays->nSolutes,carrays->nSediments,&(cuPtr));
     #endif
     
     freeBoundaCudaMemory(carrays->nOBC, carrays->nInlet, carrays->nOutlet,
@@ -283,6 +280,8 @@ EXPORT_DLL int computeInitialBoundaryConditions(
         #if SET_SOLUTE || SET_SED
         memPerOBC += (carrays->nSolutes + carrays->nSediments)*sizeof(double);
         #endif
+        //printf("nbParticules %d\n", carrays->nSolutes + carrays->nSediments);
+
         sprintf(temp,"Shared memory: nMaxBoundCells %d - Reserved %zu KB",carrays->nMaxBoundCells,(memPerOBC/1024));
         Notify(temp,MSG_L0,msg);
 
@@ -292,7 +291,7 @@ EXPORT_DLL int computeInitialBoundaryConditions(
             cuPtr->qInByInlet,cuPtr->mInByInlet,
             cuPtr->qOutByOutlet,cuPtr->mOutByOutlet);          
 
-
+        //getchar();
         //-------------------------------------------------------------
         //cublasDasum(cuHandle, carrays->nInlet, cuPtr->mInByInlet, 1, cuPtr->mTotalIn);
         cublasDdot(cuHandle, carrays->nInlet, cuPtr->aux1sByInlet, 1, cuPtr->mInByInlet, 1, cuPtr->mTotalIn);
@@ -321,6 +320,7 @@ EXPORT_DLL int computeInitialBoundaryConditions(
         sprintf(temp,"Initial discharge: Inlet %lf m3/s - Outlet %lf m3/s",carrays->qTotalIn, carrays->qTotalOut);
         Notify(temp,MSG_L2,msg);          
     }    
+    //getchar();
 
     //Inititalize mass balance
     carrays->massTotalIn=0.0;
@@ -411,10 +411,10 @@ EXPORT_DLL void generateTimeStep(
 
 
     #if SET_SOLUTE || SET_SED
-    nTasks=carrays->nWallCell*(nSolutes+nSediments);  
+    nTasks=carrays->nWallCell*(carrays->nSolutes + carrays->nSediments);  
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_initialize_particle_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
-    getchar();
+    //getchar();
     #endif
 
 
@@ -433,6 +433,7 @@ EXPORT_DLL void generateTimeStep(
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         
         g_wall_particle_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->localDt);
+        //getchar();
         
         if(carrays->nOBC){
             #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0  //compact 
@@ -685,14 +686,15 @@ EXPORT_DLL void generateTimeStep(
         obcPerGrid = carrays->nOBC; 
         memPerOBC = 4*carrays->nMaxBoundCells*sizeof(double);
         #if SET_SOLUTE || SET_SED
-        memPerOBC += carrays->nParticles*sizeof(double);
+        memPerOBC += (carrays->nSolutes + carrays->nSediments)*sizeof(double);
         #endif
         cudaFuncSetCacheConfig(g_update_open_boundary, cudaFuncCachePreferShared);
         g_update_open_boundary <<<obcPerGrid,threadsPerOBC,memPerOBC>>> (nTasks, garrays, 
             cuPtr->qBoundByCell, cuPtr->mBoundByCell, cuPtr->mInnerByCell,
             cuPtr->qInByInlet,cuPtr->mInByInlet,
             cuPtr->qOutByOutlet,cuPtr->mOutByOutlet);
-
+        
+        //getchar();
 
         carrays->mTotalIn=0.0;
         carrays->mTotalOut=0.0;
@@ -746,7 +748,7 @@ EXPORT_DLL void generateTimeStep(
 
     if(carrays->dumpState){
         // Transfer flow arrays from GPU to CPU 
-        //cudaMemcpy((carrays->z), (cuPtr->z), ncells*sizeof(double), cudaMemcpyDeviceToHost );
+        cudaMemcpy((carrays->z), (cuPtr->z), ncells*sizeof(double), cudaMemcpyDeviceToHost );
         cudaMemcpy((carrays->h), (cuPtr->h), ncells*sizeof(double), cudaMemcpyDeviceToHost );
         //cudaMemcpy((carrays->hu), (cuPtr->hu), ncells*sizeof(double), cudaMemcpyDeviceToHost );
         //cudaMemcpy((carrays->hv), (cuPtr->hv), ncells*sizeof(double), cudaMemcpyDeviceToHost );
@@ -761,6 +763,8 @@ EXPORT_DLL void generateTimeStep(
             cudaMemcpy((carrays->phi), (cuPtr->phi), nParticles*ncells*sizeof(double), cudaMemcpyDeviceToHost );
         }
         #endif
+        //printf("nbParticle %d\n", nParticles);
+        //getchar();
     }
 
     // Sincronizar la CPU con la GPU

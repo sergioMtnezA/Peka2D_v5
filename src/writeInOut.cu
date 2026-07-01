@@ -347,13 +347,17 @@ EXPORT_DLL int write_vtk_state(char *filename, t_mesh *mesh, t_arrays *arrays, t
 
 	if(arrays->nSolutes + arrays->nSediments){
 		for(j=0;j<arrays->nSolutes + arrays->nSediments;j++){
-			fprintf (fp, "SCALARS phi%d double\n",j);
+			if(j<arrays->nSolutes){
+				fprintf (fp, "SCALARS solute_phi%d double\n",j);
+			}else if(j>=arrays->nSolutes){
+				fprintf (fp, "SCALARS sed_phi%d double\n",j-arrays->nSolutes);
+			}
 			fprintf (fp, "LOOKUP_TABLE default\n");
 			for(i=0;i<arrays->ncells;i++){
 				idx = j*arrays->ncells+i;
 				write_Dscalar_in_vtk(fp, arrays->phi[idx]);
 			}
-		}		
+		}	
 	}
 	#endif	          
 

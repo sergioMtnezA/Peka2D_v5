@@ -60,6 +60,10 @@ EXPORT_DLL int initilizeComputationControls(
     //solute permanent flag to switch on/off memory & computation
 	carrays->nSolutes = mesh->nSolutes;
     carrays->nSediments = mesh->nSediments;
+    carrays->nParticles = carrays->nSolutes + carrays->nSediments;
+
+    carrays->minZ = mesh->minZ;
+    carrays->maxZ = mesh->maxZ;
 
     //printf("mesh to nSediments %d\n", carrays->nSediments);
 
@@ -503,6 +507,7 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
     int countOBC, countIdx0, countInnerIdx0;
     int bcBlocks, ncellsBlock; 
     int nTotalPointSeries;
+    int nTotalSeriesIn, nTotalSeriesOut;
 
     char temp[1024];
 
@@ -520,8 +525,12 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
 
     carrays->nTotalPointSeries = 0;
 
+    printf("enterred initialized OBCP %d\n", 1);
+
     //open boundaries
     if(carrays->nOBC){
+        printf("enterred if OBCP %d\n", 1);
+
         carrays->nTotalCellsIn = mesh->nTotalCellsIn;
         carrays->nTotalCellsOut = mesh->nTotalCellsOut;
         carrays->nTotalBoundCells = mesh->nTotalCellsIn+mesh->nTotalCellsOut;
@@ -532,6 +541,7 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
         countIdx0=0;
         //countInnerIdx0=0;
         if(nInlet){
+            printf("enterred nInlet OBCP %d\n", 1);
             for(j=0;j<nInlet;j++){ 
                 bcBlocks = mesh->in[j].ncellsBound/threadsPerOBC + 1; 
                 for(m=0;m<bcBlocks;m++){
@@ -651,6 +661,10 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
         //inlet time series
         nTotalPointSeries = mesh->nTotalSeriesIn+mesh->nTotalSeriesOut;
         carrays->nTotalPointSeries = nTotalPointSeries;
+        nTotalSeriesIn = mesh->nTotalSeriesIn;
+        nTotalSeriesOut = mesh->nTotalSeriesOut;
+        carrays->nTotalSeriesIn = nTotalSeriesIn;
+        carrays->nTotalSeriesOut = nTotalSeriesOut;
 
         countOBC=0;
         countIdx0=0;        
@@ -675,16 +689,17 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->hzSeriesOBC[idx] = 0.0;
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
-                        #if SET_SOLUTE
-                        for(l=0;l<mesh->nParticles;l++){
+                        #if SET_SOLUTE || SET_SED
+                        for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
                             for(k=0;k<mesh->in[j].n;k++){
-                                idx = l*nTotalPointSeries + countIdx0 + k;
+                                idx = l*nTotalSeriesIn + countIdx0 + k;
                                 carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
                                 //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
                             }
                         }
                         #endif
+                        getchar();
                         break;
 
                     case HYD_INFLOW_HZ://h+z(t)
@@ -695,10 +710,10 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->hzSeriesOBC[idx] = mesh->in[j].hZ[k];
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
-                        #if SET_SOLUTE
-                        for(l=0;l<mesh->nParticles;l++){
+                        #if SET_SOLUTE || SET_SED
+                        for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
                             for(k=0;k<mesh->in[j].n;k++){
-                                idx = l*nTotalPointSeries + countIdx0 + k;
+                                idx = l*nTotalSeriesIn + countIdx0 + k;
                                 carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
                                 //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
@@ -715,10 +730,10 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->hzSeriesOBC[idx] = mesh->in[j].hZ[k];
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
-                        #if SET_SOLUTE
-                        for(l=0;l<mesh->nParticles;l++){
+                        #if SET_SOLUTE || SET_SED
+                        for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
                             for(k=0;k<mesh->in[j].n;k++){
-                                idx = l*nTotalPointSeries + countIdx0 + k;
+                                idx = l*nTotalSeriesIn + countIdx0 + k;
                                 carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
                                 //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
@@ -762,6 +777,14 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->qSeriesOBC[idx] = 0.0;
                             carrays->hzSeriesOBC[idx] = mesh->out[j].hZ[k];
                             carrays->frSeriesOBC[idx] = 0.0;
+                        }
+                        for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
+                            for(k=0;k<mesh->in[j].n;k++){
+                                idx = l*nTotalSeriesOut + countIdx0 + k;
+                                carrays->phiSeriesOBC[idx] = mesh->out[j].phi[l][k];
+                                //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
+
+                            }
                         }
                         break;
                     case HYD_OUTFLOW_FREE:

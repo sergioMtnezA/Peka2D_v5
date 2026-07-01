@@ -243,6 +243,8 @@ int initializeComputationArrays(
 			Notify(temp,MSG_L2,msg);		
 		} 	
 
+		getchar();
+
 		//reconstruct mesh arrays
 		if(initilizeBoundaryMeshArrays(spar, mesh, carrays, msg)){
 			sprintf(temp,"Initialize mesh arrays completed");

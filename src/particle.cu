@@ -56,16 +56,16 @@ __global__ void g_wall_particle_calculus(int nTasks, t_arrays *arrays, double *l
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
 
     
-    printf("nSolutes %d nSediments %d nParticles %d\n", nSolutes, arrays->nSediments, nParticles);
+    //printf("nSolutes %d nSediments %d nParticles %d\n", nSolutes, arrays->nSediments, nParticles);
      
 
     if(i<nTasks){
         
-        #if SET_SOLUTE_UNROLL==0  //compact
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact
         //wall index
         idx=arrays->actWalls[i]; 
 
-        #elif SET_SOLUTE_UNROLL==1  //unroll 
+        #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1 //unroll 
         //solute index
         jphi=(int)(i/nActWalls);
         
@@ -86,7 +86,7 @@ __global__ void g_wall_particle_calculus(int nTasks, t_arrays *arrays, double *l
         areaR = arrays->area[id2];
 
         //cccccccccccccccccccccccccccccccccccccccccccccccccc Convective Solute Transport
-        #if SET_SOLUTE_UNROLL==0  //compact
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact
         for(jphi=0;jphi<(nParticles);jphi++){
         #endif    
 
@@ -97,7 +97,12 @@ __global__ void g_wall_particle_calculus(int nTasks, t_arrays *arrays, double *l
             phiL = arrays->phi[sid1];
             phiR = arrays->phi[sid2];
 
+            // if(idx == 358){
+            //     printf("phiL %lf phiR %lf\n", phiL, phiR);
+            // }
+
             dphi=0.5*(phiL+phiR)-SIGN(qnormalL)*0.5*(phiR-phiL);
+
 
             #if SET_MULTILAYER
             #if SET_MULTILAYER_VELOCITY
@@ -180,11 +185,18 @@ __global__ void g_wall_particle_calculus(int nTasks, t_arrays *arrays, double *l
             
             arrays->dhphi[siw1] = - dhphi*aux1;
             arrays->dhphi[siw2] = dhphi*aux2;
-        
-        #if SET_SOLUTE_UNROLL==0  //compact
+
+        // if(idx == 80500){
+        //     printf("dphi %lf, dhphi %lf\n", dphi, arrays->dhphi[siw2]);
+        // }
+            // if(idx == 358){
+            //     printf("dhphi %lf jphi %d\n", arrays->dhphi[siw1], jphi);
+            // }
+
+
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact
         }
         #endif
-
 
 	} // end iwall loop
 
@@ -216,12 +228,12 @@ __global__ void g_bound_particle_calculus(int nTasks, t_arrays *arrays){
 	int i = threadIdx.x+(blockIdx.x*blockDim.x);  
     if(i<nTasks){
 
-        #if SET_SOLUTE_UNROLL==0  //compact
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact
         //cell index
         iBoundCell=i;
         cidx=arrays->cidxBound[i];
 
-        #elif SET_SOLUTE_UNROLL==1   //unroll 
+        #elif SET_SOLUTE_UNROLL==1  || SET_SED_UNROLL==1 //unroll 
         //solute index
         jphi=(int)(i/nBoundCells);
 
@@ -234,11 +246,16 @@ __global__ void g_bound_particle_calculus(int nTasks, t_arrays *arrays){
 		hv=arrays->hv[cidx];
         area=arrays->area[cidx];
 
+        #if SET_MULTILAYER
         hun = hu*arrays->nxWallBound[iBoundCell] + hv*arrays->nyWallBound[iBoundCell];  
+        hun /=nSOlutes;
+        #else
+        hun = hu*arrays->nxWallBound[iBoundCell] + hv*arrays->nyWallBound[iBoundCell];  
+        #endif
 
         length = arrays->lWallBound[iBoundCell];
 
-        #if SET_SOLUTE_UNROLL==0  //compact
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact
         for(jphi=0;jphi<nParticles;jphi++){
         #endif
 
@@ -247,10 +264,12 @@ __global__ void g_bound_particle_calculus(int nTasks, t_arrays *arrays){
 
             arrays->dhphi[siw0] -= hun*arrays->phi[sid]*length/area;
 
-        #if SET_SOLUTE_UNROLL==0  //compact
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact
         }
         #endif
 
+        
+        
 	}
 	//__syncthreads(); // Sincronizar todos los hilos del bloque
 
@@ -279,11 +298,11 @@ __global__ void g_update_particle_contributions(int nTasks, t_arrays *arrays){
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
 
-        #if SET_SOLUTE_UNROLL==0  //compact
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0  //compact
         //cell index
         idx=arrays->actCells[i];
 
-        #elif SET_SOLUTE_UNROLL==1   //unroll 
+        #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1  //unroll 
         //solute index
         jphi=(int)(i/nActCells);
 
@@ -292,7 +311,7 @@ __global__ void g_update_particle_contributions(int nTasks, t_arrays *arrays){
         idx=arrays->actCells[iactCell];
         #endif        
 
-        #if SET_SOLUTE_UNROLL==0  //compact
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact
         for(jphi=0;jphi<arrays->nParticles;jphi++){
         #endif
 
@@ -310,7 +329,7 @@ __global__ void g_update_particle_contributions(int nTasks, t_arrays *arrays){
             }
             arrays->dhphi[siw0]=total;                
                 
-        #if SET_SOLUTE_UNROLL==0  //compact
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact
         }
         #endif
 
@@ -338,17 +357,18 @@ __global__ void g_update_particle_cells(int nTasks, t_arrays *arrays){
     int nActWalls=arrays->nActWalls;
     int nActCells=arrays->nActCells;  
 
+    double hlayer;
 
     dt=arrays->dt;
 
     int i = threadIdx.x+(blockIdx.x*blockDim.x);    
     if(i<nTasks){
 
-        #if SET_SOLUTE_UNROLL==0  //compact 
+        #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact 
         //cell index
         idx=arrays->actCells[i];
 
-        #elif SET_SOLUTE_UNROLL==1  //unroll  
+        #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1 //unroll  
         //solute index
         jphi=(int)(i/nActCells);
 
@@ -360,9 +380,9 @@ __global__ void g_update_particle_cells(int nTasks, t_arrays *arrays){
 
         if(arrays->h[idx]>TOL12){ //wet cells
 
-            //hlayer=arrays->h[idx]/nSolutes;
+            hlayer=arrays->h[idx]/nSolutes;
 
-            #if SET_SOLUTE_UNROLL==0  //compact 
+            #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact 
             for(jphi=0;jphi<nParticles;jphi++){
             #endif
 
@@ -381,7 +401,7 @@ __global__ void g_update_particle_cells(int nTasks, t_arrays *arrays){
                 #endif
                 
 
-            #if SET_SOLUTE_UNROLL==0  //compact 
+            #if SET_SOLUTE_UNROLL==0  || SET_SED_UNROLL==0//compact 
             }
             #endif
 
@@ -792,7 +812,8 @@ __global__ void g_wall_particle_diffusion_calculus(int nTasks, t_arrays *arrays)
     int nActWalls = arrays->nActWalls;
     int jphi;
     int iactWall;
-    int nInterfaces= arrays->nSolutes;
+    int nSolutes= arrays->nSolutes;
+    int nInterface = arrays->nSolutes;
     int nSediments = arrays->nSediments;
     int nParticles = arrays->nSolutes + nSediments;
 
@@ -887,12 +908,16 @@ __global__ void g_wall_particle_diffusion_calculus(int nTasks, t_arrays *arrays)
             length = arrays->length[idx];
 
 
-            #if SET_SOLUTE_UNROLL==0  //compact 
-            for(jphi=0;jphi<arrays->nParticles;jphi++){
+            #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0  //compact 
+            for(jphi=0;jphi<nParticles;jphi++){
             #endif
 
-                #if SET_SOLUTE
-                typeDiff = arrays->typeDiff[jphi];
+            //printf("jbefore %d\n", jphi);
+
+                
+                #if SET_SOLUTE || SET_SED
+                
+                typeDiff = arrays->typeDiff[0];
                 #else
                 typeDiff = CONSTANT_DIFF;
                 #endif
@@ -904,13 +929,18 @@ __global__ void g_wall_particle_diffusion_calculus(int nTasks, t_arrays *arrays)
 
                 }else if(typeDiff==CONSTANT_DIFF){
                     #if SET_SOLUTE && SET_SED
+
+                    //printf("jafter%d\n", nParticles);
                     if(jphi<arrays->nSolutes){
                         kL = arrays->k_xx[jphi];
                         kT = arrays->k_yy[jphi];
-                    }else if(jphi>arrays->nSolutes && jphi<arrays->nParticles){
-                        kL = arrays->ks_xx[jphi];
-                        kT = arrays->ks_yy[jphi];
+                        //printf("kL %lf kT %lf particles%d\n",kL, kT,jphi);
+                    }else{
+                        kL = arrays->ks_xx[jphi-nSolutes];
+                        kT = arrays->ks_yy[jphi-nSolutes];
+                        //printf("kL %lf kT %lf particles%d\n",arrays->ks_xx[jphi-nSolutes], arrays->ks_yy[jphi-nSolutes],jphi);
                     }
+                    //printf("kL %lf kT %lf particles%d\n",arrays->ks_xx[jphi], arrays->ks_yy[jphi],nSolutes);
                     #else
                     #if SET_SOLUTE
                     if(jphi<nParticles){
@@ -934,9 +964,11 @@ __global__ void g_wall_particle_diffusion_calculus(int nTasks, t_arrays *arrays)
                     if(jphi<arrays->nSolutes){
                         kL = arrays->k_xx[jphi]*hbar*ustar;
                         kT = arrays->k_yy[jphi]*hbar*ustar;
-                    }else if(jphi>=arrays->nSolutes && jphi<arrays->nParticles){
+                    }
+                    if((jphi>=nSolutes) || (jphi<nParticles)){
                         kL = arrays->ks_xx[jphi]*hbar*ustar;
                         kT = arrays->ks_yy[jphi]*hbar*ustar;
+                        //printf("kL %lf kT %lf j%d\n",arrays->ks_xx[jphi], arrays->ks_yy[jphi],jphi);
                     }
                     #else
                     #if SET_SOLUTE
@@ -956,7 +988,7 @@ __global__ void g_wall_particle_diffusion_calculus(int nTasks, t_arrays *arrays)
                     #endif
 
                 }
-                //printf("kL %lf kT %lf\n", kL, kT);
+                //printf("kL %lf kT %lf j%d\n",arrays->ks_xx[jphi], arrays->ks_yy[jphi],jphi);
     
                 if(modU2>TOL9){
                     aux1 = kL*ubar*ubar/modU2 + kT*vbar*vbar/modU2;
@@ -998,7 +1030,7 @@ __global__ void g_wall_particle_diffusion_calculus(int nTasks, t_arrays *arrays)
                 arrays->Bwall[siw1] = (contrib/hL)*aux1;
                 arrays->Bwall[siw2] = (contrib/hR)*aux2;
 
-            #if SET_SOLUTE_UNROLL==0  //compact 
+            #if SET_SOLUTE_UNROLL==0  || SET_SED_UNROLL==0//compact 
             }
             #endif
 

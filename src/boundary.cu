@@ -695,7 +695,8 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
             // HYD_OUTFLOW_HZ 12
             // HYD_OUTFLOW_FREE 13
             // HYD_OUTFLOW_FR 14
-            // HYD_OUTFLOW_NORMAL 15            
+            // HYD_OUTFLOW_NORMAL 15         
+            // HYD_OUTFLOW_HZPHI 16   
 
             if(typebc==HYD_OUTFLOW_GAUGE){ //q(hz)
 
@@ -907,7 +908,7 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
                 __syncthreads();    
 
             } //end if(typebc==HYD_OUTFLOW_FREE){			       
-				
+			
         }
     }
 
@@ -1010,9 +1011,9 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 			if(typebc==HYD_INFLOW_Q){
 
 				//interpolate time series value
-				if(ithread<nParticles){
+				if(ithread<(nParticles)){
 					tidx = d_get_index(arrays->t, npts, ip0, arrays->tSeriesOBC);
-					phit = d_interpolate_matrix(arrays->t, ithread, arrays->nTotalPointSeries, 
+					phit = d_interpolate_matrix(arrays->t, ithread, arrays->nTotalSeriesIn, 
 						npts, ip0, 
 						tidx, 
 						arrays->tSeriesOBC, arrays->phiSeriesOBC);
@@ -1027,11 +1028,12 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 				//impose solute concentration at cells
 				if(ithread<nbc){	
 					if(localh[ithread] > TOL12){
-						for(j=0;j<(nSolutes + nSediments);j++){				
+						for(j=0;j<(nParticles);j++){				
 							arrays->phi[j*ncells+cidx] = phiIn[j];
+                            //printf("arrays->phi[j*ncells+cidx]%lf\n", arrays->phi[j*ncells+cidx]);
 						}
 					}else{
-						for(j=0;j<(nSolutes + nSediments);j++){
+						for(j=0;j<(nParticles);j++){
 							arrays->phi[j*ncells+cidx] = 0.0;
 						}
 					}
@@ -1039,26 +1041,82 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 				__syncthreads(); 
 
 			}
-		}
+            //update solute at cells (always)
+		    if(ithread<nbc){	
+                if(localh[ithread] > TOL12){
+                    for(j=0;j<(nParticles);j++){
+                                    
+                        #if SET_MULTILAYER
+                        arrays->hphi[j*ncells+cidx] = (localh[ithread]/nSolutes)*arrays->phi[j*ncells+cidx];
+                        #else
+                        arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
+                        #endif
+                        //printf("arrays->hphi[j*ncells+cidx]%lf\n", arrays->hphi[j*ncells+cidx]);
+                    }
+                }else{
+                    for(j=0;j<(nParticles);j++){
+                        arrays->hphi[j*ncells+cidx] = 0.0;
+                    }
+			    }
+		    }			
+		__syncthreads();
+		}else if(idb>0){
 
-		//update solute at cells (always)
-		if(ithread<nbc){	
-			if(localh[ithread] > TOL12){
-				for(j=0;j<(nSolutes + nSediments);j++){				
-                    #if SET_MULTILAYER
-                    arrays->hphi[j*ncells+cidx] = (localh[ithread]/nSolutes)*arrays->phi[j*ncells+cidx];
-                    #else
-                    arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
-                    #endif
-				}
-			}else{
-				for(j=0;j<(nSolutes + nSediments);j++){
-					arrays->hphi[j*ncells+cidx] = 0.0;
-				}
-			}
-		}			
-		__syncthreads(); 
+            if(typebc==HYD_OUTFLOW_HZ){
 
+                //interpolate time series value
+                if(ithread<(nParticles)){
+                    tidx = d_get_index(arrays->t, npts, ip0, arrays->tSeriesOBC);
+                    phit = d_interpolate_matrix(arrays->t, ithread, arrays->nTotalSeriesOut, 
+                        npts, ip0, 
+                        tidx, 
+                        arrays->tSeriesOBC, arrays->phiSeriesOBC);
+                    
+                    if(phit<0.0) phit=0.0;
+                    phiIn[ithread]=phit;
+                    //printf("sol %d tidx %d phit %lf phiIn %lf\n",ithread,tidx,phit,phiIn[ithread]);
+                }
+                __syncthreads();
+                
+
+                //impose solute concentration at cells
+                if(ithread<nbc){	
+                    if(localh[ithread] > TOL12){
+                        for(j=0;j<(nParticles);j++){				
+                            arrays->phi[j*ncells+cidx] = phiIn[j];
+                            //printf("arrays->phi[j*ncells+cidx]%lf\n", arrays->phi[j*ncells+cidx]);
+                        }
+                    }else{
+                        for(j=0;j<(nParticles);j++){
+                            arrays->phi[j*ncells+cidx] = 0.0;
+                        }
+                    }
+                }			
+                __syncthreads(); 
+
+            
+            }
+
+                //update solute at cells (always)
+            if(ithread<nbc){	
+                if(localh[ithread] > TOL12){
+                    for(j=0;j<(nParticles);j++){
+                                    
+                        #if SET_MULTILAYER
+                        arrays->hphi[j*ncells+cidx] = (localh[ithread]/nSolutes)*arrays->phi[j*ncells+cidx];
+                        #else
+                        arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
+                        #endif
+                        //printf("arrays->hphi[j*ncells+cidx]%lf\n", arrays->hphi[j*ncells+cidx]);
+                    }
+                }else{
+                    for(j=0;j<(nParticles);j++){
+                        arrays->hphi[j*ncells+cidx] = 0.0;
+                    }
+                }
+            }			
+            __syncthreads();
+        }
 	}
 	}		
 	#endif	  

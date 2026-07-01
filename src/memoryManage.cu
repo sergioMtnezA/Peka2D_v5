@@ -16,6 +16,9 @@ EXPORT_DLL int createArraysCudaMemory(
     int nSediments;
     int nParticles;
 
+    double minZ;
+    double maxZ;
+
     int nInlet, nOutlet, nOBC;
     int nTotalBoundCells, nTotalInnerCells;
     int nTotalPointSeries;
@@ -45,6 +48,9 @@ EXPORT_DLL int createArraysCudaMemory(
     //Sediment variables for allocation
     nSediments=carrays->nSediments;
     nParticles=nSolutes + nSediments; 
+
+    minZ = carrays->minZ;
+    maxZ = carrays->maxZ;
 
     //Transfer computation arrays 
     if(!copyComputationControls(
@@ -313,6 +319,9 @@ EXPORT_DLL int copyComputationControls(
     cudaMemcpy(&(garrays->nSolutes), &(carrays->nSolutes), sizeof(int), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->nSediments), &(carrays->nSediments), sizeof(int), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->nParticles), &(carrays->nParticles), sizeof(int), cudaMemcpyHostToDevice );
+
+    cudaMemcpy(&(garrays->minZ), &(carrays->minZ), sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->maxZ), &(carrays->maxZ), sizeof(double), cudaMemcpyHostToDevice );
 
     // CONTROL POINTERS ////////////////////////////////
     cudaMalloc((void**) &(cuPtr->index), sizeof(int));
@@ -854,6 +863,8 @@ EXPORT_DLL int copyBoundSetupArraysCudaMem(
     int nInlet = carrays->nInlet;
     int nOutlet = carrays->nOutlet;
     int nTotalPointSeries = carrays->nTotalPointSeries;
+    int nTotalSerieIn = carrays->nTotalSeriesIn;
+    int nTotalSerieOut = carrays->nTotalSeriesOut;
     int nSolutes = carrays->nSolutes;
     int nSediments = carrays->nSediments;
 
@@ -869,6 +880,8 @@ EXPORT_DLL int copyBoundSetupArraysCudaMem(
     cudaMemcpy(&(garrays->nMaxBoundCells), &(carrays->nMaxBoundCells), sizeof(int), cudaMemcpyHostToDevice );  
  
     cudaMemcpy(&(garrays->nTotalPointSeries), &(carrays->nTotalPointSeries), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nTotalSeriesIn), &(carrays->nTotalSeriesIn), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nTotalSeriesOut), &(carrays->nTotalSeriesOut), sizeof(int), cudaMemcpyHostToDevice );
 
     cudaMemcpy(&(garrays->qTotalIn), &(carrays->qTotalIn), sizeof(int), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->qTotalOut), &(carrays->qTotalOut), sizeof(int), cudaMemcpyHostToDevice );
@@ -1298,6 +1311,8 @@ int copyParticleArraysCudaMem(
         cudaMemcpy((cuPtr->Fsp), (carrays->Fsp), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->Css), (carrays->Css), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->fAngle), (carrays->fAngle), nSediments*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->EquConcFF), (carrays->EquConcFF), nSediments*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->WsFF), (carrays->WsFF), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->ks_xx), (carrays->ks_xx), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->ks_yy), (carrays->ks_yy), nSediments*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->WsFs), (carrays->WsFs), nSediments*sizeof(double), cudaMemcpyHostToDevice );
