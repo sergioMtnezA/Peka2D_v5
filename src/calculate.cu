@@ -642,7 +642,7 @@ EXPORT_DLL void generateTimeStep(
         #if SET_SED_UNROLL==0  //compact 
         nTasks=carrays->nActWalls;
         #elif SET_SED_UNROLL==1  //unroll  
-        nTasks=carrays->nActWalls*(carrays->nSediments);
+        nTasks=carrays->ncells*(carrays->nSediments);
         #endif
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_cell_sediment_Erosion_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);

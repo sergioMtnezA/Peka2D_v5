@@ -192,11 +192,11 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
                 arrays->Nb[idx] += arrays->Ns[sid1];
 
                 // if(idx == 260){
-                //     printf("Ns %.12lf Nb %.12lf sid %f\n", arrays->Ns[sid1], arrays->Nb[idx], sid);
+                //     printf("Ns %.12lf Nb %.12lf sid1 %d\n", arrays->Ns[sid1], arrays->Nb[idx], sid1);
                 // } 
 
 
-            #if SET_SOLUTE_UNROLL==0  //compact
+            #if SET_SED_UNROLL==0  //compact
             }
             #endif
 
@@ -246,6 +246,7 @@ if(i<nTasks){
 
     if(pd<1.){
         EtaS = 1./(1-pd);
+        //printf("EtaS %lf\n", EtaS);
     }else{
         EtaS = 0;
     }
@@ -261,6 +262,8 @@ if(i<nTasks){
     rhoBulk = _rhow_*(1-phiZero) + rhoS*phiZero; 
 
     bedExchange = 0.0;
+
+    //printf("rhoBulk %lf\n", rhoBulk);
 
     if(arrays->h[idx]>TOL12){ //wet cells
 
@@ -282,12 +285,13 @@ if(i<nTasks){
         aux2 = 0.0;
         for(jphi=0;jphi<arrays->nSediments;jphi++){
             sid = (arrays->nSolutes + jphi)*ncells+idx;
+            sid1 = jphi*ncells+idx;
             if(mod_EtaS>0.0){
                 EtaS_eff = mod_EtaS;
             }else{
                 EtaS_eff = EtaS;
             }
-            aux1 = arrays->Ns[sid]*dt;
+            aux1 = arrays->Ns[sid1]*dt;
 
             if(aux1<0.0){
                 aux1 = fmax(-1.*arrays->hphi[sid], aux1);
@@ -304,9 +308,9 @@ if(i<nTasks){
                 aux3 = fmax(-1.*arrays->h[idx], aux3);
                 aux3 = fmin(aux3,0.0);
             }else{ // erosion limited by z
-                aux3 = fmin((arrays->z[idx]-arrays->maxZ), aux3);
-                printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
-                aux3 = fmax(aux3,0.0); 
+                // aux3 = fmin((arrays->z[idx]-arrays->maxZ), aux3);
+                // printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
+                // aux3 = fmax(aux3,0.0); 
             }
             cr = aux3/aux2; // 0<cr<1
         }else{
@@ -331,10 +335,10 @@ if(i<nTasks){
 
             aux1 = cr*aux1;
             arrays->z[idx] += -aux1*(EtaS_eff);
-            if(arrays->z[idx] > arrays->maxZ){
-                printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
-                arrays->z[idx] = arrays->maxZ;
-            }
+            // if(arrays->z[idx] > arrays->maxZ){
+            //     printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
+            //     arrays->z[idx] = arrays->maxZ;
+            // }
 
             arrays->hphi[sid] += aux1;
             if(arrays->hphi[sid]<0.0){
@@ -354,10 +358,10 @@ if(i<nTasks){
             }
 
 
-            if(idx == 54611){
-                printf("hphi %.12lf phi %.12lf z %.12lf h%.12lf\n", arrays->hphi[sid], arrays->phi[sid], arrays->z[idx], arrays->h[idx]);
-                //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
-            } 
+            // if(idx == 54611){
+            //     printf("hphi %.12lf phi %.12lf z %.12lf h%.12lf\n", arrays->hphi[sid], arrays->phi[sid], arrays->z[idx], arrays->h[idx]);
+            //     //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
+            // } 
 
             // if(std::isnan(arrays->phi[sid])){
             //     printf("cell %d layer %f\n",idx, jphi);
@@ -372,5 +376,7 @@ if(i<nTasks){
  
 }
 }
+
+
 
 #endif 
