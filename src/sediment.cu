@@ -326,7 +326,7 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
         //printf("rhoBulk %lf\n", rhoBulk);
         //printf("phiZero %lf\n", phiZero);
 
-        if(arrays->h[idx] > TOL12){ //wet cells
+        if(arrays->h[idx] > arrays->minh){ //wet cells
 
             aux1 = 0.0;
             aux2 = 0.0;
@@ -352,6 +352,8 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
             for(jphi=0;jphi<arrays->nSediments;jphi++){
                 sid = (arrays->nSolutes + jphi)*ncells+idx;
                 sid1 = jphi*ncells+idx;
+
+
                 if(mod_EtaS>0.0){
                     EtaS_eff = mod_EtaS;
                 }else{
@@ -405,22 +407,36 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
  
                 aux1 = cr*aux1;
 
+                arrays->z[idx] += -aux1*EtaS_eff;
+
+                 // if(abs(arrays->z[idx])> arrays->maxZ){
+                //     //printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
+
+                //     if(arrays->z[idx]< 0.0){
+                //         arrays->z[idx] = -arrays->maxZ;
+                //     }else{
+                //         arrays->z[idx] = arrays->maxZ;
+                //     }
+
                 arrays->hphi[sid] += aux1;
 
-                if(idx == 104477){
-                    printf("aux1 %.12lf\n", aux1);
-                //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
+                if(arrays->hphi[sid]<TOL12){
+                    arrays->hphi[sid] = 0.0;
+                    arrays->phi[sid] = 0.0;
                 }
+
+                // if(idx == 104477){
+                //     printf("aux1 %.12lf\n", aux1);
+                // //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
+                // }
 
                 //}
 
                 //aux3 = arrays->Nb[idx]*dt;
 
-                if(idx ==104477){
-                    printf("Nb %.12lf dt %.12lf\n", arrays->Nb[idx], dt);
-                }
-
-                arrays->z[idx] += -aux1*EtaS_eff;
+                // if(idx ==104477){
+                //     printf("Nb %.12lf dt %.12lf\n", arrays->Nb[idx], dt);
+                // }
 
                 // if(idx == 90526){
                 //     printf("z %.12lf EtaS_eff %.12lf\n", arrays->z[idx], EtaS_eff);
@@ -438,19 +454,24 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
                 // }
                 arrays->h[idx] += aux1*EtaS_eff;
 
-                if(idx == 88511){
-                    printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
-                    //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
-                }
+                // if(arrays->h[idx] < 0.0){
+                //     arrays->h[idx] = 0.0;
+                //     arrays->hphi[sid] = 0.0;
+                //     arrays->phi[sid] = 0.0;
+
+                // }
+
+                // if(idx == 88511){
+                //     printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
+                //     //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
+                // }
 
                 if(arrays->h[idx] > 0.0){
 
                     if(rhoBulk > 0.0){
                         aux1 = arrays->u[idx]*((rhob/rhoBulk)-1);
                         aux2 = arrays->v[idx]*((rhob/rhoBulk)-1);
-                        if(idx == 104477){
-                            printf("aux1 %.12lf aux2 %.12lf\n", aux1, aux2);
-                        }
+                        
                     }else{
                         aux1 = -arrays->u[idx];
                         aux2 = -arrays->v[idx];
@@ -466,6 +487,8 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
                 }else{
                     arrays->u[idx] = 0.0;
                     arrays->v[idx] = 0.0;
+                    arrays->hphi[sid] = 0.0;
+                    arrays->phi[sid] = 0.0;
                 }
 
             
@@ -479,24 +502,13 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
                 //     sid = (arrays->nSolutes + jphi)*ncells+idx;
                 //     sid1 = jphi*ncells+idx;
 
-                if(arrays->h[idx]<TOL12){
-                    arrays->h[idx] = 0.0;
-                    arrays->hphi[sid] = 0.0;
-                    arrays->phi[sid] = 0.0;
-                    //arrays->u[idx] =0.0;
-                    //arrays->v[idx] = 0.0;
-                }
-
-                if(arrays->hphi[sid]<TOL12){
-                    arrays->hphi[sid] = 0.0;
-                    arrays->phi[sid] = 0.0;
+                
+                if(arrays->h[idx]>arrays->minh && arrays->hphi[sid]>0.0){
+                    arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
                 }else{
-                    if(arrays->h[idx]>TOL12){
-                        arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
-                    }else{
-                        arrays->phi[sid] = 0.0;
-                    }
+                    arrays->phi[sid] = 0.0;
                 }
+                
             }
             
 
