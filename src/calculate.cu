@@ -635,25 +635,29 @@ EXPORT_DLL void generateTimeStep(
     #if SET_SED
 
     if(carrays->flagErosion){
-        nTasks=carrays->ncells*(carrays->nSediments);
+        nTasks=carrays->nActCells;
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_initialize_sediment_erosion_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
         
-        #if SET_SED_UNROLL==0  //compact 
-        nTasks=carrays->nActWalls;
-        #elif SET_SED_UNROLL==1  //unroll  
-        nTasks=carrays->ncells*(carrays->nSediments);
-        #endif
+        nTasks=carrays->nActCells;
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_cell_sediment_Erosion_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
 
-        nTasks=carrays->ncells*(carrays->nSediments);
+        //g_set_new_dt <<<1,1>>> (garrays);
+
+        nTasks=carrays->nActCells;
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_update_sediment_erosion_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+
+        //g_set_new_dt <<<1,1>>> (garrays);
+        //getchar();
+
 
     }   
 
     #endif
+
+
 
 
 

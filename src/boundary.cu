@@ -952,8 +952,8 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
             if(idb<0){ 
                 //qInByInlet[indexIN] = totalDischarge;
                 //mInByInlet[indexIN] = totalMass; 
-				atomicAdd(&qInByInlet[indexIN], totalDischarge);
-				atomicAdd(&mInByInlet[indexIN], totalMass);
+				//atomicAdd(&qInByInlet[indexIN], totalDischarge);
+				//atomicAdd(&mInByInlet[indexIN], totalMass);
 
 				//printf("qin %lf\n", totalDischarge);
             }
@@ -961,8 +961,8 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
             if(idb>0){ 
                 //qOutByOutlet[indexOUT] = totalDischarge;
                 //mOutByOutlet[indexOUT] = totalMass; 
-				atomicAdd(&qOutByOutlet[indexOUT], totalDischarge);
-				atomicAdd(&mOutByOutlet[indexOUT], totalMass);	
+				//atomicAdd(&qOutByOutlet[indexOUT], totalDischarge);
+				//atomicAdd(&mOutByOutlet[indexOUT], totalMass);	
 
 				//printf("qout %lf\n", totalDischarge);		           
             }

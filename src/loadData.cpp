@@ -1944,7 +1944,7 @@ int ComputeSettlingVelocity(
     printf("nSediments %d\n", nSediments);
     t_c_cell *c1;
 
-    double aux1, aux2, aux3;
+    double aux1, aux2, aux3, aux4;
     double dsp;
 
     double rhoS = mesh->sediments->rhoS;
@@ -1965,10 +1965,18 @@ int ComputeSettlingVelocity(
             if(WsF==1){
                 aux1 = 13.95*(_nu_/dsp);
                 aux2 = ((rhoS/_rhow_)-1.)*_g_*dsp;
-                aux3 = sqrt(aux1*aux1+1.09*aux2) - aux1;
-                //printf("aux1 %.12lf aux2 %.12lf aux3%.12lf\n",dsp, aux2, aux3);
+                aux3 = aux1*aux1+1.09*aux2;
+                if(aux3>0.0){
+                    aux4 = sqrt(aux1*aux1+1.09*aux2) - aux1;
+                }else{
+                    aux4 = aux1;
+                }
 
-                mesh->sediments->sediment[j].WsFs = aux3;
+                printf("aux1 %.12lf aux2 %.12lf aux3%.12lf\n",dsp, aux2, aux3);
+
+                mesh->sediments->sediment[j].WsFs = aux4;
+                
+                printf("WsFs%.12lf\n",mesh->sediments->sediment[j].WsFs);
             }
         }
 
