@@ -141,13 +141,13 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
                 Ssu = aux1*aux2*u_comp;
                 Ssv = aux1*aux2*v_comp;
 
-                SsModulus = sqrt(Ssu*Ssu + Ssv*Ssv);
+                //SsModulus = sqrt(Ssu*Ssu + Ssv*Ssv);
                 //SsModulus = _rhow_*aux2*moduloU;
 
-                //SsModulus = rhoBulk*_g_*h*(nman*nman*(u*u + v*v))/(pow(h,4./3.));
+                SsModulus = rhoBulk*_g_*h*(nman*nman*(u*u + v*v))/(pow(h,4./3.));
 
                 //printf("SsModulus %.12lf\n", SsModulus);
-                Theta = abs(SsModulus)/((rhoS-_rhow_)*_g_*dsp);
+                Theta = SsModulus/((rhoS-_rhow_)*_g_*dsp);
 
                 if(Css > 0.0){
                     Thetar = Theta/Css;
@@ -160,22 +160,28 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
 
                 if(WsFs >TOL12){
                     if(arrays->EquConcF==EQUCONCF_BAGNOLD){
-                        if(moduloU > 0.0){
-                            aux1 = (1./(h*moduloU));
-                        }else{
-                            aux1 = 0.0;
-                        }
+                       //if(moduloU > 0.0){
+                        //    aux1 = (1./(h*moduloU));
+                        //}else{
+                        //    aux1 = 0.0;
+                        //}
                         //printf("aux1 %lf\n", aux1);
                         
-                        Csst = 0.01*((rhoS/(rhoS-_rhow_))*((SsModulus*moduloU*moduloU)/WsFs));
+                        //Csst = 0.01*((rhoS/(rhoS-_rhow_))*((SsModulus*moduloU*moduloU)/WsFs));
+                        EquConcFs = 0.01*SsModulus*moduloU/((rhoS-_rhow_)*_g_*h*WsFs);
                         // if(idx == 90526){
                         //     printf("SsModulus %.12lf moduloU  %.12lf\n", SsModulus, moduloU);
                         // }
-                        EquConcFs = aux1*Csst;
 
                         // if(idx == 104477){
                         //     printf("WsFs %.12lf moduloU %.12lf Csst %.12lf EquConcFs %.12lf\n", WsFs,moduloU, Csst, EquConcFs);
                         // }
+                        aux1 = h*moduloU*(1-pd);
+
+                        if (EquConcFs>aux1){
+                            EquConcFs = aux1;
+                        }
+
                         
                     }else if(arrays->EquConcF==EQUCONCF_WU){
                         aux1=(1./21.1)*pow(dsp,1./6.);
@@ -454,42 +460,44 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
                 // }
                 arrays->h[idx] += aux1*EtaS_eff;
 
-                // if(arrays->h[idx] < 0.0){
-                //     arrays->h[idx] = 0.0;
-                //     arrays->hphi[sid] = 0.0;
-                //     arrays->phi[sid] = 0.0;
+                if(arrays->h[idx] < 0.0){
+                    arrays->h[idx] = 0.0;
+                    arrays->hphi[sid] = 0.0;
+                    arrays->phi[sid] = 0.0;
+                    arrays->u[idx] = 0.0;
+                    arrays->v[idx] = 0.0;
 
-                // }
+                }
 
                 // if(idx == 88511){
                 //     printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
                 //     //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
                 // }
 
-                if(arrays->h[idx] > 0.0){
+                // if(arrays->h[idx] > 0.0){
 
-                    if(rhoBulk > 0.0){
-                        aux1 = arrays->u[idx]*((rhob/rhoBulk)-1);
-                        aux2 = arrays->v[idx]*((rhob/rhoBulk)-1);
+                //     // if(rhoBulk > 0.0){
+                //     //     aux1 = arrays->u[idx]*((rhob/rhoBulk)-1);
+                //     //     aux2 = arrays->v[idx]*((rhob/rhoBulk)-1);
                         
-                    }else{
-                        aux1 = -arrays->u[idx];
-                        aux2 = -arrays->v[idx];
-                    }
-                    arrays->u[idx] += -(1./arrays->h[idx])*aux1*aux3*EtaS_eff;
-                    arrays->v[idx] += -(1./arrays->h[idx])*aux2*aux3*EtaS_eff;
+                //     // }else{
+                //     //     aux1 = -arrays->u[idx];
+                //     //     aux2 = -arrays->v[idx];
+                //     // }
+                //     // arrays->u[idx] += -(1./arrays->h[idx])*aux1*aux3*EtaS_eff;
+                //     // arrays->v[idx] += -(1./arrays->h[idx])*aux2*aux3*EtaS_eff;
 
-                    if(idx == 88511){
-                        printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
-                    //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
-                    }
+                //     // if(idx == 88511){
+                //     //     printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
+                //     // //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
+                //     // }
 
-                }else{
-                    arrays->u[idx] = 0.0;
-                    arrays->v[idx] = 0.0;
-                    arrays->hphi[sid] = 0.0;
-                    arrays->phi[sid] = 0.0;
-                }
+                // }else{
+                //     arrays->u[idx] = 0.0;
+                //     arrays->v[idx] = 0.0;
+                //     arrays->hphi[sid] = 0.0;
+                //     arrays->phi[sid] = 0.0;
+                // }
 
             
                 // if(idx == 104477){
@@ -503,7 +511,7 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
                 //     sid1 = jphi*ncells+idx;
 
                 
-                if(arrays->h[idx]>arrays->minh && arrays->hphi[sid]>0.0){
+                if(arrays->h[idx]>TOL12 && arrays->hphi[sid]>0.0){
                     arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
                 }else{
                     arrays->phi[sid] = 0.0;
