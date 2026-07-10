@@ -96,10 +96,6 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
                 
         moduloU = sqrt(u*u + v*v);
 
-        // if(idx == 90526){
-        //     printf("moduloU %.12lf u %.12lf v %.12lf\n", moduloU, u, v);
-        // }
-
         phiZero = arrays->phiZero[idx];
         nman = arrays->nman[idx];
 
@@ -124,24 +120,12 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
                 rhob = _rhow_*pd + rhoS*(1-pd);
                 rhoBulk = _rhow_*(1-phiZero) + rhoS*phiZero; 
 
-
                 rhoSW = rhoS/_rhow_;
 
                 WsFs = arrays->WsFs[jphi];
 
-                //printf("Fsp %.12lf Css %.12lf dsp %.12lf jphi %d\n", Fsp, Css, dsp, jphi);
-
                 //printf("EquConcFF %.12lf WsFs %.12lf jphi %d\n", arrays->EquConcFF[jphi], WsFs, jphi);
             
-                aux1 = rhoBulk*_g_*h;
-                aux2 = nman*nman/pow(h,4./3.);
-                u_comp = moduloU*u;
-                v_comp = moduloU*v;
-
-                Ssu = aux1*aux2*u_comp;
-                Ssv = aux1*aux2*v_comp;
-
-                //SsModulus = sqrt(Ssu*Ssu + Ssv*Ssv);
                 //SsModulus = _rhow_*aux2*moduloU;
 
                 SsModulus = rhoBulk*_g_*h*(nman*nman*(u*u + v*v))/(pow(h,4./3.));
@@ -156,8 +140,6 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
                 }
                
 
-
-
                 if(WsFs >TOL12){
                     if(arrays->EquConcF==EQUCONCF_BAGNOLD){
                        //if(moduloU > 0.0){
@@ -165,17 +147,10 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
                         //}else{
                         //    aux1 = 0.0;
                         //}
-                        //printf("aux1 %lf\n", aux1);
                         
                         //Csst = 0.01*((rhoS/(rhoS-_rhow_))*((SsModulus*moduloU*moduloU)/WsFs));
                         EquConcFs = 0.01*SsModulus*moduloU/((rhoS-_rhow_)*_g_*h*WsFs);
-                        // if(idx == 90526){
-                        //     printf("SsModulus %.12lf moduloU  %.12lf\n", SsModulus, moduloU);
-                        // }
-
-                        // if(idx == 104477){
-                        //     printf("WsFs %.12lf moduloU %.12lf Csst %.12lf EquConcFs %.12lf\n", WsFs,moduloU, Csst, EquConcFs);
-                        // }
+                        
                         aux1 = h*moduloU*(1-pd);
 
                         if (EquConcFs>aux1){
@@ -206,18 +181,17 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
                         aux2 = sqrt((rhoS/(rhoS -_rhow_))*_g_*dsp*dsp*dsp);
 
                         EquConcFs = aux2*aux1;
+
+                        aux1 = h*moduloU*(1-pd);
+
+                        if (EquConcFs>aux1){
+                            EquConcFs = aux1;
+                        }
                     }
                 }else{
                     EquConcFs = 0.0;
                 }
 
-                if(idx == 88511){
-                    printf("EquConcFs %.12lf\n", EquConcFs);
-                }
-
-                // if(idx == 260){
-                //     printf("EquConcFs %.12lf WsFs %d\n", EquConcFs, WsFs);
-                // }
 
                 //Calculation of the settling velocity in the mixture
                 //aux1 = EquConcFF*WsFs;
@@ -238,25 +212,10 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
                 //DEPOSITION
                 Dbj = arrays->WsFs[jphi]*arrays->WsFF[jphi]*arrays->phi[sid];
 
-                if(idx == 88511){
-                    printf("Dbj %.12lf Ebj%.12lf\n", Dbj, Ebj);
-                    printf("phi %.12lf\n",arrays->phi[sid]);
-                }
-
-
-
                 arrays->Ns[sid1] = (Ebj - Dbj);
                 arrays->Nb[idx] += arrays->Ns[sid1];
-
-                if(idx == 88511){
-                  printf("Ns %.12lf Nb %.12lf sid1 %d\n", arrays->Ns[sid1], arrays->Nb[idx], sid1);
-                } 
-
-
             
             }
-
-
 
         }else{
 
@@ -317,7 +276,6 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
             EtaS = 0;
         }
         
-
         
         //cell index
         idx=arrays->actCells[i];
@@ -328,9 +286,6 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
         rhoBulk = _rhow_*(1-phiZero) + rhoS*phiZero; 
 
         bedExchange = 0.0;
-
-        //printf("rhoBulk %lf\n", rhoBulk);
-        //printf("phiZero %lf\n", phiZero);
 
         if(arrays->h[idx] > arrays->minh){ //wet cells
 
@@ -403,9 +358,6 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
 
                 aux1 = arrays->Ns[sid1]*dt;
 
-                if(idx ==104477){
-                    printf("Ns %.12lf dt %.12lf\n", arrays->Ns[sid1], dt);
-                }
 
                 if(aux1<0.0){
                     aux1 = fmax(-1.*arrays->hphi[sid], aux1);
@@ -431,23 +383,6 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
                     arrays->phi[sid] = 0.0;
                 }
 
-                // if(idx == 104477){
-                //     printf("aux1 %.12lf\n", aux1);
-                // //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
-                // }
-
-                //}
-
-                //aux3 = arrays->Nb[idx]*dt;
-
-                // if(idx ==104477){
-                //     printf("Nb %.12lf dt %.12lf\n", arrays->Nb[idx], dt);
-                // }
-
-                // if(idx == 90526){
-                //     printf("z %.12lf EtaS_eff %.12lf\n", arrays->z[idx], EtaS_eff);
-                // }
-
                 // if(abs(arrays->z[idx])> arrays->maxZ){
                 //     //printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
 
@@ -469,10 +404,6 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
 
                 }
 
-                // if(idx == 88511){
-                //     printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
-                //     //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
-                // }
 
                 // if(arrays->h[idx] > 0.0){
 
@@ -487,11 +418,6 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
                 //     // arrays->u[idx] += -(1./arrays->h[idx])*aux1*aux3*EtaS_eff;
                 //     // arrays->v[idx] += -(1./arrays->h[idx])*aux2*aux3*EtaS_eff;
 
-                //     // if(idx == 88511){
-                //     //     printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
-                //     // //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
-                //     // }
-
                 // }else{
                 //     arrays->u[idx] = 0.0;
                 //     arrays->v[idx] = 0.0;
@@ -502,14 +428,8 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
             
                 // if(idx == 104477){
                 //     printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
-                //     //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
+                //     printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
                 // } 
-
-
-                // for(jphi=0;jphi<arrays->nSediments;jphi++){
-                //     sid = (arrays->nSolutes + jphi)*ncells+idx;
-                //     sid1 = jphi*ncells+idx;
-
                 
                 if(arrays->h[idx]>TOL12 && arrays->hphi[sid]>0.0){
                     arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
@@ -520,18 +440,11 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
             }
             
 
-            if(idx == 88511){
-                printf("hphi %.12lf phi %.12lf z %.12lf h %.12lf\n", arrays->hphi[sid], arrays->phi[sid], arrays->z[idx], arrays->h[idx]);
-                //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
-            } 
+            // if(idx == 88511){
+            //     printf("hphi %.12lf phi %.12lf z %.12lf h %.12lf\n", arrays->hphi[sid], arrays->phi[sid], arrays->z[idx], arrays->h[idx]);
+            //     //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
+            // } 
 
-            // if(std::isnan(arrays->phi[sid])){
-            //     printf("cell %d layer %f\n",idx, jphi);
-            //     //printf("h %lf\n",hlayer);
-            //     printf("hphi %lf phi %lf hlayer %lf\n ",arrays->hphi[sid], arrays->phi[sid], jphi);
-            // }
-
-            
             
             
         }

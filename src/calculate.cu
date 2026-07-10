@@ -643,15 +643,9 @@ EXPORT_DLL void generateTimeStep(
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_cell_sediment_Erosion_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
 
-        //g_set_new_dt <<<1,1>>> (garrays);
-
         nTasks=carrays->nActCells;
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_update_sediment_erosion_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
-
-        //g_set_new_dt <<<1,1>>> (garrays);
-        //getchar();
-
 
     }   
 
