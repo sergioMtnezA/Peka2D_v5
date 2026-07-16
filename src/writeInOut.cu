@@ -562,6 +562,73 @@ EXPORT_DLL int write_hotstart_file(char *filename, t_arrays *arrays, t_message *
 
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+EXPORT_DLL int dump_probes_gpu(t_mesh *mesh, t_arrays *arrays, char *path, t_message *msg, double t){
+	FILE *fp;
+	int i,j;
+	int idc;
+	t_c_cell *c;
+	char temp[1024], filename[1024];
+	double h,hz,u,v,moduloU;
+	double phi;
+	
+	for(i=0;i<mesh->nProbes;i++){
+
+		sprintf(filename,"%sprobe%d.out",path,i+1);
+
+		fp=fopen(filename,"a+");
+
+
+		//printf("idc %d/n", mesh->probe->probe[i].idc);
+		if(fp){
+			idc = mesh->probe->probe[i].idc;
+			if(mesh->probe->probe[i].idc<0){// No habia sonda
+
+				fprintf(fp,"%lf 0.0 0.0 0.0 0.0",t);
+					if(mesh->nSolutes>0){
+						for(j=0;j<mesh->nSolutes;j++){
+							fprintf(fp," 0.0");
+						}
+					}
+
+					if(mesh->nSediments>0){
+						for(j=0;j<mesh->nSediments;j++){
+							fprintf(fp,"0.0");
+						}
+					}
+				fprintf(fp,"\n");
+
+			}else{
+				//c=mesh->probe->probe[i].cell;
+				
+
+				fprintf(fp,"%lf %.6lf %.6lf %.6lf %.6lf %.6lf",
+					t,arrays->h[idc] + arrays->z[idc],
+					arrays->h[idc],
+					arrays->u[idc],
+					arrays->v[idc],
+					arrays->modulou[idc]);
+
+				if(mesh->nSolutes>0 || mesh->nSediments>0){
+					for(j=0;j<mesh->nSolutes + mesh->nSediments;j++){
+						fprintf(fp," %.6lf",arrays->phi[j*arrays->ncells + idc]);
+					}
+				}
+			
+				fprintf(fp,"\n");
+				fclose(fp);
+			}
+		
+		}else{
+			sprintf(temp,"obs file not reacheable");
+        	Notify(temp,MSG_ERROR,msg);	
+		}
+		
+	}
+	return 1;
+
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg){

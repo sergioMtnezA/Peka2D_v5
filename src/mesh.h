@@ -16,6 +16,8 @@
 #ifndef i_mesh_
 #define i_mesh_
 
+#include "loadData.h"
+
 typedef struct t_pair_ t_pair;
 
 struct t_pair_{
@@ -63,5 +65,9 @@ int build_inner_inlet(t_mesh *mesh, t_bound *iinn, int i, t_message *msg);
 int build_wall_outlet(t_mesh *mesh, t_bound *outt, t_wall *w, int i,t_message *msg);
 
 int build_inner_outlet(t_mesh *mesh,t_bound *outt, int i, t_message *msg);
+
+int dentro_poligono(l_nodes *line,t_node point);
+
+int buscar_sondas(t_mesh *mesh, t_message *msg);
 
 #endif

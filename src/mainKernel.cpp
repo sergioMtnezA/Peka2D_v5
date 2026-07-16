@@ -63,6 +63,8 @@ int runMainKernel (int argc, char * argv[]) {
 		Notify(temp,MSG_L1,msg);	
 	} 
 
+
+
 	//getchar();
 	//freeMemory();
 

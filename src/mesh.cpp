@@ -1178,8 +1178,96 @@ int build_inner_outlet(t_mesh *mesh,t_bound *outt, int i, t_message *msg){
 
 }
 
+/*******************************************************/
+//devuelve 1 si esta dentro, 0 si está fuera
+int dentro_poligono(l_nodes *line,t_node point) {
 
+	int contador;
+	int i, j;
+	double x_inters;
+	t_node *p1, *p2;
+ 	double coord_y, coord_x;
 
+	contador=0;
 
+   coord_x=point.x;
+   coord_y=point.y;
+	j=line->n;
 
+	for (i=0;i<j;i++) {
+
+		p1 = line->nodes + i;
+		p2 = line->nodes + (i+1)%j;
+		if ((coord_y > MIN(p1->y,p2->y)) && (coord_y <= MAX(p1->y,p2->y)) && (coord_x <= MAX(p1->x,p2->x))) {
+        if (p1->y != p2->y) {
+		    x_inters = p1->x + (coord_y-p1->y)*(p2->x-p1->x)/(p2->y-p1->y);
+			 if (p1->x == p2->x || coord_x <= x_inters){
+					contador++;
+          }
+		  }
+		}
+	}
+	if (contador % 2 == 0)
+		return(0);
+	else
+		return(1);
+
+}
+
+int buscar_sondas(t_mesh *mesh, t_message *msg){
+// Habiendo leido ya las sondas (Existe l_probes y contiene las coordenadas
+// asignamos las celdas
+	int *posicion;
+	l_nodes celda;
+	t_node punto;
+	int j,i,k;
+	int found;
+      char error[1024];
+	FILE *fp1;
+
+	celda.n=mesh->NCwall;
+	celda.size=mesh->NCwall;
+	celda.nodes=(t_node*)malloc(sizeof(t_node)*mesh->NCwall);
+	posicion=(int*) malloc(sizeof(int)*mesh->nProbes);
+	found=0;
+	for(i=0;i<mesh->nProbes;i++){
+		posicion[i]=-1;
+	}
+
+	for(j=0;j<mesh->ncells;j++){
+		for(k=0;k<mesh->NCwall;k++){
+			celda.nodes[k].x=mesh->g_cells->cells[j].nodes[k]->x;
+			celda.nodes[k].y=mesh->g_cells->cells[j].nodes[k]->y;
+		}
+		for(i=0;i<mesh->nProbes;i++){
+			if(posicion[i]<0){
+				punto.x=mesh->probe->probe[i].x;
+				punto.y=mesh->probe->probe[i].y;
+
+				if(dentro_poligono(&celda,punto)){
+					posicion[i]=j;
+				}
+			}
+		}
+	}
+
+	for(i=0;i<mesh->nProbes;i++){
+		mesh->probe->probe[i].idc=posicion[i];
+		if(posicion[i]<0){
+			sprintf(error,"Probe %d not found",i);
+         	Notify(error,MSG_WARN,msg);
+
+		}else{
+			found++;
+			sprintf(error,"Probe %d is located in cell %d",i,posicion[i]);
+			Notify(error,MSG_L2,msg);
+
+			mesh->probe->probe[i].cell=&mesh->c_cells->cells[posicion[i]];
+		}
+	}
+
+	free(celda.nodes);
+	free(posicion);
+	return(found);
+}
 

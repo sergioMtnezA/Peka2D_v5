@@ -384,7 +384,42 @@ EXPORT_DLL int loadMeshData(
 		return 0;
  	}    
 
+
+    /*****************************************************************
+    // Load Observation Points Data
+    *****************************************************************/
+    Peka2D_ProbeGroup *probeGroup;
+    probeGroup = (Peka2D_ProbeGroup*) malloc(sizeof(Peka2D_ProbeGroup));
+
+    int obs_enable_by_run=0;
+
+    obs_enable_by_run = pksetup->pkrun.obs;
+
+    if(obs_enable_by_run){
+        sprintf(filename,"%s%s.OBS",spar->dir,spar->proj);
+
+        //load probe data
+	    if(ReadObservationPointData(filename,probeGroup, msg)){
+            sprintf(temp,"Reading obs point file completed");
+            Notify(temp,MSG_L1,msg);
+	    }
+
+        pksetup->probeGroup = probeGroup;
+
+        //Create probe structures
+        if(createProbeStructures(pksetup, spar, mesh, msg)){
+            sprintf(temp,"Probe structures completed");
+            Notify(temp,MSG_L1,msg);		
+        }
+        getchar();
+    }else{
+		mesh->nProbes=0;
+	    Notify("No observation points in setup",MSG_L3,msg);
+	}
+
     return 1;
+
+
 }
 
 
@@ -558,6 +593,57 @@ int readMeshFile(
     sprintf(temp,"Mesh file reading completed");
     Notify(temp,MSG_L1,e);
     return(1);
+}
+
+/*******************************************************/
+int ReadObservationPointData(
+    char *filename, 
+    Peka2D_ProbeGroup *probeGroup, 
+    t_message *msg){
+    /*----------------------------*/
+	int j;
+    int n=0;
+	FILE *fp;
+	char temp[1024];
+
+	fp = fopen(filename, "r");
+	if(!fp){
+		sprintf(temp,"%s file not found",filename);
+		Notify(temp,MSG_ERROR, msg);
+		return(0);
+    }
+
+	fscanf(fp,"%d",&n); //line 1
+    printf("&n %d\n", n);
+
+	if(n>0){
+        probeGroup->n = n;
+		probeGroup->probe = (Peka2D_Probe*) malloc(n * sizeof(Peka2D_Probe));
+
+        for(j=0; j<n;j++){
+            if(fscanf(fp,"%s %lf %lf",&probeGroup->probe[j].id, &probeGroup->probe[j].p.x, &probeGroup->probe[j].p.y) == EOF){
+                sprintf(temp,"In file %s, expected %d observation points and found only %d",filename,n,j+1);
+                Notify(temp,MSG_ERROR,msg);
+                return(0);
+            }
+                //printf("%s %lf %lf\n",probeGroup->probe[j].id,probeGroup->probe[j].p.x,probeGroup->probe[j].p.y);
+            
+            // probeGroup->probe[j].p.x*=(FT2MFACT);
+            // probeGroup->probe[j].p.y*=(FT2MFACT);
+
+            //printf("x %lf y %lf\n", probeGroup->probe[j].p.x, probeGroup->probe[j].p.y);
+        }
+			
+	}else{
+		sprintf(temp, "%s specifies %d observation points",filename,n);
+            Notify(temp, MSG_ERROR, msg);
+            return(0);
+	}
+
+	fclose(fp);
+
+	Notify("Observation points file read", MSG_L1,msg);
+	return(1);
 }
 
 
@@ -1986,7 +2072,54 @@ int ComputeSettlingVelocity(
     return 1;
 
 }
+////////////////////////////////////////////////////////////////
+int createProbeStructures(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e){
+/*----------------------------*/
 
+    char temp[1024];
+
+    Peka2D_ProbeGroup *probeGroup;
+    probeGroup = pksetup->probeGroup;
+
+    int nProbes = probeGroup->n;
+    int i;
+    int found = 0;
+
+    mesh->nProbes=0;
+    mesh->nProbes = nProbes;
+
+    if(mesh->nProbes){
+        mesh->probe = (l_probes*) malloc( sizeof(l_probes) );
+        mesh->probe->n = mesh->nProbes;
+
+        mesh->probe->probe= (t_probe*) malloc( sizeof(t_probe) * mesh->nProbes);
+
+        for(i=0;i<mesh->nProbes;i++){
+
+            mesh->probe->probe[i].x = probeGroup->probe[i].p.x;
+            mesh->probe->probe[i].y = probeGroup->probe[i].p.y;
+            sprintf(mesh->probe->probe[i].idName,"%s",probeGroup->probe[i].id);
+            //printf("%d of %d\n",i,mesh->nProbes);
+
+        }
+
+        found = buscar_sondas(mesh,e);
+			//printf("%d!!!!\n",found);
+        if(found < mesh->nProbes){
+            sprintf(temp,"%d observation points (of %d) are outside the domain\n",mesh->nProbes-found,mesh->nProbes);
+            Notify(temp,MSG_ERROR,e);
+            return(0);
+        }
+        Notify("Observation points ready",MSG_L1,e);
+    }
+    return 1;
+
+}
+////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////
 int setInitialParticleState(

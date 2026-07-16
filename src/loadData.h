@@ -53,6 +53,8 @@ typedef struct Peka2D_Solute_ Peka2D_Solute;
 typedef struct Peka2D_SedGroup_ Peka2D_SedGroup;
 typedef struct Peka2D_ParticleGroup_ Peka2D_ParticleGroup;
 typedef struct Peka2D_Sediment_ Peka2D_Sediment;
+typedef struct Peka2D_ProbeGroup_ Peka2D_ProbeGroup;
+typedef struct Peka2D_Probe_ Peka2D_Probe;
 
 
 struct Peka2D_Run_{
@@ -133,6 +135,17 @@ struct Peka2D_Sediment_{
     double iniConc;
 };
 
+struct Peka2D_Probe_{
+    char id[STR_SIZE];
+    t_node p;
+};
+
+struct Peka2D_ProbeGroup_{
+    int n;
+    int nProbes;
+    Peka2D_Probe *probe;
+};
+
 struct Peka2D_SoluteGroup_{
     int nSolutes;
     int flagDiffusion;
@@ -165,6 +178,7 @@ struct Peka2D_Setup_{
     Peka2D_SoluteGroup *soluteGroup;  
     Peka2D_SedGroup *sedGroup;
     Peka2D_ParticleGroup *particleGroup;
+    Peka2D_ProbeGroup *probeGroup;
 };
 
 
@@ -195,6 +209,7 @@ EXPORT_DLL int readControlDataFile(
 /**
  * @brief This function passes the simulation execution paramenters from pksetup to spar.
  * @param spar This variable gets the simulation execution paramenters passed from pksetup in this function.
+ * @param pksetup This variable gets the information file in this function.
  */
 EXPORT_DLL int setControlParameters(
     Peka2D_Setup *pksetup, 
@@ -236,6 +251,19 @@ int readMeshFile(
     Peka2D_Setup *pksetup,
     t_mesh *mesh, 
     t_message *e);
+/*----------------------------*/
+
+/**
+ * @brief This function reads the mesh data from file and stores it in variable mesh.
+ * @param filename This variable passes the name of the data file to read in this the function.
+ * @param probeGroup This variable receives the mesh data read from file.
+ */
+
+int ReadObservationPointData(
+    char *filename, 
+    Peka2D_ProbeGroup *probeGroup,
+    t_message *msg);
+
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
@@ -348,6 +376,14 @@ int createParticleStructures(
 
 ////////////////////////////////////////////////////////////////
 int ComputeSettlingVelocity(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+int createProbeStructures(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
     t_mesh *mesh,    

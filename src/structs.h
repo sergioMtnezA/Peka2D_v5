@@ -33,6 +33,12 @@ typedef struct l_solutes_ l_solutes;
 typedef struct t_sediment_ t_sediment;
 typedef struct l_sediments_ l_sediments;
 
+typedef struct t_probe_ t_probe;
+typedef struct l_probes_ l_probes;
+
+typedef struct t_section_ t_section;
+typedef struct l_sections_ l_sections;
+
 typedef struct t_arrays_ t_arrays;
 typedef struct t_cuPtr_ t_cuPtr;
 
@@ -124,6 +130,16 @@ struct t_mesh_{
 
 	//particles
 	int nParticles;
+
+	//OnePointReading
+	int nProbes;
+	l_probes *probe;
+
+	//section
+	int npoints;
+	l_sections *sec;
+
+
 
 };
 
@@ -371,7 +387,42 @@ struct l_sediments_{
 	t_sediment *sediment;
 };
 
+/**
+ * @brief obs point
+*/
+struct t_probe_{
+	int idc;
+	t_c_cell *cell;
+	double x,y;
+	char idName[1024];
 
+};
+
+/**
+ * @brief List of obs Points
+*/
+
+struct l_probes_{
+	int n;
+	t_probe *probe;
+};
+
+struct t_section_{
+	char idName[1024];
+	double normal[2];
+	t_node node[2];
+	int npoints;
+	l_probes *probeSec;
+	double deltaX;
+	double discharge;
+	double zAverage,hAverage;
+	double dist;
+};
+
+struct l_sections_{
+	int n;
+	t_section *sec;
+};
 
 /**
  * @brief Arrange all the domain parameters, run controls and data arrays required for computation
@@ -413,6 +464,7 @@ struct t_arrays_{
 	double massOld; /**< @brief Run-control integrated volume at the beginning of the time step*/
 	double massNew; /**< @brief Run-control current integrated volume */
     double massError; /**< @brief Run-control mass error computed at the end of the time stop */
+	double probe;
 
 	//solute controls
 	int nSolutes; /**< @brief Number of solutes */
@@ -619,6 +671,7 @@ struct t_cuPtr_{
 
     double *massOld, *massNew;
     double *massError;
+	double *probe;
 
 
 	// GPU COMPUTATION ARRAYS ////////////////////////////////////////////

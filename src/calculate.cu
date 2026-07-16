@@ -16,6 +16,7 @@ EXPORT_DLL int computeSimulation(
 
     double t;
     int nIter;
+    int i;
 
     clock_t stime1, stime2, stime3;
     clock_t start0, end0;
@@ -119,6 +120,15 @@ EXPORT_DLL int computeSimulation(
         Notify(temp,MSG_L2,msg);	
     }       
 
+    //initialize obs Point
+    if(mesh->nProbes>0){
+        for(i=0; i<mesh->nProbes; i++){
+            sprintf(filename,"%sprobe%d.out",spar.dir,i+1);
+            remove(filename);
+        }
+            dump_probes_gpu(mesh,carrays,spar.dir,msg,0);
+    }
+
 
     //write initial condition      
     sprintf(filename,"%sstate%d.vtk",spar.dir,0);
@@ -148,7 +158,7 @@ EXPORT_DLL int computeSimulation(
 	while(t < carrays->tf){
 
         //update carrays to next time step
-		generateTimeStep(&t, carrays, garrays, &(cuPtr), timers, msg);
+		generateTimeStep(&t, carrays, garrays, mesh, &(cuPtr), timers, msg);
 
      	//Start IO time .....................................
         stime1=clock();
@@ -162,6 +172,9 @@ EXPORT_DLL int computeSimulation(
         if(carrays->dumpComponent){ 
             //mass balance file
             write_massBalance(spar.dir, carrays, msg);  
+            if(mesh->nProbes>0){
+                dump_probes_gpu(mesh, carrays, spar.dir, msg, t);
+            }
 
             carrays->indexDump++;	
         }        
@@ -365,12 +378,13 @@ EXPORT_DLL void generateTimeStep(
     double *t,
     t_arrays *carrays,
     t_arrays *garrays,     
+    t_mesh *mesh,
     t_cuPtr *cuPtr,
     t_timers *timers, 
     t_message *msg){
 /*----------------------------*/
 
-    int i;
+    int i,j,jphi;
 	int checkpos;
     int ncells=carrays->ncells;
     int nwc=carrays->nw_calc;
@@ -389,6 +403,9 @@ EXPORT_DLL void generateTimeStep(
     size_t memPerOBC;
 
     clock_t stime1, stime2, stime3, stime4;
+
+    t_c_cell *c;
+    int idc;
 
     
 
@@ -742,6 +759,7 @@ EXPORT_DLL void generateTimeStep(
         cudaMemcpy(&(carrays->mTotalOut), &(garrays->mTotalOut), sizeof(double), cudaMemcpyDeviceToHost );                
         cudaMemcpy(&(carrays->massTotalIn), &(garrays->massTotalIn), sizeof(double), cudaMemcpyDeviceToHost );
         cudaMemcpy(&(carrays->massTotalOut), &(garrays->massTotalOut), sizeof(double), cudaMemcpyDeviceToHost );
+
     }
 
     if(carrays->dumpState){
@@ -763,6 +781,22 @@ EXPORT_DLL void generateTimeStep(
         #endif
         //printf("nbParticle %d\n", nParticles);
         //getchar();
+        // if(mesh->nProbes>0){
+        //     for(j=0;j<mesh->nProbes;j++){
+
+        //         c=mesh->probe->probe[j].cell;
+        //         idc = mesh->probe->probe[i].idc;
+
+        //         c->z = carrays->z[idc];
+        //         c->h = carrays->h[idc];
+        //         c->u = carrays->u[idc];
+        //         c->v = carrays->v[idc];
+        //         c->modulou = carrays->modulou[idc];
+        //         for(jphi=0;jphi<nParticles;j++){
+        //             c->phi[jphi] = carrays->phi[jphi*ncells+idc];
+        //         }
+        //     }
+        // }
     }
 
     // Sincronizar la CPU con la GPU

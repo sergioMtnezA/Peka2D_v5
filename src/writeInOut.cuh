@@ -26,4 +26,6 @@ EXPORT_DLL void write_Dvector_in_vtk(FILE *fp, double val1, double val2);
 
 EXPORT_DLL int write_hotstart_file(char *filename, t_arrays *arrays, t_message *msg);
 
+EXPORT_DLL int dump_probes_gpu(t_mesh *mesh, t_arrays *arrays, char* path, t_message *msg, double t);
+
 EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg);

@@ -51,7 +51,8 @@ EXPORT_DLL int computeInitialMassBalance(
 EXPORT_DLL void generateTimeStep(
     double *t,
     t_arrays *carrays,
-    t_arrays *garrays,     
+    t_arrays *garrays,    
+    t_mesh *mesh, 
     t_cuPtr *cuPtr,
     t_timers *timers, 
     t_message *msg);

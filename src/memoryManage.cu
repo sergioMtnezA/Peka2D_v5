@@ -309,6 +309,7 @@ EXPORT_DLL int copyComputationControls(
     cudaMemcpy(&(garrays->massOld), &(carrays->massOld), sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->massNew), &(carrays->massNew), sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->massError), &(carrays->massError), sizeof(double), cudaMemcpyHostToDevice );
+    //cudaMemcpy(&(garrays->probe), &(carrays->probe), sizeof(double), cudaMemcpyHostToDevice );
 
     //boundary permanent flag
     cudaMemcpy(&(garrays->nInlet), &(carrays->nInlet), sizeof(int), cudaMemcpyHostToDevice );
@@ -353,10 +354,11 @@ EXPORT_DLL int copyComputationControls(
     cudaMalloc((void**) &(cuPtr->massOld), sizeof(double));
     cudaMalloc((void**) &(cuPtr->massNew), sizeof(double));
     cudaMalloc((void**) &(cuPtr->massError), sizeof(double));
+    cudaMalloc((void**) &(cuPtr->probe), sizeof(double));
     cudaMemcpy(cuPtr->massOld, &(carrays->massOld), sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy(cuPtr->massNew, &(carrays->massNew), sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy(cuPtr->massError, &(carrays->massError), sizeof(double), cudaMemcpyHostToDevice );    
-
+    //cudaMemcpy(cuPtr->probe, &(carrays->probe), sizeof(double), cudaMemcpyHostToDevice );    
     return 1;
 
 }
@@ -679,6 +681,7 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr){
     cudaFree(cuPtr->massOld);
     cudaFree(cuPtr->massNew);
     cudaFree(cuPtr->massError);
+    //cudaFree(cuPtr->probe);
 
 
     //cells
