@@ -417,6 +417,38 @@ EXPORT_DLL int loadMeshData(
 	    Notify("No observation points in setup",MSG_L3,msg);
 	}
 
+    /*****************************************************************
+    // Load Cross section Points Data
+    *****************************************************************/
+    Peka2D_CrossSectionGroup *secGroup;
+    secGroup = (Peka2D_CrossSectionGroup*) malloc(sizeof(Peka2D_CrossSectionGroup));
+
+    int sec_enable_by_run=0;
+
+    sec_enable_by_run = pksetup->pkrun.crossSection;
+
+    if(sec_enable_by_run){
+        sprintf(filename,"%s%s.XSECS",spar->dir,spar->proj);
+
+        //load probe data
+	    if(ReadCrossSectionData(filename,secGroup, msg)){
+            sprintf(temp,"Reading section points file completed");
+            Notify(temp,MSG_L1,msg);
+	    }
+
+        pksetup->secGroup = secGroup;
+
+        //Create probe structures
+        if(createCrossSectionStructures(pksetup, spar, mesh, msg)){
+            sprintf(temp,"Cross Section structures completed");
+            Notify(temp,MSG_L1,msg);		
+        }
+        getchar();
+    }else{
+		mesh->nSections=0;
+	    Notify("No observation points in setup",MSG_L3,msg);
+	}
+
     return 1;
 
 
@@ -646,6 +678,76 @@ int ReadObservationPointData(
 	return(1);
 }
 
+/*******************************************************/
+int ReadCrossSectionData(
+    char *filename, 
+    Peka2D_CrossSectionGroup *secGroup, 
+    t_message *e){
+    /*----------------------------*/
+    FILE *fp;
+    int i,j;
+    int n = 0;
+    char temp[1024];
+
+    fp = fopen(filename,"r");
+
+    if(!fp){
+        sprintf(temp,"%s file not found",filename);
+        Notify(temp,MSG_ERROR,e);
+        return(0);
+    }
+
+    fscanf(fp,"%d",&n);
+
+    if(n > 0 ){
+
+        secGroup->n = n;
+        secGroup->xs = (Peka2D_CrossSection*) malloc(n*sizeof(Peka2D_CrossSection));
+    
+        for(i=0;i<n;i++){
+            if(fscanf(fp,"%s %d %d",&secGroup->xs[i].id,&secGroup->xs[i].Nv,&secGroup->xs[i].Nd) == EOF){
+                sprintf(temp,"In file %s, expected %d cross sections and found only %d",filename,n,i+1);
+                Notify(temp,MSG_ERROR,e);
+                return(0);
+            }
+
+            if(secGroup->xs[i].Nv == 2){
+                    secGroup->xs[i].p = (t_node*) malloc(secGroup->xs[i].Nv * sizeof(t_node));
+            }
+            else{
+                    sprintf(temp,"In file %s, cross section with id %s indicates %d vertices and only two is admisible",filename,secGroup->xs[i].id,secGroup->xs[i].Nv);
+                    Notify(temp,MSG_ERROR,e);
+                    return(0);
+            }
+            if(secGroup->xs[i].Nd < 3){
+                    sprintf(temp,"In file %s, cross-section %d specifies to be partitioned into %d segments, but 3 is the minimum admisible",filename,i+1,secGroup->xs [i].Nd);
+                    Notify(temp,MSG_ERROR,e);
+            }
+            for(j=0; j<secGroup->xs[i].Nv; j++){
+                    if( fscanf(fp,"%lf %lf",&secGroup->xs[i].p[j].x,&secGroup->xs[i].p[j].y) == EOF){
+                        sprintf(temp,"In file %s, expected %d points and found only %d in cross section %s",filename,secGroup->xs[i].Nv,j+1,secGroup->xs[i].id);
+                        Notify(temp,MSG_ERROR,e);
+                        return(0);
+                    }
+                        // //añadido recientemente (9-8-2014)
+                        // if(run->units==1){
+                        //     csg->xs[i].p[j].x*=(FT2MFACT);
+                        //     csg->xs[i].p[j].y*=(FT2MFACT);
+                        // }
+            }
+
+        }
+
+        fclose(fp);
+        Notify("Cross section data read",MSG_L1,e);
+
+    }else{
+        sprintf(temp,"%s specifies %d cross sections",filename,n);
+        Notify(temp,MSG_ERROR,e);
+        return(0);
+    }
+    return(1);
+}
 
 ////////////////////////////////////////////////////////////////
 int setInitialState(
@@ -2119,7 +2221,56 @@ int createProbeStructures(
     return 1;
 
 }
+
 ////////////////////////////////////////////////////////////////
+int createCrossSectionStructures(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e){
+/*----------------------------*/
+    int i;
+    char temp[1024];
+
+    Peka2D_CrossSectionGroup *secGroup;
+    secGroup = pksetup->secGroup;
+
+    int nSections = secGroup->n;
+
+    mesh->nSections = 0;
+    mesh->nSections = nSections;
+
+    mesh->sec = NULL;
+
+    if(mesh->nSections){
+        mesh->sec = (l_sections*) malloc( sizeof(l_sections) );
+        mesh->sec->n = mesh->nSections;
+
+        mesh->sec->sec = (t_section*) malloc( mesh->nSections * sizeof(t_section) );
+
+        for(i=0;i<mesh->nSections;i++){
+
+                mesh->sec->sec[i].npoints = secGroup->xs[i].Nd;
+
+                sprintf(mesh->sec->sec[i].idName,"%s",secGroup->xs[i].id);
+
+                mesh->sec->sec[i].node[0].x = secGroup->xs[i].p[0].x;
+                mesh->sec->sec[i].node[0].y = secGroup->xs[i].p[0].y;
+                mesh->sec->sec[i].node[1].x = secGroup->xs[i].p[1].x;
+                mesh->sec->sec[i].node[1].y = secGroup->xs[i].p[1].y;
+
+                if(!build_section(mesh->sec->sec+i,i,e)){
+                    return(0);
+                }
+        }
+        if(!search_sections(mesh,e)){
+            return(0);
+        }
+        Notify("Cross sections ready",MSG_L1,e);
+    }
+    return 1;
+
+}
 
 ////////////////////////////////////////////////////////////////
 int setInitialParticleState(

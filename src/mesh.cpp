@@ -1271,3 +1271,128 @@ int buscar_sondas(t_mesh *mesh, t_message *msg){
 	return(found);
 }
 
+int build_section(t_section *sec, int nSec, t_message *msg){
+
+
+	int i;
+	double npointsD; //double de npoints
+	double dist,distX,distY,difX,difY;
+	double sumX,sumY;
+	char error[1024];
+
+
+	sec->probeSec=(l_probes*) malloc(sizeof(l_probes));
+	sec->probeSec->n=sec->npoints;
+	sec->probeSec->probe=(t_probe*) malloc(sec->probeSec->n*sizeof(t_probe));
+
+	npointsD=sec->npoints*1.0;
+
+	difX=sec->node[1].x-sec->node[0].x;
+	difY=sec->node[1].y-sec->node[0].y;
+	dist=sqrt(difX*difX+difY*difY);
+	sec->dist=dist;
+
+	if(fabs(dist)<TOL12){
+			sprintf(error,"Points defining section %d are the same. Please redefine them",nSec+1);
+                  Notify(error,MSG_ERROR,msg);
+			return(0);
+	}else{
+		distX=difX/(npointsD-1.0);
+		distY=difY/(npointsD-1.0);
+	}
+
+	sec->normal[_X_]=difY/dist;
+	sec->normal[_Y_]=-difX/dist;
+	sec->deltaX=dist/(npointsD-1.0); //changed 17/03/2015. we think that should be divided by npoints-1
+	//sec->deltaX=dist/(npointsD);
+
+
+	sumX=sec->node[0].x;
+	sumY=sec->node[0].y;
+
+	for(i=0;i<sec->npoints;i++){
+		sec->probeSec->probe[i].x=sumX;
+		sec->probeSec->probe[i].y=sumY;
+
+		if(fabs(difX)>TOL9){
+			sumX+=distX;
+			sumY=sec->node[0].y+difY/difX*(sumX-sec->node[0].x);
+		}else{
+			sumX=sec->node[0].x;
+			sumY+=distY;
+		}
+		if(i==sec->npoints-2){
+			sumX=sec->node[1].x;
+			sumY=sec->node[1].y;
+		}
+
+	}
+	// for(i=0;i<sec->npoints;i++){
+	// 	printf("%lf %lf\n",sec->probeSec->probe[i].x,sec->probeSec->probe[i].y);
+	// }
+	// printf("\n\n");
+	return 1;
+}
+
+int search_sections(t_mesh *mesh, t_message *msg){
+
+	//se trata de localizar los puntos que definen las seccion como si fuesen
+	//sondas
+
+	int *posicion;
+	l_nodes celda;
+	t_node punto;
+	int j,i,k,l;
+	int found;
+	int warn;
+	t_section *sec;
+      char error[1024];
+
+	celda.n=mesh->NCwall;
+	celda.size=mesh->NCwall;
+	celda.nodes=(t_node*)malloc(sizeof(t_node)*mesh->NCwall);
+	found=0;
+
+	sec=mesh->sec->sec;
+
+	for(l=0;l<mesh->nSections;l++){
+		posicion=(int*) malloc(sec->npoints*sizeof(int));
+		for(i=0;i<sec->npoints;i++){
+			posicion[i]=-1;
+			sec->probeSec->probe[i].idc=-1;
+		}
+		for(j=0;j<mesh->ncells;j++){
+			for(k=0;k<mesh->NCwall;k++){
+				celda.nodes[k].x=mesh->g_cells->cells[j].nodes[k]->x;
+				celda.nodes[k].y=mesh->g_cells->cells[j].nodes[k]->y;
+			}
+			for(i=0;i<sec->npoints;i++){
+				if(posicion[i]<0){
+					punto.x=sec->probeSec->probe[i].x;
+					punto.y=sec->probeSec->probe[i].y;
+					if(dentro_poligono(&celda,punto)){
+						posicion[i]=j;
+						sec->probeSec->probe[i].idc=j;
+						sec->probeSec->probe[i].cell=&mesh->c_cells->cells[j];
+					}
+				}
+			}
+		}
+		warn=0;
+		for(i=0;i<sec->npoints;i++){
+			if(posicion[i]<0){
+				warn=1;
+				//return(0);
+			}
+		}
+		if(warn){
+			sprintf(error,"The line defining the section %d is at least partially out of the domain",l+1);
+          	Notify(error,MSG_WARN,msg);
+		}
+		free(posicion);
+		sec++;
+	}
+    return(1);
+
+}
+

@@ -136,7 +136,7 @@ struct t_mesh_{
 	l_probes *probe;
 
 	//section
-	int npoints;
+	int nSections;
 	l_sections *sec;
 
 
@@ -416,6 +416,9 @@ struct t_section_{
 	double deltaX;
 	double discharge;
 	double zAverage,hAverage;
+	double phiAveraged;
+	double phiAveragedSed;
+	double phiAveragedSol;
 	double dist;
 };
 

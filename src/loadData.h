@@ -55,6 +55,8 @@ typedef struct Peka2D_ParticleGroup_ Peka2D_ParticleGroup;
 typedef struct Peka2D_Sediment_ Peka2D_Sediment;
 typedef struct Peka2D_ProbeGroup_ Peka2D_ProbeGroup;
 typedef struct Peka2D_Probe_ Peka2D_Probe;
+typedef struct Peka2D_CrossSectionGroup_ Peka2D_CrossSectionGroup;
+typedef struct Peka2D_CrossSection_ Peka2D_CrossSection;
 
 
 struct Peka2D_Run_{
@@ -146,6 +148,18 @@ struct Peka2D_ProbeGroup_{
     Peka2D_Probe *probe;
 };
 
+struct Peka2D_CrossSection_{
+    char id[STR_SIZE];
+    int Nv;
+    int Nd;
+    t_node *p;
+};
+
+struct Peka2D_CrossSectionGroup_{
+    int n;
+    Peka2D_CrossSection *xs;
+};
+
 struct Peka2D_SoluteGroup_{
     int nSolutes;
     int flagDiffusion;
@@ -179,6 +193,7 @@ struct Peka2D_Setup_{
     Peka2D_SedGroup *sedGroup;
     Peka2D_ParticleGroup *particleGroup;
     Peka2D_ProbeGroup *probeGroup;
+    Peka2D_CrossSectionGroup *secGroup;
 };
 
 
@@ -263,6 +278,21 @@ int ReadObservationPointData(
     char *filename, 
     Peka2D_ProbeGroup *probeGroup,
     t_message *msg);
+
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+
+/**
+ * @brief This function reads the mesh data from file and stores it in variable mesh.
+ * @param filename This variable passes the name of the data file to read in this the function.
+ * @param secGroup This variable receives the mesh data read from file.
+ */
+
+int ReadCrossSectionData(
+    char *filename, 
+    Peka2D_CrossSectionGroup *secGroup, 
+    t_message *e);
 
 /*----------------------------*/
 
@@ -384,6 +414,14 @@ int ComputeSettlingVelocity(
 
 ////////////////////////////////////////////////////////////////
 int createProbeStructures(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+int createCrossSectionStructures(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
     t_mesh *mesh,    

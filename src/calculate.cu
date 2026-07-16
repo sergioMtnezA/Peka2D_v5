@@ -129,6 +129,22 @@ EXPORT_DLL int computeSimulation(
             dump_probes_gpu(mesh,carrays,spar.dir,msg,0);
     }
 
+    //initialize Cross section
+    if(mesh->nSections>0){
+        for(i=0; i<mesh->nSections; i++){
+            sprintf(filename,"%sdischarge_section.out",spar.dir,i+1);
+            remove(filename);
+
+            sprintf(filename,"%saverage_section%d.out",spar.dir,i+1);
+            remove(filename);
+
+            sprintf(filename,"%ssection%d.out",spar.dir,i+1);
+            remove(filename);
+
+        }
+            dump_probes_gpu(mesh,carrays,spar.dir,msg,0);
+    }
+
 
     //write initial condition      
     sprintf(filename,"%sstate%d.vtk",spar.dir,0);
@@ -174,6 +190,10 @@ EXPORT_DLL int computeSimulation(
             write_massBalance(spar.dir, carrays, msg);  
             if(mesh->nProbes>0){
                 dump_probes_gpu(mesh, carrays, spar.dir, msg, t);
+            }
+
+            if(mesh->nSections>0){
+                dump_sections_gpu(mesh, carrays, t, spar.dir);
             }
 
             carrays->indexDump++;	

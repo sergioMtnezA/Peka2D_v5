@@ -28,4 +28,6 @@ EXPORT_DLL int write_hotstart_file(char *filename, t_arrays *arrays, t_message *
 
 EXPORT_DLL int dump_probes_gpu(t_mesh *mesh, t_arrays *arrays, char* path, t_message *msg, double t);
 
+EXPORT_DLL int dump_sections_gpu(t_mesh *mesh,t_arrays *arrays,double t,char* dir);
+
 EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg);
