@@ -823,7 +823,7 @@ EXPORT_DLL int dump_sections_gpu(t_mesh *mesh, t_arrays *arrays, double t,char* 
 
 				if(sec->probeSec->probe[j].idc>0){
 					c=sec->probeSec->probe[j].cell;
-					fprintf(f,"%d %.3f %lf %lf %lf %lf %lf\n",c->id,sec->deltaX*j,
+					fprintf(f,"%d %.3f %lf %lf %lf %lf %lf",c->id,sec->deltaX*j,
 						arrays->z[idc],
 						arrays->h[idc],
 						arrays->h[idc]+arrays->z[idc],
@@ -842,19 +842,22 @@ EXPORT_DLL int dump_sections_gpu(t_mesh *mesh, t_arrays *arrays, double t,char* 
 					}
 					#endif
 
+				fprintf(f,"\n");
 				}else{
-					fprintf(f,"%d %.3f %lf %lf %lf %lf %lf\n",-1,sec->deltaX*j,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0);
+					fprintf(f,"%d %.3f %lf %lf %lf %lf %lf",-1,sec->deltaX*j,-9999.0,-9999.0,-9999.0,-9999.0,-9999.0);
 
 					#if SET_SOLUTE
 					for(jphi=0;jphi<nSolutes;jphi++){
-						fprintf(f,"%lf\n",-9999.0);
+						fprintf(f,"%lf",-9999.0);
 					}
 					#endif 
 					#if SET_SED
 					for(jphi=nSolutes;jphi<nSolutes+nSediments;jphi++){
-						fprintf(f,"%lf\n",-9999.0);
+						fprintf(f,"%lf",-9999.0);
 					}
 					#endif
+
+				fprintf(f,"\n");
 				}
 
 			}// end for(j=0;j<sec->npoints;j++){
@@ -864,45 +867,76 @@ EXPORT_DLL int dump_sections_gpu(t_mesh *mesh, t_arrays *arrays, double t,char* 
 		}
 
 		#if SET_SOLUTE || SET_SED
+
+		sec=mesh->sec->sec;
+
 		for(i=0;i<mesh->nSections;i++){
 			sprintf(nombre,"%saveragePHI_section%d.out",dir,i+1);
 			f=fopen(nombre,"a+");
 			fprintf(f,"%lf",t);
+		
+			if(mesh->nSections>0){
 
-			for(jphi=0;jphi<nSolutes +nSediments;jphi++){
+				for(jphi=0;jphi<nSolutes + nSediments;jphi++){
+					
+					sec->phiAveraged = 0.0;
 
-				sec->phiAveraged = 0.0;
-				for(j=0;j<sec->npoints-1;j++){
-					sumphi = 0.0;
-					idc = sec->probeSec->probe[j].idc;
+					npointsMojados=0.0;
 
-					if(sec->probeSec->probe[j].idc>0){
-						if(arrays->h[idc]>0.0){
-							sumphi+= arrays->phi[jphi *ncells + idc]*0.5;
+					for(j=0;j<sec->npoints-1;j++){
+
+						sumphi = 0.0;
+						npoints = 0.0;
+
+						idc = sec->probeSec->probe[j].idc;
+
+						if(sec->probeSec->probe[j].idc>0){
+							if(arrays->h[idc]>0.0){
+								sumphi+= arrays->phi[jphi *ncells + idc]*0.5;
+								npoints=npoints+0.5;
+								npointsMojados+=0.5;
+							}
 						}
-					}
 
-					idc2 = sec->probeSec->probe[j+1].idc;
+						//printf("sum phi %lf\n", sumphi);
 
-					if(sec->probeSec->probe[j+1].idc>0){
-						if(arrays->h[idc2]>0.0){
-							sumphi+= arrays->phi[jphi *ncells + idc2]*0.5;
+
+						idc2 = sec->probeSec->probe[j+1].idc;
+
+						if(sec->probeSec->probe[j+1].idc>0){
+							if(arrays->h[idc2]>0.0){
+								sumphi+= arrays->phi[jphi *ncells + idc2]*0.5;
+								npoints=npoints+0.5;
+								npointsMojados+=0.5;
+							}
 						}
-					}
 
+						//printf("sum phi %lf\n", sumphi);
+
+					}
+					//printf("sum phi %lf\n", sumphi);
+					if(npoints>0.0){
+						sec->phiAveraged += sumphi/npoints;
+					}
+					//printf("phiAve %lf\n", sec->phiAveraged);
+
+					if(npointsMojados>0.0){
+						sec->phiAveraged = sec->phiAveraged/npointsMojados;	
+					}else{
+						sec->phiAveraged = 0.0;
+					}
+				
+					//fprintf(f," %lf", mesh->sec->sec[i].phiAveraged);
+						
 				}
 
-				if(npoints>0.0){
-					sec->phiAveraged = sumphi/npoints;
-				}
-			
-				fprintf(f," %lf", mesh->sec->sec[i].phiAveraged);
-			
-			}
+				//fprintf(f," %lf", mesh->sec->sec[i].phiAveraged);
 			fprintf(f,"\n");
 			fclose(f);
-			sec++;
-		}
+			}
+
+		sec++;
+		}	
 		#endif
 
 	}
