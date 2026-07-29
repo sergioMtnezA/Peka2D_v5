@@ -1746,6 +1746,8 @@ EXPORT_DLL int loadParticleData(
     sprintf(particleGroup->initialFile,"%s%s.SOLINITIAL",spar->dir,spar->proj);
     //associted particleGroup to pksetup
     pksetup->particleGroup = particleGroup;
+    int solute_enabled_by_run=0;
+    int sediment_enabled_by_run=0;
 
     #if SET_SOLUTE
 
@@ -1754,8 +1756,6 @@ EXPORT_DLL int loadParticleData(
 
     //initialize default solute
     soluteGroup->nSolutes=0;
-
-    int solute_enabled_by_run=0;
 
     //Load solutes if activated
     solute_enabled_by_run = pksetup->pkrun.solutes;
@@ -1781,7 +1781,6 @@ EXPORT_DLL int loadParticleData(
     sedGroup = (Peka2D_SedGroup*) malloc(sizeof(Peka2D_SedGroup));
 
     sedGroup->nSediments=0;
-    int sediment_enabled_by_run=0;
 
     //Load sediments if activated
     sediment_enabled_by_run = pksetup->pkrun.sediment;
