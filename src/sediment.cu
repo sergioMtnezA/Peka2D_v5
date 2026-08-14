@@ -209,6 +209,8 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
             arrays->Ns[sid1] = (Ebj - Dbj);
             arrays->Nb[idx] += arrays->Ns[sid1];
 
+            //printf(" Ns %lf\n", arrays->Ns[sid1]);
+
             
 
             #else
@@ -332,8 +334,7 @@ __global__ void g_cell_sediment_Erosion_calculus(int nTasks, t_arrays *arrays){
             #if SET_MULTILAYER_SED
             sid1 = 0*ncells+idx;
             arrays->Ns[sid1] = 0.0;
-            
-
+        
             arrays->Nb[idx] = 0.0;
             #else  
             for(jphi=0;jphi<arrays->nSediments;jphi++){
@@ -409,6 +410,9 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
 
         bedExchange = 0.0;
 
+        if (idx == 109075){ 
+        printf("phi %lf hphi %lf\n", arrays->phi[nSolutes*ncells+idx], arrays->hphi[nSolutes*ncells+idx]);
+        } 
         if(arrays->h[idx] > arrays->minh){ //wet cells
 
             aux1 = 0.0;
@@ -594,14 +598,14 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
 
                 arrays->z[idx] += -aux1*EtaS_eff;
 
-                arrays->hphi[sid] = aux1;
+                arrays->hphi[sid] += aux1;
 
                 if(arrays->hphi[sid]<TOL12){
                     arrays->hphi[sid] = 0.0;
                     arrays->phi[sid] = 0.0;
                 }
                
-                //arrays->h[idx] += aux1*nSediments;
+                arrays->h[idx] += aux1*nSediments;
 
                 if (idx == 109075){ 
                 printf("h %lf\n", arrays->h[idx]);

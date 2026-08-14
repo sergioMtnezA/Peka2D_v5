@@ -870,7 +870,7 @@ dt=arrays->dt;
                 hphi1S = arrays->hphi[sid1S];
                 hphi2S = arrays->hphi[sid2S];
 
-                aux2 = dt*(ws*phij2S);
+                aux2 = dt*(arrays->WsFs[0] *phij2S);
                 #endif 
 
                 if((fabs(aux1)>TOL14)){
