@@ -565,12 +565,15 @@ EXPORT_DLL void generateTimeStep(
     //Start multilayer time .....................................
 	stime3=clock();
 
+
     #if SET_SOLUTE
     #if SET_MULTILAYER
     #if SET_MULTILAYER_IMPLICIT
     nTasks=carrays->nActCells;
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_multilayer_implicit_update_solute_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    //printf("in %d\n", 1);
+
     // #else
     // nTasks=carrays->nActCells;
     // blocksPerGrid = nTasks/threadsPerBlock + 1; 
@@ -578,6 +581,14 @@ EXPORT_DLL void generateTimeStep(
     #endif
     #endif
     #endif
+
+    // #if SET_SED
+    // #if SET_MULTILAYER_SED
+    // nTasks=carrays->nActCells;   
+    // blocksPerGrid = nTasks/threadsPerBlock + 1; 
+    // g_multilayer_implicit_update_sediment_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
+    // #endif  
+    // #endif  
 
     stime4=clock();
 	timers->multilayer_calculus += double(stime4-stime3)/CLOCKS_PER_SEC;
@@ -662,6 +673,8 @@ EXPORT_DLL void generateTimeStep(
 
     }
 
+    //printf("in %d\n", 1);
+
     // Sincronizar la CPU con la GPU
     cudaDeviceSynchronize();
     stime2=clock();
@@ -689,7 +702,7 @@ EXPORT_DLL void generateTimeStep(
     #endif
 
 
-
+    //printf("in %d\n", 1);
 
 
     //Start openBoundaries time .....................................   

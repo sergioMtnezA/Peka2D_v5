@@ -2323,7 +2323,7 @@ int setInitialParticleState(
                     if(c1->h > TOL12){
                         c1->phi[j] = MAX(0.0,dataParticle);
                         #if SET_MULTILAYER
-                        c1->hphi[j] = c1->h/n * c1->phi[j];
+                        c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
                         #else
                         c1->hphi[j] = c1->h * c1->phi[j];
                         #endif
