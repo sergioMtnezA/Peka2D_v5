@@ -61,6 +61,7 @@ EXPORT_DLL int initilizeComputationControls(
 	carrays->nSolutes = mesh->nSolutes;
     carrays->nSediments = mesh->nSediments;
     carrays->nParticles = carrays->nSolutes + carrays->nSediments;
+    carrays->nLayers = mesh->nLayers;
 
     carrays->minZ = mesh->minZ;
     carrays->maxZ = mesh->maxZ;
@@ -388,6 +389,7 @@ EXPORT_DLL int allocateBoundaryArraysMem(
     int nSolutes;
     int nSediments;
     int nParticles;
+    int nLayers;
 
 	//Local variables just for allocation
     NCwall = mesh->NCwall;	//walls per cell
@@ -406,6 +408,7 @@ EXPORT_DLL int allocateBoundaryArraysMem(
     nSolutes = carrays->nSolutes;
     nSediments = carrays->nSediments;
     nParticles = nSolutes + nSediments;
+    nLayers = carrays->nLayers;
 
     //bound blocks
     nOBC=0;
@@ -465,7 +468,13 @@ EXPORT_DLL int allocateBoundaryArraysMem(
         carrays->hzSeriesOBC=(double*)malloc(nTotalPointSeries*sizeof(double));
         carrays->frSeriesOBC=(double*)malloc(nTotalPointSeries*sizeof(double)); 
         #if SET_SOLUTE
+
+        #if MULTILAYER 
+        carrays->phiSeriesOBC=(double*)malloc(nLayers*(nSolutes + nSediments)*nTotalPointSeries*sizeof(double)); 
+        #else 
         carrays->phiSeriesOBC=(double*)malloc((nSolutes + nSediments)*nTotalPointSeries*sizeof(double)); 
+        #endif 
+
         #endif
 
         //mass balance arrays
@@ -501,7 +510,7 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
     t_message *msg){
 /*----------------------------*/
 
-    int j, k, m, l;
+    int j, k, m, l, i;
     int idx;
     int nInlet, nOutlet;
     int countOBC, countIdx0, countInnerIdx0;
@@ -690,14 +699,31 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
                         #if SET_SOLUTE || SET_SED
-                        for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
-                            for(k=0;k<mesh->in[j].n;k++){
-                                idx = l*nTotalPointSeries + countIdx0 + k;
-                                carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
-                                //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
+                        #if MULTILAYER
+                        for(i=0;i<nLayers;i++){
+                        #endif
+
+                            for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
+                                for(k=0;k<mesh->in[j].n;k++){
+                                    
+                                    #if MULTILAYER
+                                    idx = (i*(mesh->nSolutes + mesh->nSediments)+l)*nTotalPointSeries + countIdx0 + k;
+                                    carrays->phiSeriesOBC[idx] = mesh->in[j].phi[i*(mesh->nSolutes + mesh->nSediments)+l][k];
+                                    #else
+                                    idx = (l)*nTotalPointSeries + countIdx0 + k;
+                                    carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
+                                    #endif
+                                    
+                                    //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
+
+                                }
                             }
+
+                        #if MULTILAYER
                         }
+                        #endif
+
                         #endif
                         getchar();
                         break;
@@ -711,14 +737,30 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
                         #if SET_SOLUTE || SET_SED
+
+                        #if MULTILAYER
+                        for(i=0; i<mesh->nLayers; i++){
+                        #endif
+
                         for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
                             for(k=0;k<mesh->in[j].n;k++){
+
+                                #if MULTILAYER
+                                idx = (i*(mesh->nSolutes + mesh->nSediments)+l)*nTotalPointSeries + countIdx0 + k;
+                                carrays->phiSeriesOBC[idx] = mesh->in[j].phi[i*(mesh->nSolutes + mesh->nSediments)+l][k];
+                                #else
                                 idx = l*nTotalPointSeries + countIdx0 + k;
                                 carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
+                                #endif
+                                //carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
                                 //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
                             }
                         }
+                        #if MULTILAYER
+                        }
+                        #endif
+
                         #endif
                         break;
 
@@ -731,14 +773,30 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
                         #if SET_SOLUTE || SET_SED
+                        
+                        #if MULTILAYER
+                        for(i=0; i<mesh->nLayers; i++){
+                        #endif
+
                         for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
                             for(k=0;k<mesh->in[j].n;k++){
+
+                                #if MULTILAYER
+                                idx = (i*(mesh->nSolutes + mesh->nSediments)+l)*nTotalPointSeries + countIdx0 + k;
+                                carrays->phiSeriesOBC[idx] = mesh->in[j].phi[i*(mesh->nSolutes + mesh->nSediments)+l][k];
+                                #else
                                 idx = l*nTotalPointSeries + countIdx0 + k;
                                 carrays->phiSeriesOBC[idx] = mesh->in[j].phi[l][k];
+                                #endif
                                 //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
                             }
                         }
+
+                        #if MULTILAYER
+                        }
+                        #endif
+
                         #endif
                         break;
                 }// End case
@@ -778,14 +836,30 @@ EXPORT_DLL int initilizeBoundaryControlArrays(
                             carrays->hzSeriesOBC[idx] = mesh->out[j].hZ[k];
                             carrays->frSeriesOBC[idx] = 0.0;
                         }
-                        for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
-                            for(k=0;k<mesh->out[j].n;k++){
-                                idx = l*nTotalPointSeries + countIdx0 + k;
-                                carrays->phiSeriesOBC[idx] = mesh->out[j].phi[l][k];
-                                //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
 
+                        #if MULTILAYER
+                        for(i=0; i<mesh->nLayers; i++){
+                        #endif
+
+                            for(l=0;l<(mesh->nSolutes + mesh->nSediments);l++){
+                                for(k=0;k<mesh->out[j].n;k++){
+
+                                    #if MULTILAYER
+                                    idx = (i*(mesh->nSolutes + mesh->nSediments)+l)*nTotalPointSeries + countIdx0 + k;
+                                    carrays->phiSeriesOBC[idx] = mesh->in[j].phi[i*(mesh->nSolutes + mesh->nSediments)+l][k];
+                                    #else
+                                    idx = l*nTotalPointSeries + countIdx0 + k;
+                                    carrays->phiSeriesOBC[idx] = mesh->out[j].phi[l][k];
+                                    //printf("cpu id %d sol %d phi %lf \n",j,l,carrays->phiSeriesOBC[idx]);
+                                    #endif
+
+                                }
                             }
+
+                        #if MULTILAYER
                         }
+                        #endif
+
                         break;
                     case HYD_OUTFLOW_FREE:
                         break;
@@ -942,6 +1016,7 @@ EXPORT_DLL int allocateParticleArraysMem(
     int nSolutes;
     int nSediments;
     int nParticles;
+    int nLayers;
 
 	size_t free_mem, total_mem;
 
@@ -954,6 +1029,7 @@ EXPORT_DLL int allocateParticleArraysMem(
     nSolutes=mesh->nSolutes;
     nSediments=mesh->nSediments;
     nParticles= nSolutes + nSediments;
+    nLayers = mesh->nLayers;
 
     //solutes
     #if SET_SOLUTE
@@ -1001,12 +1077,23 @@ EXPORT_DLL int allocateParticleArraysMem(
         //cell arrarys
         carrays->localDtd=(double*)malloc((nSolutes+nSediments)*ncells*sizeof(double));
         carrays->BTcell=(double*)malloc((nSolutes+nSediments)*ncells*sizeof(double));
+
+        #if MULTILAYER
+        carrays->hphi=(double*)malloc(nLayers*(nSolutes+nSediments)*ncells*sizeof(double));
+        carrays->phi=(double*)malloc(nLayers*(nSolutes+nSediments)*ncells*sizeof(double)); 
+        #else
         carrays->hphi=(double*)malloc((nSolutes+nSediments)*ncells*sizeof(double));
         carrays->phi=(double*)malloc((nSolutes+nSediments)*ncells*sizeof(double)); 
+        #endif
 
         //nWallCell arrays
         carrays->Bwall=(double*)malloc((nSolutes+nSediments)*nWallCell*sizeof(double));
+
+        #if MULTILAYER
+        carrays->dhphi=(double*)malloc(nLayers*(nSolutes+nSediments)*nWallCell*sizeof(double)); 
+        #else
         carrays->dhphi=(double*)malloc((nSolutes+nSediments)*nWallCell*sizeof(double));  
+        #endif
 
     }
 
@@ -1032,7 +1119,8 @@ EXPORT_DLL int initilizeParticleArrays(
     int nSolutes;
     int nSediments;
     int nParticles;
-    int idx;
+    int nLayers;
+    int idx, sid;
 
 
     double daux;
@@ -1052,6 +1140,7 @@ EXPORT_DLL int initilizeParticleArrays(
     nSolutes=mesh->nSolutes;
     nSediments = mesh->nSediments;
     nParticles = nSolutes + nSediments;
+    nLayers = mesh->nLayers;
     
     #if SET_SOLUTE
     if(mesh->nSolutes){
@@ -1118,7 +1207,7 @@ EXPORT_DLL int initilizeParticleArrays(
                 idx = j*ncells+i;
                 c1=&(mesh->c_cells->cells[i]);
                 carrays->Ns[idx] = 0.0;
-                //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
+                //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx]) ;        
             }
         }
 
@@ -1134,26 +1223,59 @@ EXPORT_DLL int initilizeParticleArrays(
 
 
     if(mesh->nSolutes || mesh->nSediments){   
+    
+        #if MULTILAYER
+        for(k=0;k<nLayers;k++){
+        #endif
+            carrays->Dtd = 0.0; 
+            //soltute*cell arrays
+            for(j=0;j<nParticles;j++){        
+                for(i=0;i<ncells;i++){
+                    #if MULTILAYER
+                    idx = (j)*ncells+i;
+                    sid = (k*nParticles+j)*ncells+i;
+                    #else
+                    idx = j*ncells+i;
+                    sid = j*ncells+i;
+                    #endif
+                    c1=&(mesh->c_cells->cells[i]);
+                    carrays->localDtd[idx]= 1e6;
+                    carrays->BTcell[idx]=0.0;
 
-        carrays->Dtd = 0.0; 
-        //soltute*cell arrays
-        for(j=0;j<nParticles;j++){        
-            for(i=0;i<ncells;i++){
-                idx = j*ncells+i;
-                c1=&(mesh->c_cells->cells[i]);
-                carrays->localDtd[idx]= 1e6;
-                carrays->BTcell[idx]=0.0;
-                carrays->hphi[idx] = c1->hphi[j];
-                carrays->phi[idx] = c1->phi[j];  
-                //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
+                    #if MULTILAYER
+                    carrays->hphi[sid] = c1->hphi[k*nParticles+j];
+                    carrays->phi[sid] = c1->phi[k*nParticles+j]; 
+                    #else
+                    carrays->hphi[sid] = c1->hphi[j];
+                    carrays->phi[sid] = c1->phi[j]; 
+                    #endif
+                    
+                    //printf("Phi %d - Cell %d : %lf\n",j,i,carrays->csol[idx])  ;        
+                }
             }
+        
+        #if MULTILAYER
         }
+        #endif
 
         //solute*cell*NCwall arrays
+        #if MULTILAYER
         for(i=0;i<nParticles*nWallCell;i++){
             carrays->Bwall[i]=0.0;
-		    carrays->dhphi[i]=0.0;
-	    }
+            //carrays->dhphi[i]=0.0;
+        }
+
+        for(i=0;i<nLayers*nParticles*nWallCell;i++){
+            carrays->dhphi[i]=0.0;
+        } 
+
+        #else
+        for(i=0;i<nParticles*nWallCell;i++){
+            carrays->Bwall[i]=0.0;
+            carrays->dhphi[i]=0.0;
+        }
+        #endif
+
       
     } 
 

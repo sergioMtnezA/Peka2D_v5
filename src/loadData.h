@@ -53,6 +53,7 @@ typedef struct Peka2D_Solute_ Peka2D_Solute;
 typedef struct Peka2D_SedGroup_ Peka2D_SedGroup;
 typedef struct Peka2D_ParticleGroup_ Peka2D_ParticleGroup;
 typedef struct Peka2D_Sediment_ Peka2D_Sediment;
+typedef struct Peka2D_MultilayerGroup_ Peka2D_MultilayerGroup;
 typedef struct Peka2D_ProbeGroup_ Peka2D_ProbeGroup;
 typedef struct Peka2D_Probe_ Peka2D_Probe;
 typedef struct Peka2D_CrossSectionGroup_ Peka2D_CrossSectionGroup;
@@ -184,6 +185,10 @@ struct Peka2D_ParticleGroup_{
     char initialFile[STR_SIZE];
 };
 
+struct Peka2D_MultilayerGroup_{
+    int nLayers;
+};
+
 struct Peka2D_Setup_{
     Peka2D_Run pkrun;
     Peka2D_NodeBoundary *pknode;
@@ -192,6 +197,7 @@ struct Peka2D_Setup_{
     Peka2D_SoluteGroup *soluteGroup;  
     Peka2D_SedGroup *sedGroup;
     Peka2D_ParticleGroup *particleGroup;
+    Peka2D_MultilayerGroup *multilayerGroup;
     Peka2D_ProbeGroup *probeGroup;
     Peka2D_CrossSectionGroup *secGroup;
 };
@@ -442,6 +448,7 @@ int readHotstartParticleState(
     t_mesh *mesh, 
     int nSolutes,
     int nParticles,
+    int nLayers,
     t_message *e);
 /*----------------------------*/
 

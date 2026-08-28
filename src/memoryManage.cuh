@@ -105,6 +105,7 @@ EXPORT_DLL int allocateBoundArraysCudaMem(
     int nTotalPointSeries, 
     int nSolutes,
     int nSediments,
+    int nLayers,
     t_cuPtr *cuPtr);
 /*----------------------------*/
 
@@ -178,7 +179,7 @@ EXPORT_DLL int freeBoundaCudaMemory(
 #if SET_SOLUTE || SET_SED
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int allocateParticleArraysCudaMem(
-    int nSolutes, int nSediments,
+    int nSolutes, int nSediments, int nLayers,
     int NCwall, int ncells, int nWallCell, int nwc, int nwb, 
     t_cuPtr *cuPtr);
 /*----------------------------*/
@@ -187,6 +188,7 @@ EXPORT_DLL int allocateParticleArraysCudaMem(
 ////////////////////////////////////////////////////////////////
 int copyParticleArraysCudaMem(
     int nSolutes, int nSediments,
+    int nLayers,
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr);
@@ -195,7 +197,7 @@ int copyParticleArraysCudaMem(
 
 
 ////////////////////////////////////////////////////////////////
-__global__ void assignParticleArraysToCudaMem(int nSolutes, int nSediments, t_arrays *garrays,
+__global__ void assignParticleArraysToCudaMem(int nSolutes, int nSediments, int nLayers, t_arrays *garrays,
 	//------------------------solutes
 	int *typeDiff,
 	double *k_xx,
@@ -225,7 +227,7 @@ __global__ void assignParticleArraysToCudaMem(int nSolutes, int nSediments, t_ar
 /*----------------------------*/
 
 EXPORT_DLL int freeParticleCudaMemory(
-	int nSolutes, int nSediments,
+	int nSolutes, int nSediments, int nLayers,
 	t_cuPtr *cuPtr);
 /*----------------------------*/
 #endif

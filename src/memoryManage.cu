@@ -15,6 +15,7 @@ EXPORT_DLL int createArraysCudaMemory(
     int nSolutes;
     int nSediments;
     int nParticles;
+    int nLayers;
 
     double minZ;
     double maxZ;
@@ -48,6 +49,7 @@ EXPORT_DLL int createArraysCudaMemory(
     //Sediment variables for allocation
     nSediments=carrays->nSediments;
     nParticles=nSolutes + nSediments; 
+    nLayers = carrays->nLayers;
 
     minZ = carrays->minZ;
     maxZ = carrays->maxZ;
@@ -320,6 +322,7 @@ EXPORT_DLL int copyComputationControls(
     cudaMemcpy(&(garrays->nSolutes), &(carrays->nSolutes), sizeof(int), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->nSediments), &(carrays->nSediments), sizeof(int), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->nParticles), &(carrays->nParticles), sizeof(int), cudaMemcpyHostToDevice );
+    cudaMemcpy(&(garrays->nLayers), &(carrays->nLayers), sizeof(int), cudaMemcpyHostToDevice );
 
     cudaMemcpy(&(garrays->minZ), &(carrays->minZ), sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->maxZ), &(carrays->maxZ), sizeof(double), cudaMemcpyHostToDevice );
@@ -765,6 +768,7 @@ EXPORT_DLL int allocateBoundArraysCudaMem(
     int nTotalPointSeries, 
     int nSolutes,
     int nSediments,
+    int nLayers,
     t_cuPtr *cuPtr){
 /*----------------------------*/
 
@@ -818,7 +822,12 @@ EXPORT_DLL int allocateBoundArraysCudaMem(
         cudaMalloc((void**) &(cuPtr->frSeriesOBC), nTotalPointSeries*sizeof(double));
 
         #if SET_SOLUTE || SET_SED
+        #if MULTILAYER
+        cudaMalloc((void**) &(cuPtr->phiSeriesOBC), nLayers*(nSolutes+nSediments)*nTotalPointSeries*sizeof(double));
+        #else
         cudaMalloc((void**) &(cuPtr->phiSeriesOBC), (nSolutes+nSediments)*nTotalPointSeries*sizeof(double));
+
+        #endif  
         #endif
 
         //mass balance pointers
@@ -870,6 +879,7 @@ EXPORT_DLL int copyBoundSetupArraysCudaMem(
     int nTotalSerieOut = carrays->nTotalSeriesOut;
     int nSolutes = carrays->nSolutes;
     int nSediments = carrays->nSediments;
+    int nLayers =  carrays->nLayers;
 
     int i;
     double *aux1s;
@@ -921,7 +931,11 @@ EXPORT_DLL int copyBoundSetupArraysCudaMem(
         cudaMemcpy((cuPtr->frSeriesOBC), (carrays->frSeriesOBC), nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
 
         #if SET_SOLUTE || SET_SED
+        #if MULTILAYER
+        cudaMemcpy((cuPtr->phiSeriesOBC), (carrays->phiSeriesOBC), nLayers*(nSolutes+nSediments)*nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
+        #else  
         cudaMemcpy((cuPtr->phiSeriesOBC), (carrays->phiSeriesOBC), (nSolutes+nSediments)*nTotalPointSeries*sizeof(double), cudaMemcpyHostToDevice );
+        #endif 
         #endif
 
         //mass balance pointers  
@@ -1196,6 +1210,7 @@ EXPORT_DLL int freeBoundaCudaMemory(
 EXPORT_DLL int allocateParticleArraysCudaMem(
     int nSolutes, 
     int nSediments,
+    int nLayers,
     int NCwall, int ncells, int nWallCell, int nwc, int nwb, 
     t_cuPtr *cuPtr){
 /*----------------------------*/
@@ -1247,11 +1262,20 @@ EXPORT_DLL int allocateParticleArraysCudaMem(
         //(nSolutes + nSediments)*cells
         cudaMalloc((void**) &(cuPtr->localDtd), (nSolutes + nSediments)*ncells*sizeof(double));
         cudaMalloc((void**) &(cuPtr->BTcell), (nSolutes+nSediments)*ncells*sizeof(double));
+        #if MULTILAYER
+        cudaMalloc((void**) &(cuPtr->hphi), nLayers*(nSolutes+nSediments)*ncells*sizeof(double));
+        cudaMalloc((void**) &(cuPtr->phi), nLayers*(nSolutes+nSediments)*ncells*sizeof(double));
+        #else  
         cudaMalloc((void**) &(cuPtr->hphi), (nSolutes+nSediments)*ncells*sizeof(double));
         cudaMalloc((void**) &(cuPtr->phi), (nSolutes+nSediments)*ncells*sizeof(double));
+        #endif 
         //(nSolutes + nSediments)*cells*NCwall
         cudaMalloc((void**) &(cuPtr->Bwall), (nSolutes+nSediments)*nWallCell*sizeof(double));
+        #if MULTILAYER
         cudaMalloc((void**) &(cuPtr->dhphi), (nSolutes+nSediments)*nWallCell*sizeof(double));
+        #else  
+        cudaMalloc((void**) &(cuPtr->dhphi), (nSolutes+nSediments)*nWallCell*sizeof(double));
+        #endif 
     }
     return(1);
 
@@ -1263,6 +1287,7 @@ EXPORT_DLL int allocateParticleArraysCudaMem(
 int copyParticleArraysCudaMem(
     int nSolutes, 
     int nSediments,
+    int nLayers,
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr){
@@ -1322,7 +1347,12 @@ int copyParticleArraysCudaMem(
         //solutes*cells           
         cudaMemcpy((cuPtr->Ns), (carrays->Ns), nSediments*ncells*sizeof(double), cudaMemcpyHostToDevice );   
         cudaMemcpy((cuPtr->Nb), (carrays->Nb), ncells*sizeof(double), cudaMemcpyHostToDevice );
+
+        #if MULTILAYER
+        cudaMemcpy((cuPtr->phiZero), (carrays->phiZero), nLayers*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        #else  
         cudaMemcpy((cuPtr->phiZero), (carrays->phiZero), ncells*sizeof(double), cudaMemcpyHostToDevice );
+        #endif 
 
     }
     #endif
@@ -1334,11 +1364,22 @@ int copyParticleArraysCudaMem(
         //solutes*cells
         cudaMemcpy((cuPtr->localDtd), (carrays->localDtd), (nSolutes+nSediments)*ncells*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->BTcell), (carrays->BTcell), (nSolutes+nSediments)*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        #if MULTILAYER 
+        cudaMemcpy((cuPtr->hphi), (carrays->hphi), nLayers*(nSediments+nSolutes)*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        cudaMemcpy((cuPtr->phi), (carrays->phi), nLayers*(nSediments+nSolutes)*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        #else 
         cudaMemcpy((cuPtr->hphi), (carrays->hphi), (nSediments+nSolutes)*ncells*sizeof(double), cudaMemcpyHostToDevice );
         cudaMemcpy((cuPtr->phi), (carrays->phi), (nSediments+nSolutes)*ncells*sizeof(double), cudaMemcpyHostToDevice );
+        #endif 
+
         //solutes*cells*NCwall
         cudaMemcpy((cuPtr->Bwall), (carrays->Bwall), (nSolutes+nSediments)*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
+
+        #if MULTILAYER 
+        cudaMemcpy((cuPtr->dhphi), (carrays->dhphi), nLayers*(nSediments+nSolutes)*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
+        #else 
         cudaMemcpy((cuPtr->dhphi), (carrays->dhphi), (nSediments+nSolutes)*nWallCell*sizeof(double), cudaMemcpyHostToDevice );
+        #endif 
     }
 
     return(1);
@@ -1348,7 +1389,7 @@ int copyParticleArraysCudaMem(
 
 
 ////////////////////////////////////////////////////////////////
-__global__ void assignParticleArraysToCudaMem(int nSolutes,int nSediments, t_arrays *garrays,
+__global__ void assignParticleArraysToCudaMem(int nSolutes,int nSediments, int nLayers, t_arrays *garrays,
 	//------------------------cells
 	int *typeDiff,
 	double *k_xx,
@@ -1427,6 +1468,7 @@ __global__ void assignParticleArraysToCudaMem(int nSolutes,int nSediments, t_arr
 EXPORT_DLL int freeParticleCudaMemory(
     int nSolutes, 
     int nSediments,
+    int nLayers,
     t_cuPtr *cuPtr){
 /*----------------------------*/
     #if SET_SOLUTE

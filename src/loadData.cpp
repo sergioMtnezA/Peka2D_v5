@@ -74,7 +74,8 @@ EXPORT_DLL int readControlDataFile(
 				&run->itrash,
 				&run->itrash,
 				&run->dambreach,
-				&run->itrash);
+				&run->itrash,
+                &run->multilayer);
 			break;
 		default:
 			sprintf(temp,"Release %d not valid",run->release);
@@ -141,7 +142,7 @@ EXPORT_DLL int readControlDataFile(
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Line 14: Pollutant transport model switch
-	fscanf(fp,"%d",&run->solutes, &run->sediments);
+	fscanf(fp,"%d",&run->solutes, &run->sediments, &run->nLayers);
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	// Line 15: Wind stress switch
@@ -222,6 +223,7 @@ EXPORT_DLL int setControlParameters(
     mesh->nSolutes=0;
     mesh->nSediments=0;
     mesh->nParticles=0;
+    mesh->nLayers=0;
 
     return 1;
 
@@ -448,6 +450,27 @@ EXPORT_DLL int loadMeshData(
 		mesh->nSections=0;
 	    Notify("No observation points in setup",MSG_L3,msg);
 	}
+
+    /*****************************************************************
+    // Load Multilayer version
+    *****************************************************************/
+    Peka2D_MultilayerGroup *multilayerGroup;
+    multilayerGroup = (Peka2D_MultilayerGroup*) malloc(sizeof(Peka2D_MultilayerGroup));
+
+
+    //initialize default solute
+    multilayerGroup->nLayers=0;
+    int multilayer_enabled_by_run =0;
+
+    //Load solutes if activated
+    multilayer_enabled_by_run = pksetup->pkrun.multilayer;
+
+
+    if(multilayer_enabled_by_run){
+    //Load solutes if activated
+        nLayers = pksetup->pkrun.nLayers;
+        multilayerGroup->nLayers=nLayers;
+    }
 
     return 1;
 
@@ -854,7 +877,7 @@ int readHotstartState(
     double aux1, wse;
     char temp[1024];
 
-    int nhydro, nParticles;
+    int nhydro, nSolutes, nSediments, nParticles, nLayers;
 
     fp = fopen(filename,"r");
     if(!fp){
@@ -864,7 +887,10 @@ int readHotstartState(
 
     }else{
         //headers
-        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(nParticles));  
+        fscanf(fp,"%d %d %*d %*d",&(nhydro),&(nSolutes), &(nSediments), &(nLayers));  
+
+        nParticles = nSolutes + nSediments;
+
         if(nhydro!=4){
             fclose(fp);
             sprintf(temp,"Unconsistent number of hydrodynamic data in %s",filename);
@@ -884,9 +910,15 @@ int readHotstartState(
 
             //skip nsolutes data
             if(nParticles){ 
+                #if MULTILAYER
+                for(j=0;j<nParticles*nLayers;j++){
+                    fscanf(fp,"%*lf");
+                }
+                #else
                 for(j=0;j<nParticles;j++){
                     fscanf(fp,"%*lf");
                 }
+                #endif
             }  
     
             // Initialize momentum
@@ -1535,10 +1567,29 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].q=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
                     #if SET_SOLUTE || SET_SED
+
+                    #if MULTILAYER
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*mesh->nLayers*sizeof(double*));
+                    #else
                     mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*sizeof(double*));
-                    for(k=0;k<mesh->nParticles;k++){
-                        mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                    #endif
+
+                    #if MULTILAYER
+                    for(l=0;l<mesh->nLayers;l++){
+                    #endif 
+
+                        for(k=0;k<mesh->nParticles;k++){
+                            #if MULTILAYER
+                            mesh->in[countInlet].phi[l*mesh->nParticles + k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                            #else
+                            mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                            #endif
+                        }
+
+                    #if MULTILAYER
                     }
+                    #endif 
+                    
                     #endif
 
                    
@@ -1549,11 +1600,25 @@ int readOpenBoundaryFile(
                         mesh->in[countInlet].t[j] *= 3600.0;
 
                         #if SET_SOLUTE || SET_SED
-                        for(k=0;k<mesh->nParticles;k++){
-                            fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
-                            //printf("file id %d sol %d phi %lf \n",countInlet,k,mesh->in[countInlet].phi[k][j]);
+
+                        #if MULTILAYER
+                        for(l=0;l<mesh->nLayers;l++){
+                        #endif 
+
+                            for(k=0;k<mesh->nParticles;k++){
+
+                                #if MULTILAYER
+                                fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[l*mesh->nParticles+k][j]));
+                                #else
+                                fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
+                                //printf("file id %d sol %d phi %lf \n",countInlet,k,mesh->in[countInlet].phi[k][j]);
+                                #endif
+                            }
+                            #endif
+
+                        #if MULTILAYER
                         }
-                        #endif
+                        #endif 
 
                     }
 
@@ -1568,10 +1633,29 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].hZ=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
                     #if SET_SOLUTE || SET_SED
+
+                    #if MULTILAYER
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*nLayers*sizeof(double*));
+                    #else
                     mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*sizeof(double*));
-                    for(k=0;k<mesh->nParticles;k++){
-                        mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                    #endif
+
+                    #if MULTILAYER
+                    for(l=0;l<mesh->nLayers;l++){
+                    #endif 
+
+                        for(k=0;k<mesh->nParticles;k++){
+                            #if MULTILAYER
+                            mesh->in[countInlet].phi[l*mesh->nParticles+k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                            #else
+                            mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                            #endif
+                        }
+
+                    #if MULTILAYER
                     }
+                    #endif 
+
                     #endif
 
                     for(j=0;j<mesh->in[countInlet].n;j++){
@@ -1580,9 +1664,23 @@ int readOpenBoundaryFile(
                         mesh->in[countInlet].t[j] *= 3600.0;
 
                         #if SET_SOLUTE || SET_SED
-                        for(k=0;k<mesh->nParticles;k++){
-                            fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
+
+                        #if MULTILAYER
+                        for(l=0;l<mesh->nLayers;l++){
+                        #endif 
+
+                            for(k=0;k<mesh->nParticles;k++){
+                                #if MULTILAYER
+                                fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[l*nParticles+k][j]));
+                                #else
+                                fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
+                                #endif
+                            }
+
+                        #if MULTILAYER
                         }
+                        #endif 
+
                         #endif
                     }
                     fclose(fdata);
@@ -1597,10 +1695,30 @@ int readOpenBoundaryFile(
                     mesh->in[countInlet].hZ=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
 
                     #if SET_SOLUTE || SET_SED
+                    
+                    #if MULTILAYER
+                    mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*nLayers*sizeof(double*));
+                    #else
                     mesh->in[countInlet].phi=(double**) malloc(mesh->nParticles*sizeof(double*));
-                    for(k=0;k<mesh->nParticles;k++){
-                        mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                    #endif
+
+                    
+                    #if MULTILAYER
+                    for(l=0;l<mesh->nLayers;l++){
+                    #endif 
+
+                        for(k=0;k<mesh->nParticles;k++){
+                            #if MULTILAYER
+                            mesh->in[countInlet].phi[l*nParticles+k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                            #else
+                            mesh->in[countInlet].phi[k]=(double*) malloc(mesh->in[countInlet].n*sizeof(double));
+                            #endif
+                        }
+
+                    #if MULTILAYER
                     }
+                    #endif 
+
                     #endif
 
                     for(j=0;j<mesh->in[countInlet].n;j++){
@@ -1609,9 +1727,23 @@ int readOpenBoundaryFile(
                         mesh->in[countInlet].t[j] *= 3600.0;
 
                         #if SET_SOLUTE || SET_SED
-                        for(k=0;k<mesh->nParticles;k++){
-                            fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
+
+                        #if MULTILAYER
+                        for(l=0;l<mesh->nLayers;l++){
+                        #endif 
+
+                            for(k=0;k<mesh->nParticles;k++){
+                                #if MULTILAYER
+                                fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[l*nParticles+k][j]));
+                                #else
+                                fscanf(fdata,"%lf",&(mesh->in[countInlet].phi[k][j]));
+                                #endif
+                            }
+
+                        #if MULTILAYER
                         }
+                        #endif
+
                         #endif
                     }
                     fclose(fdata);
@@ -1654,10 +1786,19 @@ int readOpenBoundaryFile(
                 mesh->out[countOutlet].t=(double*) malloc(mesh->out[countOutlet].n*sizeof(double));
 
                 #if SET_SOLUTE || SET_SED
+                    #if MULTILAYER
+                    mesh->out[countOutlet].phi=(double**) malloc(nLayers*(mesh->nSolutes + mesh->nSediments)*sizeof(double*));
+                    for(l=0;l<nLayers; l++){ 
+                        for(k=0;k<(mesh->nSolutes + mesh->nSediments);k++){
+                            mesh->out[countOutlet].phi[l*(mesh->nSolutes + mesh->nSediments)+k]=(double*) malloc(mesh->in[countOutlet].n*sizeof(double));
+                        }
+                    } 
+                    #else  
                     mesh->out[countOutlet].phi=(double**) malloc((mesh->nSolutes + mesh->nSediments)*sizeof(double*));
                     for(k=0;k<(mesh->nSolutes + mesh->nSediments);k++){
                         mesh->out[countOutlet].phi[k]=(double*) malloc(mesh->in[countOutlet].n*sizeof(double));
                     }
+                    #endif 
                 #endif
 
                 for(j=0;j<mesh->out[countOutlet].n;j++){
@@ -1666,10 +1807,21 @@ int readOpenBoundaryFile(
                     mesh->out[countOutlet].t[j] *= 3600.0;
 
                     #if SET_SOLUTE || SET_SED
+
+                    #if MULTILAYER
+                    for(l=0;l<nLayers;l++){
+                        for(k=0;k<(mesh->nSolutes + mesh->nSediments);k++){
+                            fscanf(fdata,"%lf",&(mesh->out[countOutlet].phi[l*(mesh->nSolutes + mesh->nSediments)+k][j]));
+                            printf("file id %d sol %d phi %lf \n",countOutlet,k,mesh->out[countOutlet].phi[l*(mesh->nSolutes + mesh->nSediments)+k][j]);
+                        }
+                    } 
+                    #else  
                         for(k=0;k<(mesh->nSolutes + mesh->nSediments);k++){
                             fscanf(fdata,"%lf",&(mesh->out[countOutlet].phi[k][j]));
                             printf("file id %d sol %d phi %lf \n",countOutlet,k,mesh->out[countOutlet].phi[k][j]);
                         }
+                    #endif 
+
                     #endif
                 }
                 fclose(fdata);
@@ -2034,6 +2186,7 @@ int createParticleStructures(
     int nSolutes = soluteGroup->nSolutes;
     int nSediments = sedGroup->nSediments;
     int nParticles = nSolutes + nSediments;
+    int nLayers = multilayerGroup->nLayers;
 
     t_c_cell *c1;
 
@@ -2041,6 +2194,7 @@ int createParticleStructures(
     mesh->nSolutes = nSolutes;
     mesh->nSediments = nSediments;
     mesh->nParticles = nSolutes + nSediments;
+    mesh->nLayers = nLayers;
     
     #if SET_SOLUTE
     if(mesh->nSolutes){
@@ -2097,21 +2251,35 @@ int createParticleStructures(
             mesh->sediments->sediment[j].ks_yy = sedGroup->sediment[j].ks_yy;
             mesh->sediments->sediment[j].iniConc=sedGroup->sediment[j].iniConc;
 
-            printf("mesh->sediments->sediment[j].EquConcFF %lf\n",mesh->sediments->sediment[j].EquConcFF);
+            //printf("mesh->sediments->sediment[j].EquConcFF %lf\n",mesh->sediments->sediment[j].EquConcFF);
         }
 
     }
     #endif
 
-    if(mesh->nParticles){
-        //solute variables in c_cells
-        for(i=0;i<mesh->ncells;i++){
-            c1=&(mesh->c_cells->cells[i]);
-            c1->hphi=(double*) malloc(mesh->nParticles*sizeof(double));
-            c1->phi=(double*) malloc(mesh->nParticles*sizeof(double));
+    #if MULTILAYER
+    for(l=0;l<mesh->nLayers;l++){
+    #endif
+
+        if(mesh->nParticles){
+            //solute variables in c_cells
+            for(i=0;i<mesh->ncells;i++){
+                c1=&(mesh->c_cells->cells[i]);
+
+                #if MULTILAYER
+                c1->hphi=(double*) malloc(mesh->nParticles*mesh->nLayers*sizeof(double));
+                c1->phi=(double*) malloc(mesh->nParticles*mesh->nLayers*sizeof(double));
+                #else
+                c1->hphi=(double*) malloc(mesh->nParticles*sizeof(double));
+                c1->phi=(double*) malloc(mesh->nParticles*sizeof(double));
+                #endif
+            }
+        
         }
-    
+
+    #if MULTILAYER
     }
+    #endif
 
 	return 1;
 	
@@ -2283,14 +2451,17 @@ int setInitialParticleState(
     Peka2D_SoluteGroup *soluteGroup;
     Peka2D_SedGroup *sedGroup;
     Peka2D_ParticleGroup *particleGroup;
+    Peka2D_MultilayerGroup *multilayerGroup;
 
     soluteGroup = pksetup->soluteGroup;
     sedGroup = pksetup->sedGroup;
     particleGroup = pksetup->particleGroup;
+    multilayerGroup = pksetup->multilayerGroup;
 
     int nSolutes = soluteGroup->nSolutes;
     int nSediments = sedGroup->nSediments;
     int nParticles = nSolutes + nSediments;
+    int nLayers = multilayerGroup->nLayers;
 
     t_c_cell *c1;
     char filename[1024],temp[1024];
@@ -2301,7 +2472,7 @@ int setInitialParticleState(
     if(pksetup->pkrun.hotStart){ //hotstart initialization
 
         sprintf(filename,"%s%s.HOTSTART",spar->dir,spar->proj);
-        if(!readHotstartParticleState(filename, mesh, nSolutes, nParticles, e)){
+        if(!readHotstartParticleState(filename, mesh, nSolutes, nParticles, nLayers, e)){
             sprintf(temp,"Hotstart solute initialization failed");
 		    Notify(temp,MSG_ERROR,e);
 		    return 0;
@@ -2317,29 +2488,45 @@ int setInitialParticleState(
             for(i=0;i<mesh->ncells;i++){
                 c1=&(mesh->c_cells->cells[i]);
 
-                for(j=0;j<nParticles;j++){  
-                    fscanf(fp,"%lf",&dataParticle);  
+                #if MULTILAYER
+                for(k=0;k<nLayers;k++){
+                #endif
 
-                    if(c1->h > TOL12){
-                        c1->phi[j] = MAX(0.0,dataParticle);
-                        #if SET_MULTILAYER
-                        c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
-                        #else
-                        c1->hphi[j] = c1->h * c1->phi[j];
-                        #endif
-                    }else{
-                        c1->phi[j] = 0.0;
-                        c1->hphi[j] = 0.0;
-                    }
+                    for(j=0;j<nParticles;j++){  
+                        fscanf(fp,"%lf",&dataParticle);  
 
-                    if(i == 86499){
-                        printf("hphi %lf phi %lf j%d\n", c1->phi[j],c1->hphi[j],j);
-                    }
-                    //getchar();
-                
-                } 
+                        if(c1->h > TOL12){
+
+                            //c1->phi[j] = MAX(0.0,dataParticle);
+                            #if MULTILAYER
+                            c1->phi[k*nParticles+j] = MAX(0.0,dataParticle);
+                            c1->hphi[k*nParticles+j] = c1->h/nLayers * c1->phi[k*nParticles+j];
+                            #else
+                            c1->phi[j] = MAX(0.0,dataParticle);
+                            c1->hphi[j] = c1->h * c1->phi[j];
+                            #endif
+
+                        }else{
+
+                            #if MULTILAYER
+                            c1->phi[k*nParticles+j] = 0.0;
+                            c1->hphi[k*nParticles+j] = 0.0;
+                            #else
+                            c1->phi[j] = 0.0;
+                            c1->hphi[j] = 0.0;
+                            #endif
+
+                        }
+
+                        //getchar();
+                    
+                    } 
+                #if MULTILAYER
+                }
+                #endif
 
             } // end cell loop
+
             fclose(fp);
             sprintf(temp,"Particle initial concentration set from file %s",particleGroup->initialFile);
             Notify(temp,MSG_L1,e);
@@ -2349,25 +2536,47 @@ int setInitialParticleState(
             for(i=0;i<mesh->ncells;i++){
                 c1=&(mesh->c_cells->cells[i]);
 
-                for(j=0;j<nParticles;j++){  
-                    if(c1->h > TOL12){
-                        if(j<nSolutes){
-                            c1->phi[j] = mesh->solutes->solute[j].iniConc;
-                        }else if (j>=nSolutes){
-                            c1->phi[j] = mesh->sediments->sediment[j].iniConc;
+                #if MULTILAYER
+                for(k=0;k<nLayers;k++){
+                #endif
+
+                    for(j=0;j<nParticles;j++){  
+                        if(c1->h > TOL12){
+                            
+                            //c1->phi[j] = mesh->solutes->solute[j].iniConc;
+                            #if MULTILAYER
+
+                            if(j<nSolutes){
+                                c1->phi[k*nParticles+j] = mesh->solutes->solute[k*nParticles+j].iniConc;
+                            }else if (j>=nSolutes){
+                                c1->phi[k*nParticles+j] = mesh->sediments->sediment[k*nParticles+j].iniConc;
+                            }
+
+                            c1->hphi[k*nParticles+j] = c1->h/nLayers * c1->phi[k*nParticles+j];
+                            #else
+
+                            if(j<nSolutes){
+                                c1->phi[j] = mesh->solutes->solute[j].iniConc;
+                            }else if (j>=nSolutes){
+                                c1->phi[j] = mesh->sediments->sediment[j].iniConc;
+                            }
+
+                            c1->hphi[j] = c1->h * c1->phi[j];
+                            #endif
+                        }else{
+                            #if MULTILAYER
+                            c1->phi[k*nParticles+j] = 0.0;
+                            c1->hphi[k*nParticles+j] = 0.0;
+                            #else
+                            c1->phi[j] = 0.0;
+                            c1->hphi[j] = 0.0;
+                            #endif
                         }
-                        
-                        //c1->phi[j] = mesh->solutes->solute[j].iniConc;
-                        #if SET_MULTILAYER
-                        c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
-                        #else
-                        c1->hphi[j] = c1->h * c1->phi[j];
-                        #endif
-                    }else{
-                        c1->phi[j] = 0.0;
-                        c1->hphi[j] = 0.0;
-                    }
-                } 
+                    } 
+
+                #if MULTILAYER
+                }
+                #endif
 
             } // end cell loop        
             sprintf(temp,"Particle initial concentration set uniform");
@@ -2388,6 +2597,7 @@ int readHotstartParticleState(
     t_mesh *mesh, 
     int nSolutes,
     int nParticles,
+    int nLayers,
     t_message *e){
 /*----------------------------*/
 
@@ -2422,22 +2632,36 @@ int readHotstartParticleState(
             //skip hydro data
             fscanf(fp,"%*lf %*lf %*lf %*lf");
 
-            //read nsolutes data
-            for(j=0;j<nParticles;j++){  
-                fscanf(fp,"%lf",&dataParticle);         
+            #if MULTILAYER
+            for(k=0;k<nLayers;k++){
+            #endif
+                //read nsolutes data
+                for(j=0;j<nParticles;j++){  
+                    fscanf(fp,"%lf",&dataParticle);         
 
-                if(c1->h > TOL12){
-                    c1->phi[j] = MAX(0.0,dataParticle);
-                    #if SET_MULTILAYER
-                    c1->hphi[j] = c1->h/nSolutes * c1->phi[j];
-                    #else
-                    c1->hphi[j] = c1->h * c1->phi[j];
-                    #endif
-                }else{
-                    c1->phi[j] = 0.0;
-                    c1->hphi[j] = 0.0;
-                } 
-            }      
+                    if(c1->h > TOL12){
+                        
+                        #if MULTILAYER
+                        c1->phi[k*nParticles+j] = MAX(0.0,dataParticle);
+                        c1->hphi[k*nParticles+j] = c1->h/nLayers * c1->phi[k*nParticles+j];
+                        #else
+                        c1->phi[k*nParticles+j] = MAX(0.0,dataParticle);
+                        c1->hphi[k*nParticles+j] = c1->h * c1->phi[k*nParticles+j];
+                        #endif
+
+                    }else{
+                        #if MULTILAYER
+                        c1->phi[k*nParticles+j] = 0.0;
+                        c1->hphi[k*nParticles+j] = 0.0;
+                        #else
+                        c1->phi[j] = 0.0;
+                        c1->hphi[j] = 0.0;
+                        #endif
+                    } 
+                }  
+            #if MULTILAYER
+            }
+            #endif    
 
         } // end cell loop
     }

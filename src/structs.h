@@ -131,6 +131,9 @@ struct t_mesh_{
 	//particles
 	int nParticles;
 
+	//layers
+	int nLayers;
+
 	//OnePointReading
 	int nProbes;
 	l_probes *probe;
@@ -477,6 +480,9 @@ struct t_arrays_{
 
 	//particle controls
 	int nParticles; /**< @brief Number of Particles */
+
+	//Layers number
+	int nLayers;
 
 	double minZ;
 	double maxZ;

@@ -255,7 +255,7 @@ EXPORT_DLL int computeSimulation(
     // Free CUDA memory
    
     #if SET_SOLUTE || SET_SED
-    freeParticleCudaMemory(carrays->nSolutes,carrays->nSediments,&(cuPtr));
+    freeParticleCudaMemory(carrays->nSolutes,carrays->nSediments, carrays->nLayers ,&(cuPtr));
     #endif
     
     freeBoundaCudaMemory(carrays->nOBC, carrays->nInlet, carrays->nOutlet,
@@ -412,6 +412,7 @@ EXPORT_DLL void generateTimeStep(
     int nSolutes=carrays->nSolutes;
     int nSediments = carrays->nSediments;
     int nParticles = nSolutes + nSediments;
+    int nLayers = carrays->nLayers;
     
     int nSteps;
     double dtDifR, dtAux;
@@ -448,7 +449,12 @@ EXPORT_DLL void generateTimeStep(
 
 
     #if SET_SOLUTE || SET_SED
+
+    #if MULTILAYER
+    nTasks=carrays->nWallCell*(carrays->nSolutes + carrays->nSediments)*nLayers;
+    #else
     nTasks=carrays->nWallCell*(carrays->nSolutes + carrays->nSediments);  
+    #endif
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_initialize_particle_delta <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
     //getchar();
@@ -464,8 +470,12 @@ EXPORT_DLL void generateTimeStep(
     #if SET_SOLUTE || SET_SED
         #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0   //compact 
         nTasks=carrays->nActWalls;
-        #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1  //unroll    
+        #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1  //unroll 
+        #if MULTILAYER
+        nTasks=carrays->nActWalls*(nSolutes + nSediments)*nLayers;
+        #else   
         nTasks=carrays->nActWalls*(nSolutes + nSediments);
+        #endif
         #endif
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         
@@ -475,8 +485,12 @@ EXPORT_DLL void generateTimeStep(
         if(carrays->nOBC){
             #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0  //compact 
             nTasks=carrays->nTotalBoundCells;
-            #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1  //unroll  
+            #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1  //unroll
+            #if MULTILAYER
+            nTasks=carrays->nTotalBoundCells*(nSolutes + nSediments)*nLayers;
+            #else  
             nTasks=carrays->nTotalBoundCells*(nSolutes + nSediments);
+            #endif
             #endif
             blocksPerGrid = nTasks/threadsPerBlock + 1; 
 
@@ -581,14 +595,6 @@ EXPORT_DLL void generateTimeStep(
     #endif
     #endif
     #endif
-
-    // #if SET_SED
-    // #if SET_MULTILAYER_SED
-    // nTasks=carrays->nActCells;   
-    // blocksPerGrid = nTasks/threadsPerBlock + 1; 
-    // g_multilayer_implicit_update_sediment_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
-    // #endif  
-    // #endif  
 
     stime4=clock();
 	timers->multilayer_calculus += double(stime4-stime3)/CLOCKS_PER_SEC;

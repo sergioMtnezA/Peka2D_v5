@@ -223,6 +223,7 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 	__shared__ int nSolutes;
     __shared__ int nSediments;
     __shared__ int nParticles;
+    __shared__ int nLayers;
 
     __shared__ int idb;
 	__shared__ int nbc,i0;
@@ -277,6 +278,7 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 		nSolutes = arrays->nSolutes;
         nSediments = arrays->nSediments;
         nParticles = nSolutes + nSediments;
+        nLayers = arrays->nLayers;
 
     
 
@@ -950,19 +952,19 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
             totalMass=tempDa2[0];
             
             if(idb<0){ 
-                //qInByInlet[indexIN] = totalDischarge;
-                //mInByInlet[indexIN] = totalMass; 
-				//atomicAdd(&qInByInlet[indexIN], totalDischarge);
-				//atomicAdd(&mInByInlet[indexIN], totalMass);
+                qInByInlet[indexIN] = totalDischarge;
+                mInByInlet[indexIN] = totalMass; 
+				atomicAdd(&qInByInlet[indexIN], totalDischarge);
+				atomicAdd(&mInByInlet[indexIN], totalMass);
 
 				//printf("qin %lf\n", totalDischarge);
             }
 
             if(idb>0){ 
-                //qOutByOutlet[indexOUT] = totalDischarge;
-                //mOutByOutlet[indexOUT] = totalMass; 
-				//atomicAdd(&qOutByOutlet[indexOUT], totalDischarge);
-				//atomicAdd(&mOutByOutlet[indexOUT], totalMass);	
+                qOutByOutlet[indexOUT] = totalDischarge;
+                mOutByOutlet[indexOUT] = totalMass; 
+				atomicAdd(&qOutByOutlet[indexOUT], totalDischarge);
+				atomicAdd(&mOutByOutlet[indexOUT], totalMass);	
 
 				//printf("qout %lf\n", totalDischarge);		           
             }
@@ -1043,21 +1045,35 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 			}
             //update solute at cells (always)
 		    if(ithread<nbc){	
-                if(localh[ithread] > TOL12){
-                    for(j=0;j<(nParticles);j++){
-                                    
-                        #if SET_MULTILAYER
-                        arrays->hphi[j*ncells+cidx] = (localh[ithread]/nSolutes)*arrays->phi[j*ncells+cidx];
-                        #else
-                        arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
-                        #endif
-                        //printf("arrays->hphi[j*ncells+cidx]%lf\n", arrays->hphi[j*ncells+cidx]);
+
+                #if MULTILAYER
+                for(l=0;l<nLayers;l++){
+                #endif
+
+                    if(localh[ithread] > TOL12){
+
+                        for(j=0;j<(nParticles);j++){
+                                        
+                            #if MULTILAYER
+                            arrays->hphi[(l*nParticles+j)*ncells+cidx] = (localh[ithread]/nLayers)*arrays->phi[(l*nParticles+j)*ncells+cidx];
+                            #else
+                            arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
+                            #endif
+                            //printf("arrays->hphi[j*ncells+cidx]%lf\n", arrays->hphi[j*ncells+cidx]);
+                        }
+                    }else{
+                        for(j=0;j<(nParticles);j++){
+                            #if MULTILAYER
+                            arrays->hphi[(l*nParticles+j)*ncells+cidx] = 0.0;
+                            #else
+                            arrays->hphi[j*ncells+cidx] = 0.0;
+                            #endif
+                        }
                     }
-                }else{
-                    for(j=0;j<(nParticles);j++){
-                        arrays->hphi[j*ncells+cidx] = 0.0;
-                    }
-			    }
+
+                #if MULTILAYER
+                }
+                #endif
 		    }			
 		__syncthreads();
 		}else if(idb>0){
@@ -1080,17 +1096,34 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
                 
 
                 //impose solute concentration at cells
-                if(ithread<nbc){	
-                    if(localh[ithread] > TOL12){
-                        for(j=0;j<(nParticles);j++){				
-                            arrays->phi[j*ncells+cidx] = phiIn[j];
-                            //printf("arrays->phi[j*ncells+cidx]%lf\n", arrays->phi[j*ncells+cidx]);
+                if(ithread<nbc){
+
+                    #if MULTILAYER
+                    for(l=0;l<nLayers;l++){
+                    #endif
+
+                        if(localh[ithread] > TOL12){
+                            for(j=0;j<(nParticles);j++){	
+                                #if MULTILAYER
+                                arrays->phi[(l*nParticles+j)*ncells+cidx] = phiIn[j];
+                                #else			
+                                arrays->phi[j*ncells+cidx] = phiIn[j];
+                                #endif
+                                //printf("arrays->phi[j*ncells+cidx]%lf\n", arrays->phi[j*ncells+cidx]);
+                            }
+                        }else{
+                            for(j=0;j<(nParticles);j++){
+                                #if MULTILAYER
+                                arrays->phi[(l*nParticles+j)*ncells+cidx] = 0.0;
+                                #else
+                                arrays->phi[j*ncells+cidx] = 0.0;
+                                #endif
+                            }
                         }
-                    }else{
-                        for(j=0;j<(nParticles);j++){
-                            arrays->phi[j*ncells+cidx] = 0.0;
-                        }
+
+                    #if MULTILAYER
                     }
+                    #endif
                 }			
                 __syncthreads(); 
 
@@ -1098,22 +1131,35 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
             }
 
                 //update solute at cells (always)
-            if(ithread<nbc){	
-                if(localh[ithread] > TOL12){
-                    for(j=0;j<(nParticles);j++){
-                                    
-                        #if SET_MULTILAYER
-                        arrays->hphi[j*ncells+cidx] = (localh[ithread]/nSolutes)*arrays->phi[j*ncells+cidx];
-                        #else
-                        arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
-                        #endif
-                        //printf("arrays->hphi[j*ncells+cidx]%lf\n", arrays->hphi[j*ncells+cidx]);
+            if(ithread<nbc){
+                
+                #if MULTILAYER
+                for(l=0;l<nLayers;l++){
+                #endif
+
+                    if(localh[ithread] > TOL12){
+                        for(j=0;j<(nParticles);j++){
+                                        
+                            #if MULTILAYER
+                            arrays->hphi[(l*nParticles + j)*ncells+cidx] = (localh[ithread]/nLayers)*arrays->phi[(l*nParticles + j)*ncells+cidx];
+                            #else
+                            arrays->hphi[j*ncells+cidx] = localh[ithread]*arrays->phi[j*ncells+cidx];
+                            #endif
+                            //printf("arrays->hphi[j*ncells+cidx]%lf\n", arrays->hphi[j*ncells+cidx]);
+                        }
+                    }else{
+                        for(j=0;j<(nParticles);j++){
+                            #if MULTILAYER
+                            arrays->hphi[(l*nParticles + j)*ncells+cidx] = 0.0;
+                            #else
+                            arrays->hphi[j*ncells+cidx] = 0.0;
+                            #endif
+                        }
                     }
-                }else{
-                    for(j=0;j<(nParticles);j++){
-                        arrays->hphi[j*ncells+cidx] = 0.0;
-                    }
+
+                #if MULTILAYER
                 }
+                #endif
             }			
             __syncthreads();
         }

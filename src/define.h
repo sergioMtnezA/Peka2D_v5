@@ -54,6 +54,10 @@
 		#define SET_MULTILAYER_SED 1
 	#endif
 
+	#ifndef MULTILAYER
+		#define MULTILAYER 1
+	#endif 
+
 #endif
 
 /** Active elemens arrangement
