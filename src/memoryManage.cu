@@ -86,6 +86,8 @@ EXPORT_DLL int createArraysCudaMemory(
         cuPtr->sqrh,
         cuPtr->area,
         cuPtr->nman,
+        cuPtr->zSed,
+        cuPtr->zmax,
         cuPtr->SOX,
         cuPtr->SOY,
         cuPtr->mass,
@@ -391,6 +393,8 @@ EXPORT_DLL int allocateArraysCudaMem(
 
     cudaMalloc((void**) &(cuPtr->area), ncells*sizeof(double));
     cudaMalloc((void**) &(cuPtr->nman), ncells*sizeof(double));
+    cudaMalloc((void**) &(cuPtr->zSed), ncells*sizeof(double));
+    cudaMalloc((void**) &(cuPtr->zmax), ncells*sizeof(double));
     cudaMalloc((void**) &(cuPtr->SOX), ncells*sizeof(double));
     cudaMalloc((void**) &(cuPtr->SOY), ncells*sizeof(double));    
 
@@ -484,6 +488,8 @@ int copyMeshArraysCudaMem(
 	
     cudaMemcpy((cuPtr->area), (carrays->area), ncells*sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy((cuPtr->nman), (carrays->nman), ncells*sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy((cuPtr->zSed), (carrays->zSed), ncells*sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy((cuPtr->zmax), (carrays->zmax), ncells*sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy((cuPtr->SOX), (carrays->SOX), ncells*sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy((cuPtr->SOY), (carrays->SOY), ncells*sizeof(double), cudaMemcpyHostToDevice );    
 
@@ -554,6 +560,8 @@ __global__ void assignMeshArraysToCudaMem(t_arrays *garrays,
 	double *sqrh,
 	double *area,
 	double *nman,
+    double *zSed,
+    double *zmax,
 	double *SOX,
 	double *SOY,
 	double *mass,
@@ -607,6 +615,8 @@ __global__ void assignMeshArraysToCudaMem(t_arrays *garrays,
 
 	garrays->area=area;
 	garrays->nman=nman;
+    garrays->zSed=zSed;
+    garrays->zmax=zmax;
 	garrays->SOX=SOX;
 	garrays->SOY=SOY;
 
@@ -702,6 +712,8 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr){
 
     cudaFree(cuPtr->area);
     cudaFree(cuPtr->nman);
+    cudaFree(cuPtr->zSed);
+    cudaFree(cuPtr->zmax);
     cudaFree(cuPtr->SOX);
     cudaFree(cuPtr->SOY);  
 

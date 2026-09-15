@@ -259,6 +259,7 @@ double bedExchange;
 double mod_EtaS, EtaS_eff;
 double cr;
 double deltaz;
+double zmax;
 
 
 int i = threadIdx.x+(blockIdx.x*blockDim.x);
@@ -282,170 +283,178 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
 
         phiZero = arrays->phiZero[idx];
 
+        zmax = arrays->zmax[idx];
+
         rhob = _rhow_*pd + rhoS*(1-pd);
         rhoBulk = _rhow_*(1-phiZero) + rhoS*phiZero; 
 
         bedExchange = 0.0;
 
         if(arrays->h[idx] > arrays->minh){ //wet cells
+            if(arrays->zSed[idx] >0.0){
 
-            aux1 = 0.0;
-            aux2 = 0.0;
+                aux1 = 0.0;
+                aux2 = 0.0;
 
-            for(jphi=0;jphi<arrays->nSediments;jphi++){
-                sid = (arrays->nSolutes + jphi)*ncells+idx;
-                aux1 += arrays->hphi[sid]/arrays->h[idx];
-                aux2 += (arrays->hphi[sid]/arrays->h[idx])*EtaS;
-            }
-
-            //printf("aux1 %lf aux2 %lf\n", aux1, aux2);
-
-            mod_EtaS = 0.0;
-
-            if(aux2>1.0){
-                if(aux1>0.0){
-                    mod_EtaS = 1./aux1;
+                for(jphi=0;jphi<arrays->nSediments;jphi++){
+                    sid = (arrays->nSolutes + jphi)*ncells+idx;
+                    aux1 += arrays->hphi[sid]/arrays->h[idx];
+                    aux2 += (arrays->hphi[sid]/arrays->h[idx])*EtaS;
                 }
-            }
 
-            aux2 = 0.0;
+                //printf("aux1 %lf aux2 %lf\n", aux1, aux2);
 
-            for(jphi=0;jphi<arrays->nSediments;jphi++){
-                sid = (arrays->nSolutes + jphi)*ncells+idx;
-                sid1 = jphi*ncells+idx;
+                mod_EtaS = 0.0;
+
+                if(aux2>1.0){
+                    if(aux1>0.0){
+                        mod_EtaS = 1./aux1;
+                    }
+                }
+
+                aux2 = 0.0;
+
+                for(jphi=0;jphi<arrays->nSediments;jphi++){
+                    sid = (arrays->nSolutes + jphi)*ncells+idx;
+                    sid1 = jphi*ncells+idx;
 
 
-                if(mod_EtaS>0.0){
-                    EtaS_eff = mod_EtaS;
+                    if(mod_EtaS>0.0){
+                        EtaS_eff = mod_EtaS;
+                    }else{
+                        EtaS_eff = EtaS;
+                    }
+                    aux1 = arrays->Ns[sid1]*dt;
+
+                    if(aux1<0.0){
+                        aux1 = fmax(-1.*arrays->hphi[sid], aux1);
+                    }
+
+                    aux2 += aux1*EtaS_eff;
+                }
+
+                cr = 1.0;
+
+                if(abs(aux2)>=TOL12){
+                    aux3 = aux2;
+                    if(aux3<0.0){ //deposition limited by h
+                        aux3 = fmax(-1.*arrays->h[idx], aux3);
+                        aux3 = fmin(aux3,0.0);
+                    }else{ // erosion limited by z
+                        // aux3 = fmin((arrays->z[idx]-arrays->maxZ), aux3);
+                        // //printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
+                        // aux3 = fmax(aux3,0.0); 
+                    }
+                    cr = aux3/aux2; // 0<cr<1
                 }else{
-                    EtaS_eff = EtaS;
-                }
-                aux1 = arrays->Ns[sid1]*dt;
-
-                if(aux1<0.0){
-                    aux1 = fmax(-1.*arrays->hphi[sid], aux1);
+                    cr=0.0;
                 }
 
-                aux2 += aux1*EtaS_eff;
-            }
+                for(jphi=0;jphi<arrays->nSediments;jphi++){
+                    sid = (arrays->nSolutes + jphi)*ncells+idx;
+                    sid1 = jphi*ncells+idx;
 
-            cr = 1.0;
+                    if(mod_EtaS>0.0){
+                        EtaS_eff = mod_EtaS;
+                    }else{
+                        EtaS_eff = EtaS;
+                    }
 
-            if(abs(aux2)>=TOL12){
-                aux3 = aux2;
-                if(aux3<0.0){ //deposition limited by h
-                    aux3 = fmax(-1.*arrays->h[idx], aux3);
-                    aux3 = fmin(aux3,0.0);
-                }else{ // erosion limited by z
-                    // aux3 = fmin((arrays->z[idx]-arrays->maxZ), aux3);
-                    // //printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
-                    // aux3 = fmax(aux3,0.0); 
+                    aux1 = arrays->Ns[sid1]*dt;
+
+
+                    if(aux1<0.0){
+                        aux1 = fmax(-1.*arrays->hphi[sid], aux1);
+                    }
+    
+                    aux1 = cr*aux1;
+
+                    arrays->z[idx] += -aux1*EtaS_eff;
+
+                    if(arrays->z[idx]<zmax){
+                        aux1 = 0.0;
+                        arrays->z[idx] = zmax;
+                    }
+
+                    // if(abs(arrays->z[idx])> arrays->maxZ){
+                    //     //printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
+
+                    //     if(arrays->z[idx]< 0.0){
+                    //         arrays->z[idx] = -arrays->maxZ;
+                    //     }else{
+                    //         arrays->z[idx] = arrays->maxZ;
+                    //     }
+
+                    arrays->hphi[sid] += aux1;
+
+                    if(arrays->hphi[sid]<TOL12){
+                        arrays->hphi[sid] = 0.0;
+                        arrays->phi[sid] = 0.0;
+                    }
+
+                    // if(abs(arrays->z[idx])> arrays->maxZ){
+                    //     //printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
+
+                    //     if(arrays->z[idx]< 0.0){
+                    //         arrays->z[idx] = -arrays->maxZ;
+                    //     }else{
+                    //         arrays->z[idx] = arrays->maxZ;
+                    //     }
+
+                    // }
+                    arrays->h[idx] += aux1*EtaS_eff;
+
+                    if(arrays->h[idx] < 0.0){
+                        arrays->h[idx] = 0.0;
+                        arrays->hphi[sid] = 0.0;
+                        arrays->phi[sid] = 0.0;
+                        arrays->u[idx] = 0.0;
+                        arrays->v[idx] = 0.0;
+
+                    }
+
+
+                    // if(arrays->h[idx] > 0.0){
+
+                    //     // if(rhoBulk > 0.0){
+                    //     //     aux1 = arrays->u[idx]*((rhob/rhoBulk)-1);
+                    //     //     aux2 = arrays->v[idx]*((rhob/rhoBulk)-1);
+                            
+                    //     // }else{
+                    //     //     aux1 = -arrays->u[idx];
+                    //     //     aux2 = -arrays->v[idx];
+                    //     // }
+                    //     // arrays->u[idx] += -(1./arrays->h[idx])*aux1*aux3*EtaS_eff;
+                    //     // arrays->v[idx] += -(1./arrays->h[idx])*aux2*aux3*EtaS_eff;
+
+                    // }else{
+                    //     arrays->u[idx] = 0.0;
+                    //     arrays->v[idx] = 0.0;
+                    //     arrays->hphi[sid] = 0.0;
+                    //     arrays->phi[sid] = 0.0;
+                    // }
+
+                
+                    // if(idx == 104477){
+                    //     printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
+                    //     printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
+                    // } 
+                    
+                    if(arrays->h[idx]>TOL12 && arrays->hphi[sid]>0.0){
+                        arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
+                    }else{
+                        arrays->phi[sid] = 0.0;
+                    }
+                    
                 }
-                cr = aux3/aux2; // 0<cr<1
-            }else{
-                cr=0.0;
-            }
+                
 
-            for(jphi=0;jphi<arrays->nSediments;jphi++){
-                sid = (arrays->nSolutes + jphi)*ncells+idx;
-                sid1 = jphi*ncells+idx;
-
-                if(mod_EtaS>0.0){
-                    EtaS_eff = mod_EtaS;
-                }else{
-                    EtaS_eff = EtaS;
-                }
-
-                aux1 = arrays->Ns[sid1]*dt;
-
-
-                if(aux1<0.0){
-                    aux1 = fmax(-1.*arrays->hphi[sid], aux1);
-                }
- 
-                aux1 = cr*aux1;
-
-                arrays->z[idx] += -aux1*EtaS_eff;
-
-                 // if(abs(arrays->z[idx])> arrays->maxZ){
-                //     //printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
-
-                //     if(arrays->z[idx]< 0.0){
-                //         arrays->z[idx] = -arrays->maxZ;
-                //     }else{
-                //         arrays->z[idx] = arrays->maxZ;
-                //     }
-
-                arrays->hphi[sid] += aux1;
-
-                if(arrays->hphi[sid]<TOL12){
-                    arrays->hphi[sid] = 0.0;
-                    arrays->phi[sid] = 0.0;
-                }
-
-                // if(abs(arrays->z[idx])> arrays->maxZ){
-                //     //printf("z %.12lf zmax %.12lf", arrays->z[idx], arrays->maxZ);
-
-                //     if(arrays->z[idx]< 0.0){
-                //         arrays->z[idx] = -arrays->maxZ;
-                //     }else{
-                //         arrays->z[idx] = arrays->maxZ;
-                //     }
-
-                // }
-                arrays->h[idx] += aux1*EtaS_eff;
-
-                if(arrays->h[idx] < 0.0){
-                    arrays->h[idx] = 0.0;
-                    arrays->hphi[sid] = 0.0;
-                    arrays->phi[sid] = 0.0;
-                    arrays->u[idx] = 0.0;
-                    arrays->v[idx] = 0.0;
-
-                }
-
-
-                // if(arrays->h[idx] > 0.0){
-
-                //     // if(rhoBulk > 0.0){
-                //     //     aux1 = arrays->u[idx]*((rhob/rhoBulk)-1);
-                //     //     aux2 = arrays->v[idx]*((rhob/rhoBulk)-1);
-                        
-                //     // }else{
-                //     //     aux1 = -arrays->u[idx];
-                //     //     aux2 = -arrays->v[idx];
-                //     // }
-                //     // arrays->u[idx] += -(1./arrays->h[idx])*aux1*aux3*EtaS_eff;
-                //     // arrays->v[idx] += -(1./arrays->h[idx])*aux2*aux3*EtaS_eff;
-
-                // }else{
-                //     arrays->u[idx] = 0.0;
-                //     arrays->v[idx] = 0.0;
-                //     arrays->hphi[sid] = 0.0;
-                //     arrays->phi[sid] = 0.0;
-                // }
-
-            
-                // if(idx == 104477){
-                //     printf("u %.12lf v %.12lf\n", arrays->u[idx], arrays->v[idx]);
-                //     printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
+                // if(idx == 88511){
+                //     printf("hphi %.12lf phi %.12lf z %.12lf h %.12lf\n", arrays->hphi[sid], arrays->phi[sid], arrays->z[idx], arrays->h[idx]);
+                //     //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
                 // } 
-                
-                if(arrays->h[idx]>TOL12 && arrays->hphi[sid]>0.0){
-                    arrays->phi[sid] = arrays->hphi[sid]/arrays->h[idx];
-                }else{
-                    arrays->phi[sid] = 0.0;
-                }
-                
+
             }
-            
-
-            // if(idx == 88511){
-            //     printf("hphi %.12lf phi %.12lf z %.12lf h %.12lf\n", arrays->hphi[sid], arrays->phi[sid], arrays->z[idx], arrays->h[idx]);
-            //     //printf("porosityCoef %.12lf EtaS %.12lf rhoS %.12lf\n", pd, EtaS, rhoS);
-            // } 
-
-            
             
         }
     

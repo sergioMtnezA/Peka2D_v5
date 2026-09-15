@@ -161,6 +161,7 @@ struct t_c_cell_{
     double zini;
 
 	double nMan;
+	double zSed;
 
 	t_g_cell *geom;
 
@@ -500,6 +501,8 @@ struct t_arrays_{
 
 	double *area; /**< @brief [NCELLS] Cell area*/
 	double *nman; /**< @brief [NCELLS] Manning roughness coefficient nMan [s m^(-1/3)] in cells*/
+	double *zSed; /**< @brief [NCELLS] Deepness of the sediment in cells*/
+	double *zmax;
     double *SOX; /**< @brief [NCELLS] X-direction bed slope*/
 	double *SOY; /**< @brief [NCELLS] Y-direction bed slope*/
 
@@ -682,7 +685,7 @@ struct t_cuPtr_{
 	int *cidx, *nneig;
 	int *activeC, *actCells;
 	double *z, *h, *hu, *hv, *u, *v, *modulou, *sqrh;
-	double *area, *nman, *SOX, *SOY;
+	double *area, *nman, *zSed, *zmax, *SOX, *SOY;
 	double *mass;
 
 	//cells*NCwall

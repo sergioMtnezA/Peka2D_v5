@@ -115,6 +115,8 @@ EXPORT_DLL int allocateMeshArraysMem(
 	
 	carrays->area=(double*)malloc(ncells*sizeof(double));
 	carrays->nman=(double*)malloc(ncells*sizeof(double));
+    carrays->zSed=(double*)malloc(ncells*sizeof(double));
+    carrays->zmax=(double*)malloc(ncells*sizeof(double));
 	carrays->SOX=(double*)malloc(ncells*sizeof(double));
 	carrays->SOY=(double*)malloc(ncells*sizeof(double));  
 
@@ -238,6 +240,10 @@ EXPORT_DLL int initilizeMeshArrays(
 
 		carrays->area[i]=g1->area;
 		carrays->nman[i]=c1->nMan;
+        carrays->zSed[i]=c1->zSed;
+
+        
+        carrays->zmax[i]= c1->z - c1->zSed;
 		//carrays->SOX[i]=mesh->c_cells->cells[i].SOX;
 		//carrays->SOY[i]=mesh->c_cells->cells[i].SOY;
 

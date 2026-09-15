@@ -950,19 +950,19 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
             totalMass=tempDa2[0];
             
             if(idb<0){ 
-                //qInByInlet[indexIN] = totalDischarge;
-                //mInByInlet[indexIN] = totalMass; 
-				//atomicAdd(&qInByInlet[indexIN], totalDischarge);
-				//atomicAdd(&mInByInlet[indexIN], totalMass);
+                qInByInlet[indexIN] = totalDischarge;
+                mInByInlet[indexIN] = totalMass; 
+				atomicAdd(&qInByInlet[indexIN], totalDischarge);
+				atomicAdd(&mInByInlet[indexIN], totalMass);
 
 				//printf("qin %lf\n", totalDischarge);
             }
 
             if(idb>0){ 
-                //qOutByOutlet[indexOUT] = totalDischarge;
-                //mOutByOutlet[indexOUT] = totalMass; 
-				//atomicAdd(&qOutByOutlet[indexOUT], totalDischarge);
-				//atomicAdd(&mOutByOutlet[indexOUT], totalMass);	
+                qOutByOutlet[indexOUT] = totalDischarge;
+                mOutByOutlet[indexOUT] = totalMass; 
+				atomicAdd(&qOutByOutlet[indexOUT], totalDischarge);
+				atomicAdd(&mOutByOutlet[indexOUT], totalMass);	
 
 				//printf("qout %lf\n", totalDischarge);		           
             }

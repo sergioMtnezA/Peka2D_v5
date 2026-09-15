@@ -582,7 +582,7 @@ int readMeshFile(
                 &mesh->c_cells->cells[i].nMan,
                 &mesh->c_cells->cells[i].z,
                 &mesh->c_cells->cells[i].h,
-                &aux1);
+                &mesh->c_cells->cells[i].zSed);
         }else if(NCwall==4){
             //id, n1, n2, n3, n4, nMan, z, wse, aux1, aux2);
             fscanf(fp,"%d %d %d %d %d %lf %lf %lf %lf %*lf",
@@ -594,7 +594,7 @@ int readMeshFile(
                 &mesh->c_cells->cells[i].nMan,
                 &mesh->c_cells->cells[i].z,
                 &mesh->c_cells->cells[i].h,
-                &aux1);
+                &mesh->c_cells->cells[i].zSed);
         }            
 
         //Assing nodes
