@@ -373,6 +373,22 @@ int readOpenBoundaryFile(
     t_message *e);
 /*----------------------------*/
 
+////////////////////////////////////////////////////////////////
+int createProbeStructures(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+int createCrossSectionStructures(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e);
+/*----------------------------*/
+
 #if SET_SOLUTE || SET_SED
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int loadParticleData(
@@ -406,22 +422,6 @@ int createParticleStructures(
 
 ////////////////////////////////////////////////////////////////
 int ComputeSettlingVelocity(
-    Peka2D_Setup *pksetup, 
-    t_parameters *spar, 
-    t_mesh *mesh,    
-    t_message *e);
-/*----------------------------*/
-
-////////////////////////////////////////////////////////////////
-int createProbeStructures(
-    Peka2D_Setup *pksetup, 
-    t_parameters *spar, 
-    t_mesh *mesh,    
-    t_message *e);
-/*----------------------------*/
-
-////////////////////////////////////////////////////////////////
-int createCrossSectionStructures(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 
     t_mesh *mesh,    

@@ -609,11 +609,13 @@ EXPORT_DLL int dump_probes_gpu(t_mesh *mesh, t_arrays *arrays, char *path, t_mes
 					arrays->v[idc],
 					arrays->modulou[idc]);
 
+				#if SET_SOLUTE || SET_SED	
 				if(mesh->nSolutes>0 || mesh->nSediments>0){
 					for(j=0;j<mesh->nSolutes + mesh->nSediments;j++){
 						fprintf(fp," %.6lf",arrays->phi[j*arrays->ncells + idc]);
 					}
 				}
+				#endif	
 			
 				fprintf(fp,"\n");
 				fclose(fp);
@@ -679,17 +681,21 @@ EXPORT_DLL int dump_sections_gpu(t_mesh *mesh, t_arrays *arrays, double t,char* 
 						sumQy+=arrays->h[idc]*arrays->v[idc];
 						sumH+=arrays->h[idc];
 
+						#if SET_SOLUTE	
 						aux1 = 0.0;
 						for(jphi=0;jphi<nSolutes;jphi++){
 							aux1 += arrays->phi[jphi*ncells +idc]/nSolutes;
 						}
 						sumphisol+=aux1*0.5;
+						#endif	
 
+						#if SET_SED	
 						aux1 = 0.0;
 						for(jphi=nSolutes;jphi<nSolutes+nSediments;jphi++){
 							aux1 += arrays->phi[jphi*ncells +idc]/nSediments;
 						}
 						sumphised+=aux1*0.5;
+						#endif	
 
 						deltaX+=(sec->dist/(sec->npoints-1))*0.5;
 						npoints=npoints+0.5;
@@ -709,17 +715,21 @@ EXPORT_DLL int dump_sections_gpu(t_mesh *mesh, t_arrays *arrays, double t,char* 
 						sumQy+=arrays->h[idc]*arrays->v[idc2];
 						sumH+=arrays->h[idc2];
 
+						#if	 SET_SOLUTE
 						aux1 = 0.0;
 						for(jphi=0;jphi<nSolutes;jphi++){
 							aux1 += arrays->phi[jphi*ncells +idc2]/nSolutes;
 						}
 						sumphisol+=aux1*0.5;
+						#endif	
 
+						#if SET_SED	
 						aux1 = 0.0;
 						for(jphi=nSolutes;jphi<nSolutes+nSediments;jphi++){
 							aux1 += arrays->phi[jphi*ncells +idc2]/nSediments;
 						}
 						sumphised+=aux1*0.5;
+						#endif	
 
 						deltaX+=(sec->dist/(sec->npoints-1))*0.5;
 						npoints=npoints+0.5;

@@ -1727,7 +1727,108 @@ int readOpenBoundaryFile(
 }
 
 
+////////////////////////////////////////////////////////////////
+int createProbeStructures(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e){
+/*----------------------------*/
 
+    char temp[1024];
+
+    Peka2D_ProbeGroup *probeGroup;
+    probeGroup = pksetup->probeGroup;
+
+    int nProbes = probeGroup->n;
+    int i;
+    int found = 0;
+
+    mesh->nProbes=0;
+    mesh->nProbes = nProbes;
+
+    if(mesh->nProbes){
+        mesh->probe = (l_probes*) malloc( sizeof(l_probes) );
+        mesh->probe->n = mesh->nProbes;
+
+        mesh->probe->probe= (t_probe*) malloc( sizeof(t_probe) * mesh->nProbes);
+
+        for(i=0;i<mesh->nProbes;i++){
+
+            mesh->probe->probe[i].x = probeGroup->probe[i].p.x;
+            mesh->probe->probe[i].y = probeGroup->probe[i].p.y;
+            sprintf(mesh->probe->probe[i].idName,"%s",probeGroup->probe[i].id);
+            //printf("%d of %d\n",i,mesh->nProbes);
+
+        }
+
+        found = buscar_sondas(mesh,e);
+			//printf("%d!!!!\n",found);
+        if(found < mesh->nProbes){
+            sprintf(temp,"%d observation points (of %d) are outside the domain\n",mesh->nProbes-found,mesh->nProbes);
+            Notify(temp,MSG_ERROR,e);
+            return(0);
+        }
+        Notify("Observation points ready",MSG_L1,e);
+    }
+    return 1;
+
+}
+
+////////////////////////////////////////////////////////////////
+int createCrossSectionStructures(
+    Peka2D_Setup *pksetup, 
+    t_parameters *spar, 
+    t_mesh *mesh,    
+    t_message *e){
+/*----------------------------*/
+    int i;
+    char temp[1024];
+
+    Peka2D_CrossSectionGroup *secGroup;
+    secGroup = pksetup->secGroup;
+
+    int nSections = secGroup->n;
+
+    mesh->nSections = 0;
+    mesh->nSections = nSections;
+
+    mesh->sec = NULL;
+
+    if(mesh->nSections){
+        mesh->sec = (l_sections*) malloc( sizeof(l_sections) );
+        mesh->sec->n = mesh->nSections;
+
+        mesh->sec->sec = (t_section*) malloc( mesh->nSections * sizeof(t_section) );
+
+        for(i=0;i<mesh->nSections;i++){
+
+                mesh->sec->sec[i].npoints = secGroup->xs[i].Nd;
+
+                sprintf(mesh->sec->sec[i].idName,"%s",secGroup->xs[i].id);
+
+                mesh->sec->sec[i].node[0].x = secGroup->xs[i].p[0].x;
+                 
+                mesh->sec->sec[i].node[0].y = secGroup->xs[i].p[0].y;
+                mesh->sec->sec[i].node[1].x = secGroup->xs[i].p[1].x;
+                mesh->sec->sec[i].node[1].y = secGroup->xs[i].p[1].y;
+
+                if(!build_section(mesh->sec->sec+i,i,e)){
+                    retu
+                    
+                    
+                    
+                    rn(0);
+                }
+        }
+        if(!search_sections(mesh,e)){
+            return(0);
+        }
+        Notify("Cross sections ready",MSG_L1,e);
+    }
+    return 1;
+
+}
 
 #if SET_SOLUTE || SET_SED
 ////////////////////////////////////////////////////////////////
@@ -2174,103 +2275,9 @@ int ComputeSettlingVelocity(
     return 1;
 
 }
-////////////////////////////////////////////////////////////////
-int createProbeStructures(
-    Peka2D_Setup *pksetup, 
-    t_parameters *spar, 
-    t_mesh *mesh,    
-    t_message *e){
-/*----------------------------*/
 
-    char temp[1024];
 
-    Peka2D_ProbeGroup *probeGroup;
-    probeGroup = pksetup->probeGroup;
 
-    int nProbes = probeGroup->n;
-    int i;
-    int found = 0;
-
-    mesh->nProbes=0;
-    mesh->nProbes = nProbes;
-
-    if(mesh->nProbes){
-        mesh->probe = (l_probes*) malloc( sizeof(l_probes) );
-        mesh->probe->n = mesh->nProbes;
-
-        mesh->probe->probe= (t_probe*) malloc( sizeof(t_probe) * mesh->nProbes);
-
-        for(i=0;i<mesh->nProbes;i++){
-
-            mesh->probe->probe[i].x = probeGroup->probe[i].p.x;
-            mesh->probe->probe[i].y = probeGroup->probe[i].p.y;
-            sprintf(mesh->probe->probe[i].idName,"%s",probeGroup->probe[i].id);
-            //printf("%d of %d\n",i,mesh->nProbes);
-
-        }
-
-        found = buscar_sondas(mesh,e);
-			//printf("%d!!!!\n",found);
-        if(found < mesh->nProbes){
-            sprintf(temp,"%d observation points (of %d) are outside the domain\n",mesh->nProbes-found,mesh->nProbes);
-            Notify(temp,MSG_ERROR,e);
-            return(0);
-        }
-        Notify("Observation points ready",MSG_L1,e);
-    }
-    return 1;
-
-}
-
-////////////////////////////////////////////////////////////////
-int createCrossSectionStructures(
-    Peka2D_Setup *pksetup, 
-    t_parameters *spar, 
-    t_mesh *mesh,    
-    t_message *e){
-/*----------------------------*/
-    int i;
-    char temp[1024];
-
-    Peka2D_CrossSectionGroup *secGroup;
-    secGroup = pksetup->secGroup;
-
-    int nSections = secGroup->n;
-
-    mesh->nSections = 0;
-    mesh->nSections = nSections;
-
-    mesh->sec = NULL;
-
-    if(mesh->nSections){
-        mesh->sec = (l_sections*) malloc( sizeof(l_sections) );
-        mesh->sec->n = mesh->nSections;
-
-        mesh->sec->sec = (t_section*) malloc( mesh->nSections * sizeof(t_section) );
-
-        for(i=0;i<mesh->nSections;i++){
-
-                mesh->sec->sec[i].npoints = secGroup->xs[i].Nd;
-
-                sprintf(mesh->sec->sec[i].idName,"%s",secGroup->xs[i].id);
-
-                mesh->sec->sec[i].node[0].x = secGroup->xs[i].p[0].x;
-                mesh->sec->sec[i].node[0].y = secGroup->xs[i].p[0].y;
-                mesh->sec->sec[i].node[1].x = secGroup->xs[i].p[1].x;
-                mesh->sec->sec[i].node[1].y = secGroup->xs[i].p[1].y;
-
-                if(!build_section(mesh->sec->sec+i,i,e)){
-                    return(0);
-                }
-        }
-        if(!search_sections(mesh,e)){
-            return(0);
-        }
-        Notify("Cross sections ready",MSG_L1,e);
-    }
-    return 1;
-
-}
 
 ////////////////////////////////////////////////////////////////
 int setInitialParticleState(

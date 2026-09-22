@@ -285,6 +285,10 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
 
         zmax = arrays->zmax[idx];
 
+        if(idx==15820){
+            printf("zmax %lf\n", zmax);
+        } 
+
         rhob = _rhow_*pd + rhoS*(1-pd);
         rhoBulk = _rhow_*(1-phiZero) + rhoS*phiZero; 
 
@@ -402,7 +406,7 @@ int i = threadIdx.x+(blockIdx.x*blockDim.x);
                     //     }
 
                     // }
-                    arrays->h[idx] += aux1*EtaS_eff;
+                    //arrays->h[idx] += aux1*EtaS_eff;
 
                     if(arrays->h[idx] < 0.0){
                         arrays->h[idx] = 0.0;

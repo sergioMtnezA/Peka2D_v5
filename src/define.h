@@ -40,7 +40,7 @@
 	 * 1 Enabled
 	*/
 	#ifndef SET_SOLUTE
-		#define SET_SOLUTE 1
+		#define SET_SOLUTE 0
 		#define SET_SOLUTE_UNROLL 0
 		#define SET_MULTILAYER 0
 		#define SET_EDDYVISCOSITY 0
@@ -49,8 +49,8 @@
 	#endif
 
 	#ifndef SET_SED
-		#define SET_SED 1
-		#define SET_SED_UNROLL 1
+		#define SET_SED 0
+		#define SET_SED_UNROLL 0
 		#define SET_MULTILAYER_SED 0
 	#endif
 
