@@ -516,7 +516,11 @@ EXPORT_DLL void generateTimeStep(
     #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0  //compact 
     nTasks=carrays->nActCells; 
     #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1  //unroll  
+    #if MULTILAYER
+    nTasks=carrays->nActCells*(nSolutes + nSediments)*nLayers;
+    #else
     nTasks=carrays->nActCells*(nSolutes + nSediments);
+    #endif
     #endif 
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
 
@@ -570,7 +574,11 @@ EXPORT_DLL void generateTimeStep(
     #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0  //compact 
     nTasks=carrays->nActCells; 
     #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1 //unroll  
+    #if MULTILAYER
+    nTasks=carrays->nActCells*(nSolutes + nSediments)*nLayers;
+    #else
     nTasks=carrays->nActCells*(nSolutes + nSediments);
+    #endif
     #endif     
     blocksPerGrid = nTasks/threadsPerBlock + 1; 
     g_update_particle_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
@@ -641,7 +649,11 @@ EXPORT_DLL void generateTimeStep(
         #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact 
         nTasks=carrays->nActWalls;
         #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1 //unroll  
+        #if MULTILAYER
+        nTasks=carrays->nActWalls*(nSolutes + nSediments)*nLayers;
+        #else
         nTasks=carrays->nActWalls*(nSolutes + nSediments);
+        #endif
         #endif  
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_wall_particle_diffusion_calculus <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays);
@@ -649,7 +661,11 @@ EXPORT_DLL void generateTimeStep(
         #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact 
         nTasks=carrays->nActCells;
         #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1  //unroll  
+        #if MULTILAYER
+        nTasks=carrays->nActCells*(nSolutes + nSediments)*nLayers;
+        #else
         nTasks=carrays->nActCells*(nSolutes + nSediments);
+        #endif
         #endif  
         blocksPerGrid = nTasks/threadsPerBlock + 1; 
         g_update_particle_diffusion_contributions <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays,cuPtr->localDtd);
@@ -669,8 +685,12 @@ EXPORT_DLL void generateTimeStep(
 
             #if SET_SOLUTE_UNROLL==0 || SET_SED_UNROLL==0 //compact 
             nTasks=carrays->nActCells;
-            #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1  //unroll  
+            #elif SET_SOLUTE_UNROLL==1 || SET_SED_UNROLL==1  //unroll
+            #if MULTILAYER
+            nTasks=carrays->nActCells*(nSolutes + nSediments)*nLayers;
+            #else  
             nTasks=carrays->nActCells*(nSolutes + nSediments);
+            #endif
             #endif  
             blocksPerGrid = nTasks/threadsPerBlock + 1;                 
             g_update_particle_diffusion_cells <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays, cuPtr->dtAux);            
@@ -740,7 +760,11 @@ EXPORT_DLL void generateTimeStep(
         obcPerGrid = carrays->nOBC; 
         memPerOBC = 4*carrays->nMaxBoundCells*sizeof(double);
         #if SET_SOLUTE || SET_SED
+        #if MULTILAYER
+        memPerOBC += (carrays->nSolutes + carrays->nSediments)*nLayers*sizeof(double);
+        #else
         memPerOBC += (carrays->nSolutes + carrays->nSediments)*sizeof(double);
+        #endif
         #endif
         cudaFuncSetCacheConfig(g_update_open_boundary, cudaFuncCachePreferShared);
         g_update_open_boundary <<<obcPerGrid,threadsPerOBC,memPerOBC>>> (nTasks, garrays, 
@@ -815,7 +839,11 @@ EXPORT_DLL void generateTimeStep(
         #if SET_SOLUTE || SET_SED
         // Transfer solute arrays from GPU to CPU 
         if(carrays->nParticles){
-            cudaMemcpy((carrays->phi), (cuPtr->phi), nParticles*ncells*sizeof(double), cudaMemcpyDeviceToHost );
+            #if MULTILAYER
+            cudaMemcpy((carrays->phi), (cuPtr->phi), nParticles*nLayers*ncells*sizeof(double), cudaMemcpyDeviceToHost);
+            #else
+            cudaMemcpy((carrays->phi), (cuPtr->phi), nParticles*ncells*sizeof(double), cudaMemcpyDeviceToHost);
+            #endif
         }
         #endif
         //printf("nbParticle %d\n", nParticles);

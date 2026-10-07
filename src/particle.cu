@@ -175,13 +175,14 @@ __global__ void g_wall_particle_calculus(int nTasks, t_arrays *arrays, double *l
             A[11]=	1.0781001436879587;
 
 
-            dhphi=(qnormalL*A[jphi]/nSolutes)*dphi;
+            dhphi=(qnormalL*A[jphi]/nLayers)*dphi;
 
             #else
             
             dhphi=(qnormalL/nLayers)*dphi;
 
             #endif
+
             #else
             
             dhphi=qnormalL*dphi;
@@ -495,7 +496,7 @@ int sid1,sid2,sid3, sid1S, sid2S;
 int jphi,l;
 
 int ncells=arrays->ncells;
-int nInterfaces= arrays->nSolutes;
+int nInterfaces= arrays->nLayers;
 int nSolutes = arrays->nSolutes;
 int nSediments = arrays->nSediments;
 int nParticles = arrays->nParticles;
@@ -512,15 +513,9 @@ double dt;
 double epsis1 = 0.005;
 
 //double A,C,B;
-double Bi [20],Ci [20];
-#if SET_MULTILAYER_SED
-double BSi[20], CSi[20];
-double ASf[20], BSf[20];
-double BSbis [71]; 
-#endif
-
-double Af[20],Bf[20];
-double Bbis [71];
+double Bi, Ci;
+double Af, Bf;
+double Bbis[71];
 double u,v,moduloU;
 double uL, uR, vL, vR, hL, hR;
 double modU2;
@@ -545,20 +540,10 @@ double C [70];
 double epsia;
 double epsib;
 double epsis2[70];
-#if SET_MULTILAYER_SED
-double AS [70];
-double BS [70];
-double CS [70];
-#endif
 #else
-double A [20];
-double B [20];
-double C [20];
-#if SET_MULTILAYER_SED
-double AS [20];
-double BS [20];
-double CS [20];
-#endif
+double A;
+double B;
+double C;
 #endif
 
 
@@ -571,10 +556,6 @@ dt=arrays->dt;
         double r [71];
         double rbis [71];
 
-        #if SET_MULTILAYER_SED
-        double rS [71]; 
-        double rSbis [71]; 
-        #endif 
 
         //printf("in %d\n", 1);
 
@@ -589,11 +570,6 @@ dt=arrays->dt;
             hlayer = arrays->h[idx]/(nLayers);
             nman = arrays->nman[idx];
             ustar = nman*moduloU*sqrt(_g_/cbrt(arrays->h[idx]));
-
-            // if(idx == 1035457){
-            //     printf("depth %.12lf ustar %.12lf\n", arrays->h[idx], ustar);
-            //     printf("manning %.12lf moduloU %.12lf\n", nman, moduloU);
-            // } 
 
             //cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc NON CONSTANT VERTICAL DIFFUSION 
             //ccccccccccccccccccccccccccc ESTUARY VERSION
@@ -610,9 +586,9 @@ dt=arrays->dt;
 
                 //first values of eddy viscosity
             
-                //ustar = nman2wall*sqrt(_g_*moduloU*moduloU/cbrt(arrays->h[idx]));
 
                 for(l=0;l<nLayers;l++){
+
                     sigmaD = (l*hlayer + hlayer/2.)/(arrays->h[idx]) - 1;
 
                     if(sigmaD <= sigmah){
@@ -625,59 +601,14 @@ dt=arrays->dt;
 
                     epsis2[l] = k*ustar*arrays->h[idx]*Asigma;
 
-
-                    // if(idx == 1035457){
-                    //     printf("epsis %.12lf sigmaD %.12lf\n", epsis2[jphi], sigmaD);
-                    //     printf("depth %.12lf ustar %.12lf\n", arrays->h[idx], ustar);
-                    // } 
-
                 }
 
-                // sigmaD = (hlayer/2.)/(arrays->h[idx]) - 1.;
-
-                // if(sigmaD <= sigmah){
-                //     Asigma = (sigmaD + 1)*(sigmap - sigmaD);
-
-                // }else if (sigmaD >sigmah && n == 1.){
-                //     Asigma = (Ai-As)*fabs(sigmaD/sigmah) + As;
-
-                // }else if (sigmaD >sigmah && n == 2.){
-                //     Asigma = (Ai-As)*fabs(sigmaD/sigmah)*fabs(sigmaD/sigmah) + As;
-
-                // }else if (sigmaD >sigmah && n == 0.){
-                //     Asigma = Ai;
-                // }
-
-                //ustar = nman2wall*sqrt(_g_*modU2/cbrt(hbar));
-
-                //epsis2 = k*ustar*arrays->h[idx]*Asigma;
-
-                //epsis2 = epsia;
-
-                // Bi = 1+dt/(hlayer*hlayer)*epsis2;
-                // Ci = -(dt*epsis2)/(hlayer*hlayer);
 
                 Bi = 1.+dt/(hlayer*hlayer)*((epsis2[1]+epsis2[0])/2.);
                 Ci = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
 
                 B[0] = Bi;
                 C[0] = Ci;
-
-                //sigmaD = (hlayer+hlayer/2.)/(arrays->h[idx]) - 1;
-
-                // if(sigmaD <= sigmah){
-                //     Asigma = (sigmaD + 1)*(sigmap - sigmaD);
-
-                // }else if (sigmaD >sigmah && n == 1.){
-                //     Asigma = (Ai-As)*fabs(sigmaD/sigmah) + As;
-
-                // }else if (sigmaD >sigmah && n == 2.){
-                //     Asigma = (Ai-As)*fabs(sigmaD/sigmah)*fabs(sigmaD/sigmah) + As;
-                // }
-
-               
-                // //epsis2 = k*ustar*arrays->h[idx]*Asigma;
-                // epsis2 = epsia;
 
 
                 A[1] = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
@@ -691,126 +622,82 @@ dt=arrays->dt;
                 rbis[1] = arrays->phi[ncells+idx] - (A[1]/Bi)*r[0];
                 Bbis[1] = B[1]-(A[1]*Ci)/Bi;
 
-                #if SET_MULTILAYER_SED
-                BSi = 1.+dt/(hlayer*hlayer)*((epsis2[1]+epsis2[0])/2.);
-                CSi = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
+                for(jphi=0;jphi<nLayers;jphi++){
+                    r[jphi] = arrays->phi[jphi*ncells+idx];
+                    r[1*nParticles+jphi] = arrays->phi[(1*nParticles+jphi)*ncells+idx];
+                    rbis[jphi] = r[jphi];
+                    rbis[1*nParticles+jphi] = arrays->phi[(1*nParticles+jphi)*ncells+idx] - (A[1]/Bi)*r[jphi];
+                }
 
-                BS[0] = BSi;
-                CS[0] = CSi;
+            //cccccccccccccccccccccccccc LINEAR VERSION 
+            
+            #else 
+            
+            if EDDY_VISCOSITY_LINEAR || EDDY_VISCOSITY_PARABOLIC
 
-                AS[1] = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
-                BS[1] = 1.+((epsis2[2]+2.*epsis2[1]+epsis2[0])/2.)*(dt/(hlayer*hlayer));
-                CS[1] = -((epsis2[2]+epsis2[1])/2.)*dt/(hlayer*hlayer);
+                for(jphi=0;jphi<nLayers;jphi++){
 
-                BSbis[0] = BSi;
-                rS[0] = arrays->phi[nSolutes*ncells*idx];
-                rS[1] = arrays->phi[(nSolutes+1)*ncells+idx];
-                rSbis[0] = rS[0];
-                rSbis[1] = arrays->phi[(nSolutes+1)ncells+idx] - (AS[1]/BSi)*rS[0];
-                BSbis[1] = BS[1]-(AS[1]*CSi)/BSi;
-                #endif  
+                    z_depth = hlayer/2 + hlayer*jphi;
+
+                    #if EDDY_VISCOSITY_LINEAR
+                    epsis2[jphi] = 10*k*ustar*(z_depth+5e-6);
+                    #endif 
+
+                    #if EDDY_VISCOSITY_PARABOLIC
+                    epsis2[jphi] = k*ustar*z_depth*(1-z_depth/arrays->h[idx]);
+                    #endif
+
+                }
+
+                Bi = 1.+dt/(hlayer*hlayer)*((epsis2[1]+epsis2[0])/2.);
+                Ci = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
+
+                B[0] = Bi;
+                C[0] = Ci;
+
+                A[1] = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
+                B[1] = 1.+((epsis2[2]+2.*epsis2[1]+epsis2[0])/2.)*(dt/(hlayer*hlayer));
+                C[1] = -((epsis2[2]+epsis2[1])/2.)*dt/(hlayer*hlayer);
+
+                Bbis[0] = Bi;
+                Bbis[1] = B[1]-(A[1]*Ci)/Bi;
+
+                for(jphi=0;jphi<nParticles;jphi++){
+
+                    r[jphi] = arrays->phi[jphi*ncells+idx];
+                    r[1*nParticles+jphi] = arrays->phi[(1*nParticles+jphi)*ncells+idx];
+                    rbis[jphi] = r[jphi];
+                    rbis[1*nParticles+jphi] = arrays->phi[(1*nParticles+jphi)*ncells+idx] - (A[1]/Bi)*r[jphi];
+                    
+                }
+
+            #endif
+
             #else
-            //cccccccccccccccccccccccccc LINEAR VERSION
-            #if EDDY_VISCOSITY_LINEAR || EDDY_VISCOSITY_PARABOLIC
 
-            for(jphi=0;jphi<nInterfaces;jphi++){
-                z_depth = hlayer/2 + hlayer*jphi;
-                #if EDDY_VISCOSITY_LINEAR
-                epsis2[jphi] = 10*k*ustar*(z_depth+5e-6);
-                #endif 
-                #if EDDY_VISCOSITY_PARABOLIC
-                epsis2[jphi] = k*ustar*z_depth*(1-z_depth/arrays->h[idx]);
-                #endif
+            A = -epsis1*dt/(hlayer*hlayer);
+            B = 1+2*epsis1*(dt/(hlayer*hlayer));
+            C = -epsis1*dt/(hlayer*hlayer);
 
-            }
+            Bi = 1+dt/(hlayer*hlayer)*epsis1;
+            Ci = -(dt*epsis1)/(hlayer*hlayer);
 
-            Bi = 1.+dt/(hlayer*hlayer)*((epsis2[1]+epsis2[0])/2.);
-            Ci = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
-
-            B[0] = Bi;
-            C[0] = Ci;
-
-            A[1] = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
-            B[1] = 1.+((epsis2[2]+2.*epsis2[1]+epsis2[0])/2.)*(dt/(hlayer*hlayer));
-            C[1] = -((epsis2[2]+epsis2[1])/2.)*dt/(hlayer*hlayer);
+            Af = dt/(hlayer*hlayer)*(-epsis1);
+            Bf = 1+dt/(hlayer*hlayer)*epsis1;
 
             Bbis[0] = Bi;
-            r[0] = arrays->phi[idx];
-            r[1] = arrays->phi[ncells+idx];
-            rbis[0] = r[0];
-            rbis[1] = arrays->phi[ncells+idx] - (A[1]/Bi)*r[0];
-            Bbis[1] = B[1]-(A[1]*Ci)/Bi;
-
-            #if SET_MULTILAYER_SED
-            BSi = 1.+dt/(hlayer*hlayer)*((epsis2[1]+epsis2[0])/2.);
-            CSi = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
-
-            BS[0] = BSi;
-            CS[0] = CSi;
-
-            AS[1] = -((epsis2[1]+epsis2[0])/2.)*dt/(hlayer*hlayer);
-            BS[1] = 1.+((epsis2[2]+2.*epsis2[1]+epsis2[0])/2.)*(dt/(hlayer*hlayer));
-            CS[1] = -((epsis2[2]+epsis2[1])/2.)*dt/(hlayer*hlayer);
-
-            BSbis[0] = BSi;
-            rS[0] = arrays->phi[nSolutes*ncells+idx];
-            rS[1] = arrays->phi[(nSolutes+1)*ncells+idx];
-            rSbis[0] = rS[0];
-            rSbis[1] = arrays->phi[(nSolutes+1)*ncells+idx] - (AS[1]/BSi)*rS[0];
-            BSbis[1] = BS[1]-(AS[1]*CSi)/BSi;
-            #endif  
-            
-            #else
+            Bbis[1] = B-(A*Ci)/Bi;
 
             for(jphi=0;jphi<nParticles;jphi++){
-
-                #if SET_SOLUTES
-                if(jphi<nSolutes){
-                    A[jphi] = -epsis1*dt/(hlayer*hlayer);
-                    B[jphi] = 1+2*epsis1*(dt/(hlayer*hlayer));
-                    C[jphi] = -epsis1*dt/(hlayer*hlayer);
-
-                    Bi[jphi] = 1+dt/(hlayer*hlayer)*epsis1;
-                    Ci[jphi] = -(dt*epsis1)/(hlayer*hlayer);
-
-                    Af[jphi] = dt/(hlayer*hlayer)*(-epsis1);
-                    Bf[jphi] = 1+dt/(hlayer*hlayer)*epsis1;
-
-                    Bbis[jphi] = Bi[jphi];
-                    r[jphi] = arrays->phi[jphi*ncells+idx];
-                    r[2*jphi] = arrays->phi[(nParticles+jphi)*ncells+idx];
-                    rbis[jphi] = r[jphi];
-                    rbis[2*jphi] = arrays->phi[(nParticles+jphi)*ncells+idx] - (A[jphi]/Bi[jphi])*r[jphi];
-                    Bbis[2*jphi] = B[jphi]-(A[jphi]*Ci[jphi])/Bi[jphi];
-                }
-                #endif
-
-                #if SET_SED
-                if(jphi>=nSolutes){
-                    AS[jphi] = -epsis1*dt/(hlayer*hlayer);
-                    BS[jphi] = 1+2*epsis1*(dt/(hlayer*hlayer));
-                    CS[jphi] = -epsis1*dt/(hlayer*hlayer);
-
-                    BSi[jphi] = 1+dt/(hlayer*hlayer)*epsis1;
-                    CSi[jphi] = -(dt*epsis1)/(hlayer*hlayer);
-
-                    ASf[jphi] = dt/(hlayer*hlayer)*(-epsis1);
-                    BSf[jphi] = 1+dt/(hlayer*hlayer)*epsis1;
-
-                    BSbis[jphi] = BSi[jphi];
-                    rS[jphi] = arrays->phi[(jphi)*ncells+idx];
-                    rS[2*jphi] = arrays->phi[(jphi+nParticles)*ncells+idx];
-                    rSbis[jphi] = rS[jphi];
-                    rSbis[2*jphi] = arrays->phi[(jphi+nParticles)*ncells+idx] - (AS[jphi]/BSi[jphi])*rS[jphi];
-                    BSbis[2*jphi] = BS[jphi]-(AS[jphi]*CSi[jphi])/BSi[jphi];
-                }
-
+                   
+                r[jphi] = arrays->phi[jphi*ncells+idx];
+                r[nParticles*jphi] = arrays->phi[(nParticles+jphi)*ncells+idx];
+                rbis[jphi] = r[jphi];
+                rbis[nParticles*jphi] = arrays->phi[(nParticles+jphi)*ncells+idx] - (A/Bi)*r[jphi];
+                
             }
+
             #endif  
-
-            #endif
-
-            #endif
 
             //printf("in %d\n", 1);
 
@@ -818,64 +705,26 @@ dt=arrays->dt;
             for(l=2;l<nLayers;l++){
                 for(jphi=0;jphi<nParticles;jphi++){
                     sid1 = (l*nParticles + jphi)*ncells+idx; 
-
-                    #if SET_SOLUTE
-                    if(jphi<nSolutes){
                         
-                        r[l*nParticles+jphi] = arrays->phi[sid1];
-                    }
-                    #endif
-
-                    #if SET_SED
-                    if(jphi>=nSolutes){
-                        
-                        rS[l*nParticles+jphi] = arrays->phi[sid1];
-                    }
-                    #endif 
-
+                    r[l*nParticles+jphi] = arrays->phi[sid1];
+                
                     #if EDDY_VISCOSITY || EDDY_VISCOSITY_LINEAR || EDDY_VISCOSITY_PARABOLIC
 
-                        #if SET_SOLUTE
-                        if(jphi<nSolutes){
+                        A[l] = -((epsis2[l]+epsis2[l-1])/2.)*dt/(hlayer*hlayer);
+                        B[l] = 1.+((epsis2[l+1]+2.*epsis2[l]+epsis2[l-1])/2.)*(dt/(hlayer*hlayer));
+                        C[l] = -((epsis2[l+1]+epsis2[l])/2.)*dt/(hlayer*hlayer);
 
-                            A[l*nParticles+jphi] = -((epsis2[l]+epsis2[l-1])/2.)*dt/(hlayer*hlayer);
-                            B[l*nParticles+jphi] = 1.+((epsis2[l+1]+2.*epsis2[l]+epsis2[l-1])/2.)*(dt/(hlayer*hlayer));
-                            C[l*nParticles+jphi] = -((epsis2[l+1]+epsis2[l])/2.)*dt/(hlayer*hlayer);
-
-                            Bbis[l*nParticles+jphi] = B[l*nParticles+jphi] - (A[l*nParticles+jphi]*C[(l-1)*nParticles+jphi])/Bbis[(l-1)*nParticles+jphi] ;
-                            rbis[l*nParticles+jphi] = r[l*nParticles+jphi] - (A[l*nParticles+jphi]/Bbis[(l-1)*nParticles+jphi])*rbis[(l-1)*nParticles+jphi];  
-                        }
-
-                        #if SET_SED
-                        if(jphi>=nSolutes){ 
-
-                            AS[l*nParticles+jphi] = -((epsis2[jphi]+epsis2[jphi-1])/2.)*dt/(hlayer*hlayer);
-                            BS[l*nParticles+jphi] = 1.+((epsis2[jphi+1]+2.*epsis2[jphi]+epsis2[jphi-1])/2.)*(dt/(hlayer*hlayer));
-                            CS[l*nParticles+jphi] = -((epsis2[jphi+1]+epsis2[jphi])/2.)*dt/(hlayer*hlayer);
-
-                            BSbis[l*nParticles+jphi] = B[l*nParticles+jphi] - (A[l*nParticles+jphi]*C[jphi-1])/Bbis[jphi-1] ;
-                            rSbis[l*nParticles+jphi] = r[l*nParticles+jphi] - (A[l*nParticles+jphi]/Bbis[jphi-1])*rbis[jphi-1];
-                            
-                        }
-                        #endif  
-
+                        Bbis[l] = B[l] - (A[l]*C[l-1])/Bbis[l-1] ;
+                        rbis[l*nParticles+jphi] = r[l*nParticles+jphi] - (A[l]/Bbis[l-1])*rbis[(l-1)*nParticles+jphi];  
+                        
                     #else
-                            
-                        Bbis[jphi] = B - (A*C)/Bbis[jphi-1] ;
-                        rbis[jphi] = r[jphi]- (A/Bbis[jphi-1])*rbis[jphi-1];  
-
-                        #if SET_MULTILAYER_SED
-                        BSbis[jphi] = BS - (AS*CS)/BSbis[jphi-1] ;
-                        rSbis[jphi] = rS[jphi]- (AS/BSbis[jphi-1])*rSbis[jphi-1];  
-                        #endif  
-
+                        Bbis[l] = B - (A*C)/Bbis[l-1] ;
+                        rbis[l*nParticles+jphi] = r[l*nParticles+jphi]- (A/Bbis[l-1])*rbis[(l-1)*nParticles+jphi];  
                         
                     #endif
                 }
                     
             } 
-
-            //printf("in %d\n", 1);
 
 
             //celdas internas
@@ -892,152 +741,104 @@ dt=arrays->dt;
             Bbis[nInterfaces-1] = Bf-(Af*C[nInterfaces-2])/Bbis[nInterfaces-2];
             #else
             Bbis[nInterfaces-1] = Bf-(Af*C)/Bbis[nInterfaces-2];
-            #if SET_MULTILAYER_SED
-            BSbis[nInterfaces-1] = BSf-(ASf*CS)/BSbis[nInterfaces-2];
-            #endif  
             #endif
 
-            rbis[nInterfaces-1] = r[nInterfaces-1]-(Af/Bbis[nInterfaces-2])*rbis[nInterfaces-2];
-            arrays->phi[(nInterfaces-1)*ncells+idx] = rbis[nInterfaces-1]/Bbis[nInterfaces-1];
+            for(jphi=0;jphi<nParticles;jphi++){
 
-            #if SET_MULTILAYER_SED
-            rSbis[nInterfaces-1] = rS[nInterfaces-1]-(ASf/BSbis[nInterfaces-2])*rSbis[nInterfaces-2];
-            arrays->phi[((nInterfaces+nSolutes)-1)*ncells+idx] = rSbis[nInterfaces-1]/BSbis[nInterfaces-1];
-            #endif  
+                rbis[(nInterfaces-1)*nParticles+jphi] = r[(nInterfaces-1)*nParticles+jphi]-(Af/Bbis[(nInterfaces-2)*nParticles+jphi])*rbis[(nInterfaces-2)*nParticles+jphi];
+                arrays->phi[((nInterfaces-1)*nParticles+jphi)*ncells+idx] = rbis[(nInterfaces-1)*nParticles+jphi]/Bbis[nInterfaces-1];
             
-
-            for(jphi=nInterfaces-2; jphi>0; jphi--){
-                sid1 = jphi*ncells+idx;
-                sid2 = (jphi+1)*ncells+idx;
-                sid1S = (nSolutes+jphi)*ncells+idx;
-                sid2S = (nSolutes+jphi+1)*ncells+idx;
-                
-                #if EDDY_VISCOSITY || EDDY_VISCOSITY_LINEAR || EDDY_VISCOSITY_PARABOLIC
-                arrays->phi[sid1] = (rbis[jphi] - C[jphi]*arrays->phi[sid2])/Bbis[jphi];
-                #if SET_MULTILAYER_SED
-                arrays->phi[sid1S] = (rSbis[jphi] - CS[jphi]*arrays->phi[sid2S])/BSbis[jphi];
-                #endif  
-                #else
-                arrays->phi[sid1] = (rbis[jphi] - C*arrays->phi[sid2])/Bbis[jphi];
-                #if SET_MULTILAYER_SED
-                arrays->phi[sid1S] = (rSbis[jphi] - CS*arrays->phi[sid2S])/BSbis[jphi];
-                #endif  
-                #endif
-                
-            }
-
-            jphi = 0;
-            sid1 = jphi*ncells+idx;
-            sid2 = (jphi+1)*ncells+idx;
-            sid1S = (nSolutes+jphi)*ncells+idx;
-            sid2S = (nSolutes+jphi+1)*ncells+idx;
-
-            arrays->phi[sid1] = (rbis[jphi] - Ci*arrays->phi[sid2])/Bbis[jphi];
-
-            #if SET_MULTILAYER_SED
-            arrays->phi[sid1S] = (rSbis[jphi] - CSi*arrays->phi[sid2S])/BSbis[jphi];
-            #endif 
-            if(idx ==97088){
-                printf("phi %lf phi2 %lf rSbis %lf\n", arrays->phi[sid1S], arrays->phi[sid2S], rSbis[jphi]);
             } 
-
             
-            for(jphi=0; jphi<nInterfaces; jphi++){
-                sid1 = jphi*ncells+idx;
-                sid1S = (nSolutes+jphi)*ncells+idx;
-                arrays->hphi[sid1] = arrays->phi[sid1]*hlayer;
 
-                #if SET_MULTILAYER_SED
-                arrays->hphi[sid1S] = arrays->phi[sid1S]*hlayer;
-                #endif  
+            for(l=nInterfaces-2; l>0; l--){
 
-            }
-
-            for(jphi=0;jphi<nInterfaces-1;jphi++){
-
-                sid1 = jphi*ncells+idx;
-                sid2 = (jphi+1)*ncells+idx; //j+1
-
-                sid1S = (nSolutes+jphi)*ncells+idx;
-                sid2S = (nSolutes+jphi+1)*ncells+idx;
-
-                phij1 = arrays->phi[sid1];
-                phij2 = arrays->phi[sid2]; //j-1 aux2
-
-                hphi1 = arrays->hphi[sid1];
-                hphi2 = arrays->hphi[sid2];
-
-                aux1 = dt*(ws*phij2);
-
-                #if SET_MULTILAYER_SED 
-                phij1S = arrays->phi[sid1S];
-                phij2S = arrays->phi[sid2S]; //j-1 aux2
-
-                hphi1S = arrays->hphi[sid1S];
-                hphi2S = arrays->hphi[sid2S];
-
-                aux2 = dt*(arrays->WsFs[0] *phij2S);
-                #endif 
-
-                if((fabs(aux1)>TOL14)){
-
+                for(jphi=0; jphi<nParticles; jphi++){
+                
+                    sid1 = (nParticles*l+jphi)*ncells+idx;
+                    sid2 = (nParticles*(l+1)+jphi)*ncells+idx;
+                    //sid1S = (nSolutes+jphi)*ncells+idx;
+                    //sid2S = (nSolutes+jphi+1)*ncells+idx;
                     
-                    if(aux1>0 && aux1>(arrays->hphi[sid2])){
-                        aux1 = arrays->hphi[sid2];
-                    }else if(aux1<0 && fabs(aux1)>(arrays->hphi[sid1])){
-                        aux1 = arrays->hphi[sid1];
-                    }
-
-                    arrays->hphi[sid1] += aux1;
-                    arrays->hphi[sid2] -= aux1;
-               
-                }
-
-                #if SET_MULTILAYER_SED
-                if((fabs(aux2)>TOL14)){
-
+                    #if EDDY_VISCOSITY || EDDY_VISCOSITY_LINEAR || EDDY_VISCOSITY_PARABOLIC
                     
-                    if(aux2>0 && aux2>(arrays->hphi[sid2S])){
-                        aux2 = arrays->hphi[sid2S];
-                    }else if(aux2<0 && fabs(aux2)>(arrays->hphi[sid1S])){
-                        aux2 = arrays->hphi[sid1S];
-                    }
+                        arrays->phi[sid1] = (rbis[nParticles*l+jphi] - C[l]*arrays->phi[sid2])/Bbis[l]; 
 
-                    arrays->hphi[sid1S] += aux2;
-                    arrays->hphi[sid2S] -= aux2;
-               
+                    #else
+
+                        arrays->phi[sid1] = (rbis[nParticles*l+jphi] - C*arrays->phi[sid2])/Bbis[l];
+                    
+                    #endif
                 }
-                #endif  
-
-                if(arrays->hphi[sid2]<0.0){
-                    arrays->hphi[sid2]=0.0;
-                    arrays->phi[sid2]=0.0;  
-                } 
-
-                #if SET_MULTILAYER_SED
-                if(arrays->hphi[sid2S]<0.0){
-                    arrays->hphi[sid2S]=0.0;
-                    arrays->phi[sid2S]=0.0;  
-                } 
-                #endif  
                 
             }
 
-            for(jphi=0;jphi<nInterfaces;jphi++){
-                sid1 = jphi*ncells+idx;
-                sid1S = (nSolutes+jphi)*ncells+idx;
+            l = 0;
+            for(jphi=0; jphi<nParticles; jphi++){
+                sid1 = (nParticles*l+jphi)*ncells+idx;
+                sid2 = (nParticles*(l+1)+jphi)*ncells+idx;
 
+                arrays->phi[sid1] = (rbis[nParticles*l+jphi] - Ci*arrays->phi[sid2])/Bbis[l];
+                
+            }
+
+            
+            for(l=0; l<nInterfaces*nParticles; l++){
+                
+                sid1 = l*ncells+idx;
+                arrays->hphi[sid1] = arrays->phi[sid1]*hlayer; 
+
+            }
+
+            for(l=0;l<nInterfaces-1;l++){
+                for(jphi=0;jphi<nParticles; jphi++){
+
+                    sid1 = (nParticles*l+jphi)*ncells+idx;
+                    sid2 = (nParticles*(l+1)+jphi)*ncells+idx; //j+1
+
+                    phij1 = arrays->phi[sid1];
+                    phij2 = arrays->phi[sid2]; //j-1 aux2
+
+                    hphi1 = arrays->hphi[sid1];
+                    hphi2 = arrays->hphi[sid2];
+
+                    if(jphi<nSolutes){
+                        aux1 = dt*(ws*phij2);
+                    }elif(jphi>=nSolutes){
+                        aux1 = dt*(arrays->WsFs[jphi-nSolutes] *phij2);
+                    } 
+
+                    if((fabs(aux1)>TOL14)){
+                        
+                        if(aux1>0 && aux1>(arrays->hphi[sid2])){
+                            aux1 = arrays->hphi[sid2];
+                        }else if(aux1<0 && fabs(aux1)>(arrays->hphi[sid1])){
+                            aux1 = arrays->hphi[sid1];
+                        }
+
+                        arrays->hphi[sid1] += aux1;
+                        arrays->hphi[sid2] -= aux1;
+                
+                    }
+
+                    if(arrays->hphi[sid2]<0.0){
+                        arrays->hphi[sid2]=0.0;
+                        arrays->phi[sid2]=0.0;  
+                    } 
+                }
+                
+            }
+
+            for(l=0;l<nInterfaces*nParticles;l++){
+                
+                sid1 = l*ncells+idx;
                 arrays->phi[sid1] = arrays->hphi[sid1]/hlayer;
 
-                #if SET_MULTILAYER_SED
-                arrays->phi[sid1S] = arrays->hphi[sid1S]/hlayer;
-                #endif  
-
-                if(std::isnan(arrays->phi[sid1])){
-                    printf("cell %d layer %f\n",idx, jphi);
-                    //printf("h %lf\n",hlayer);
-                    printf("hphi %lf phi %lf hlayer %lf\n ",arrays->hphi[sid1], arrays->phi[sid1], hlayer);
-                }
+                    // if(std::isnan(arrays->phi[sid1])){
+                    //     printf("cell %d layer %f\n",idx, jphi);
+                    //     //printf("h %lf\n",hlayer);
+                    //     printf("hphi %lf phi %lf hlayer %lf\n ",arrays->hphi[sid1], arrays->phi[sid1], hlayer);
+                    // }
             
             }
 
@@ -1105,12 +906,12 @@ __global__ void g_wall_particle_diffusion_calculus(int nTasks, t_arrays *arrays)
     int typeDiff;
 
     int nActWalls = arrays->nActWalls;
-    int jphi;
+    int jphi, l;
     int iactWall;
     int nSolutes= arrays->nSolutes;
-    int nInterfaces = arrays->nSolutes;
+    int nInterfaces = arrays->nLayers;
     int nSediments = arrays->nSediments;
-    int nParticles = arrays->nSolutes + nSediments;
+    int nParticles = arrays->nParticles;
 
 	double hL,hR;
 	double sqrhL,sqrhR; 
@@ -1161,7 +962,7 @@ __global__ void g_wall_particle_diffusion_calculus(int nTasks, t_arrays *arrays)
         hL = arrays->h[id1];
         hR = arrays->h[id2];
 
-        #if SET_MULTILAYER
+        #if MULTILAYER
         hL = arrays->h[id1]/nInterfaces;
         hR = arrays->h[id2]/nInterfaces;
         #endif
@@ -1430,7 +1231,7 @@ __global__ void g_update_particle_diffusion_cells(int nTasks, t_arrays *arrays, 
     int ncells=arrays->ncells;
     int NCwall=arrays->NCwall;
     int nw_calc=arrays->nw_calc;
-    int nInterfaces= arrays->nSolutes;
+    int nInterfaces= arrays->nLayers;
     int nParticles = arrays->nSolutes + arrays->nSediments;
 
     double dtd;
@@ -1478,7 +1279,7 @@ __global__ void g_update_particle_diffusion_cells(int nTasks, t_arrays *arrays, 
             //update conservative variable
             arrays->hphi[sid]=arrays->phi[sid]*arrays->h[idx]; 
 
-            #if SET_MULTILAYER
+            #if MULTILAYER
             arrays->hphi[sid]=arrays->phi[sid]*(arrays->h[idx]/nInterfaces); 
             #endif
 
