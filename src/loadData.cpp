@@ -1656,7 +1656,7 @@ int readOpenBoundaryFile(
                 #if SET_SOLUTE || SET_SED
                     mesh->out[countOutlet].phi=(double**) malloc((mesh->nSolutes + mesh->nSediments)*sizeof(double*));
                     for(k=0;k<(mesh->nSolutes + mesh->nSediments);k++){
-                        mesh->out[countOutlet].phi[k]=(double*) malloc(mesh->in[countOutlet].n*sizeof(double));
+                        mesh->out[countOutlet].phi[k]=(double*) malloc(mesh->out[countOutlet].n*sizeof(double));
                     }
                 #endif
 
@@ -1814,11 +1814,11 @@ int createCrossSectionStructures(
                 mesh->sec->sec[i].node[1].y = secGroup->xs[i].p[1].y;
 
                 if(!build_section(mesh->sec->sec+i,i,e)){
-                    retu
                     
                     
                     
-                    rn(0);
+                    
+                    return(0);
                 }
         }
         if(!search_sections(mesh,e)){
