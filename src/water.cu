@@ -98,6 +98,10 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
         id1=arrays->idx1[idx];
         id2=arrays->idx2[idx];
 
+        //wall-cell index
+        iw1=(arrays->idw1[idx]*arrays->ncells)+id1;
+        iw2=(arrays->idw2[idx]*arrays->ncells)+id2;
+
         zL  = arrays->z[id1];
         zR  = arrays->z[id2];	        
 
@@ -568,6 +572,9 @@ __global__ void g_get_dtmin(t_arrays *arrays, double *localDt, int *idmin){
         minDt=1.0;
     }    
     minDt*=arrays->CFL;
+
+    // --- Set the mininum dt considering preCICE dt
+    minDt = min(arrays->preciceDt, minDt);
 
     //storage time step
     arrays->dt=minDt;
