@@ -986,7 +986,8 @@ int readOpenBoundaryNodes(
                 type==HYD_OUTFLOW_HZ ||
                 type==HYD_OUTFLOW_FREE ||
                 type==HYD_OUTFLOW_FR||
-                type==HYD_OUTFLOW_NORMAL){
+                type==HYD_OUTFLOW_NORMAL ||
+                type==HYD_PRECICE_COUPLING){ // --- preCICE Coupling BC
                 countOutlet--;
                 inlet=0;
             }else{
@@ -1299,7 +1300,8 @@ int readOpenBoundaryFile(
             type==HYD_OUTFLOW_HZ ||
             type==HYD_OUTFLOW_FREE ||
             type==HYD_OUTFLOW_FR||
-            type==HYD_OUTFLOW_NORMAL){
+            type==HYD_OUTFLOW_NORMAL||
+            type==HYD_PRECICE_COUPLING){
             inlet=0;
             strcpy(mesh->out[countOutlet].idname,bcidname);
             mesh->out[countOutlet].type=type;
@@ -1326,7 +1328,7 @@ int readOpenBoundaryFile(
         // Read boundary table file
         sprintf(fdataname,"%s%s",spar->dir,label);
         fdata=fopen(fdataname,"r");
-        if(fdata==NULL && type!=HYD_OUTFLOW_FREE){
+        if(fdata==NULL && type!=HYD_OUTFLOW_FREE && type!=HYD_PRECICE_COUPLING){
             sprintf(temp,"File with boundary data %s not found",fdataname);
             Notify(temp,MSG_ERROR,e);
             fclose(fp);
@@ -1470,6 +1472,12 @@ int readOpenBoundaryFile(
                 break;
 
             case HYD_OUTFLOW_FREE: //salida libre
+                mesh->out[countOutlet].n=0;
+                nTotalSeriesOut += 0;            
+                break;
+
+            // --- preCICE Coupling. Copy of free outflow for implementation.
+            case HYD_PRECICE_COUPLING: 
                 mesh->out[countOutlet].n=0;
                 nTotalSeriesOut += 0;            
                 break;

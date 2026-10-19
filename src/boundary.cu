@@ -900,8 +900,29 @@ __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays,
 				}
                 __syncthreads();    
 
-            } //end if(typebc==HYD_OUTFLOW_FREE){			       
-				
+            } //end if(typebc==HYD_OUTFLOW_FREE){
+            // --- preCICE BC. Copy of HYD_OUTFLOW_FREE for implementation.
+            // --- This probably should be updated later.
+            else if(typebc==HYD_PRECICE_COUPLING){
+				if(ithread<nbc){
+					if(localh[ithread] >= arrays->minh){
+						hun = localhu[ithread]*arrays->nxWallBound[idx] + localhv[ithread]*arrays->nyWallBound[idx];
+						if(hun < 0.0){ // prevent back flow
+							localhu[ithread]=0.0;
+							localhv[ithread]=0.0;
+						}else{ //outflow
+							aux1=localh[ithread]*sqrt(localh[ithread]*_g_); //critical discharge					
+							if(hun<aux1){ //subcritical outflow
+								hun=aux1;
+                                localhu[ithread]=hun*arrays->nxWallBound[idx];
+                                localhv[ithread]=hun*arrays->nyWallBound[idx];                                
+							}
+						}
+					}
+				}
+                __syncthreads();    
+
+            } //end if(typebc==HYD_PRECICE_COUPLING){
         }
     }
 

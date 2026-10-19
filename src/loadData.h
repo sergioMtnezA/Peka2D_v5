@@ -43,6 +43,9 @@
 #define HYD_OUTFLOW_FR 14
 #define HYD_OUTFLOW_NORMAL 15
 
+// --- preCICE coupling boundary
+#define HYD_PRECICE_COUPLING 33
+
 
 typedef struct Peka2D_Setup_ Peka2D_Setup;
 typedef struct Peka2D_Run_ Peka2D_Run;
