@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <omp.h>
+#include <vector>
 
 #include "cuda.h"
 #include "cuda_runtime.h"
@@ -57,3 +58,37 @@ EXPORT_DLL void generateTimeStep(
     t_message *msg);
 /*----------------------------*/
 
+// --- Functions for preCICE
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int getCellsNumbersAtBC(
+    t_mesh *mesh
+);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL std::vector<double> getCellsCoordinatesAtBC(
+    t_mesh *mesh
+);
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL std::vector<int> getCellsIDsAtBC(
+    t_mesh *mesh
+);
+
+////////////////////////////////////////////////////////////////
+__global__ void g_get_coupling_values(
+    int nTasks,
+    t_arrays *arrays,
+    int *cellIDs,
+    double *hBC,
+    double *huBC,
+    double *hvBC);
+
+////////////////////////////////////////////////////////////////
+__global__ void g_write_coupling_values(
+    int nTasks,
+    t_arrays *arrays,
+    int *cellIDs,
+    double *hBC,
+    double *huBC,
+    double *hvBC);
