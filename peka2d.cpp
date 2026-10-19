@@ -42,7 +42,8 @@ t_message *msg;
 t_mesh *mesh;
 
 int main (int argc, char * argv[]) {
-	
+	setvbuf(stdout, NULL, _IONBF, 0); // For print in Debug Console
+
     char arguments[2][1024];
 	sprintf(arguments[0],"C:\\svnPeka2D\\Casos\\YubaOBCP\\");
 	sprintf(arguments[1],"YubaP");
