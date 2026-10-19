@@ -9,14 +9,19 @@ OMP=no
 # mostrar como funciona.
 
 # Macros
+# CUDA home
+CUDA_HOME = /usr/local/cuda-13.4
+
+# preCICE lib
+PRECICE_LIB_PATH = /usr/lib/x86_64-linux-gnu/
 
 # Define C compiler
 #CC = gcc
 CC = g++
-NVCC = nvcc
+NVCC = $(CUDA_HOME)/bin/nvcc
 
 # Define C flags
-C_CUDA_FLAGS = -I/usr/local/cuda/include -L/usr/local/cuda/lib64 -lcuda -lcudart -lcublas -lrt -lm
+C_CUDA_FLAGS = -I$(CUDA_HOME)/include -L$(CUDA_HOME)/lib64 -L$(PRECICE_LIB_PATH) -lcuda -lcudart -lcublas -lprecice -lrt -lm
 C_REQ_FLAGS =
 C_OPT_FLAGS = -O3 -w
 C_DEBUG_FLAGS = -g
@@ -25,9 +30,9 @@ C_PROFILE_FLAGS = -pg
 C_WARN_FLAGS = -Wall
 C_OMP_FLAGS = -fopenmp
 
-CULIB_REQ_FLAGS = --compiler-bindir=g++ -w -m64 -arch sm_120 -Xptxas -dlcm=ca --use_fast_math -lcuda -lcudart -lcublas -lrt -lm
+CULIB_REQ_FLAGS = --compiler-bindir=g++ -w -m64 -arch sm_89 -Xptxas -dlcm=ca --use_fast_math -L$(CUDA_HOME)/lib64 -L$(PRECICE_LIB_PATH) -lcuda -lcudart -lcublas -lprecice -lrt -lm
 CULIB_OPT_FLAGS = -O3 -w
-CULIB_DEBUG_FLAGS = -O3 -G -g -Xcompiler -rdynamic
+CULIB_DEBUG_FLAGS = -O0 -G -g -Xcompiler -rdynamic
 #additional flags for cuda-memcheck: (release version) -Xcompiler -rdynamic -lineinfo   (debug version) -G -g -Xcompiler -rdynamic
 
 
