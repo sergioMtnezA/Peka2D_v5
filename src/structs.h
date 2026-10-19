@@ -497,8 +497,10 @@ struct t_arrays_{
 	double mTotalOut;	
 	double massTotalIn; /**< @brief Run-control total inflow volume accumulated during the simulation*/
 	double massTotalOut; /**< @brief Run-control total outflow volume accumulated during the simulation*/ 
-    ////////////////////////////////////////////	    
-
+    ////////////////////////////////////////////	 
+	
+	// --- preCICE arrays
+	double preciceDt;
 
 	// SOLUTE ARRAYS ///////////////////////////	
 	#if SET_SOLUTE
