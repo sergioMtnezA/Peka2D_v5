@@ -1,6 +1,7 @@
 # Compilation files
 peka2D
 gpeka2D
+gpeka2d
 *.so
 *.o
 *.exe
