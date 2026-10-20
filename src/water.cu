@@ -1,5 +1,12 @@
 #include "water.cuh"
 
+// Select basal friction formulation:
+// 0 = original Peka2D friction
+// 1 = semi-implicit friction (under development)
+#ifndef USE_SEMI_IMPLICIT_FRICTION
+#define USE_SEMI_IMPLICIT_FRICTION 1
+#endif
+
 
 ////////////////////////////////////////////////////
 __global__ void g_compute_cell_mass(int nTasks, t_arrays *arrays, double *mass){
@@ -59,6 +66,10 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
 	double dZ,dL,dR,dZs;
     double bedSlope_term,ps1,ps2,psmax;
 	double hqi0,hqi1,hqi2;
+
+    // Auxiliary terms for semi-implicit Manning friction
+    double M1star, M2star, M3star, A, Delta, B, hun_corr;
+    //double hun2_corr, un_corr, h_corr, hunvt_corr, hvt_corr;
 	
 	double beta_f;
 	double maxh, minU, manning2;
@@ -288,6 +299,27 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
         //ccccccccccccccccccccccccccccccccccccccccccccccccccccc friction_slope
         friction_term=0.0;
 
+        #if USE_SEMI_IMPLICIT_FRICTION
+            if (wetWall == 1 &&
+                landl[0] < 0.0 &&
+                landl[1] >= 0.0 &&
+                landl[2] > 0.0) {
+
+                M1star = hqi1;
+                
+                /*
+                // include (+ 0.5 * gp * hL * hL) ???
+                M2star = hL * unL * unL
+                        + 0.5 * gp * hL * hL
+                        + landl[0] * landl[0] * alfal[0]
+                        - landl[0] * beta_z;
+                */
+
+                M3star = hL * unL * vtL
+                        + (landl[0] * alfal[0] - beta_z) * vtbar;
+            }
+        #endif
+
         if(wetWall==1){
             maxh=fmax(hL,hR);
             minU=fmin(modUR,modUL);
@@ -331,25 +363,116 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
                 dint = arrays->distNormal[idx];
             }
 
-            //ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-            // Integrated friction force
-            friction_term = -1.* stress/_rhow_ * dint;
-            //ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo	
 
-            //*****************************************
-            // turbulent friction energy limitation
-            friction_t = fabs(friction_term)/(cbar*cbar);
+            // -----------------------------------------------
+            #if USE_SEMI_IMPLICIT_FRICTION
+            if (landl[0] < 0.0 &&
+                landl[1] >= 0.0 &&
+                landl[2] > 0.0) {
 
-            //Limite = fabs(un)*modUbar/(2g);
-            aux1 = 10. * 0.5*fabs(unbar)*modUbar/gp;
-            aux2 = fabs(friction_t);
-            if (aux2>aux1){
-                friction_term *= (aux1/aux2);
+                if (fabs(M1star) > TOL12 &&
+                    hbar > TOL12 &&
+                    cbar > TOL12) {
+
+                A = -(M1star / fabs(M1star)) * gp * manning2 * dint
+                     / (2.0 * cbar * hbar * hbar * cbrt(hbar));
+
+                // Discriminant of the quadratic equation
+                Delta = 1.0 - 4.0 * A * M1star
+                        - 4.0 * A * A * hbar * hbar
+                        * M3star * M3star / (M1star * M1star);
+
+
+                    // Correction factor for semi-implicit Manning friction
+                    if (Delta >= 0.0) {
+                        B = (2.0 + 2.0 * A * hbar * hbar
+                            * M3star * M3star / (M1star * M1star * M1star))
+                            / (1.0 + sqrt(Delta));
+
+                        // Corrected normal momentum
+                        hun_corr = M1star * B;  
+
+
+            // ------------------------------------------------------------------------------------          
+                        // Semi-implicit Manning friction
+                        friction_term = 2.0 * cbar * (hun_corr - M1star); // T_n
+
+            // ------------------------------------------------------------------------------------ 
+                        /*
+                        //---------------------------------------------------
+                        // Corrected normal momentum flux (second equation)
+                        hun2_corr = M2star
+                                    + (friction_term / (2.0 * cbar)) * (unbar - cbar);
+
+                        // Corrected normal velocity
+                        if (fabs(hun_corr) > TOL12) {
+                            un_corr = hun2_corr / hun_corr;
+                        } else {
+                            un_corr = 0.0;
+                        }
+
+                        // Corrected water depth
+                        if (fabs(un_corr) > TOL12) {
+                            h_corr = hun_corr / un_corr;
+                        } else {
+                            h_corr = 0.0;
+                        }
+
+                        // Corrected tangential momentum flux (third equation)
+                        hunvt_corr = M3star
+                                    + (friction_term / (2.0 * cbar)) * vtbar;
+
+
+                        // Corrected tangential momentum
+                        if (fabs(un_corr) > TOL12) {
+                            hvt_corr = hunvt_corr / un_corr;
+                        } else {
+                            hvt_corr = 0.0;
+                        }
+
+                        //---------------------------------------------------
+
+                    // if Delta < 0
+                    } else {
+                        printf("ERROR: Invalid Delta in semi-implicit friction. "
+                                "Wall idx = %d, Delta = %.15e\n", idx, Delta);
+                        asm("trap;");
+                    */
+                    }
+                }
             }
-            //**************************************
+            #endif
+
+            //ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+            #if USE_SEMI_IMPLICIT_FRICTION
+                // Use original friction in regimes not yet implemented
+                if (!(landl[0] < 0.0 &&
+                    landl[1] >= 0.0 &&
+                    landl[2] > 0.0)) {
+            #endif
+
+                    // Integrated friction force
+                    friction_term = -1.* stress/_rhow_ * dint;
+
+                    //*****************************************
+                    // turbulent friction energy limitation
+                    friction_t = fabs(friction_term)/(cbar*cbar);
+
+                    //Limite = fabs(un)*modUbar/(2g);
+                    aux1 = 10. * 0.5*fabs(unbar)*modUbar/gp;
+                    aux2 = fabs(friction_t);
+                    if (aux2>aux1){
+                        friction_term *= (aux1/aux2);
+                    }
+                    //**************************************
+
+            #if USE_SEMI_IMPLICIT_FRICTION
+                }
+            #endif
+        //ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo	
 
         }//end mojado==1
-        beta_f = - 0.5*inverseCbar*friction_term; //beta1_f
+        beta_f = - 0.5*inverseCbar*friction_term; //beta1_f   // sigma_1
 
 
         //ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc friction fix
