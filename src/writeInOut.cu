@@ -591,5 +591,221 @@ EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg){
 
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------//
+// Write hydraulic results at observation points
+EXPORT_DLL int dump_probes_gpu(t_mesh *mesh, t_arrays *arrays,
+                              char *path, t_message *msg, double t){
 
+    FILE *fp;
+    char filename[1024];
+    char error[1024];
 
+    for(int i = 0; i < mesh->nProbes; i++){
+
+        int n = snprintf(filename, sizeof(filename),
+                         "%sprobe%d.out", path, i+1);
+
+        if(n < 0 || n >= (int)sizeof(filename)){
+            Notify("Probe output filename is too long", MSG_ERROR, msg);
+            return 0;
+        }
+
+        fp = fopen(filename, "a");
+
+        if(fp == NULL){
+            snprintf(error, sizeof(error),
+                     "Could not open probe output file %d", i+1);
+            Notify(error, MSG_ERROR, msg);
+            return 0;
+        }
+
+        int idc = mesh->probe->probe[i].idc;
+
+        if(idc < 0 || idc >= arrays->ncells){
+
+            // Probe outside the computational domain
+            fprintf(fp, "%.6lf 0.0 0.0 0.0 0.0 0.0\n", t);
+
+        }else{
+
+            fprintf(fp, "%.6lf %.6lf %.6lf %.6lf %.6lf %.6lf\n",
+                    t,
+                    arrays->h[idc] + arrays->z[idc],
+                    arrays->h[idc],
+                    arrays->u[idc],
+                    arrays->v[idc],
+                    arrays->modulou[idc]);
+        }
+
+        fclose(fp);
+    }
+
+    return 1;
+}
+//------------------------------------------//
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------//
+// Compute and write hydraulic results at control sections
+EXPORT_DLL int dump_sections_gpu(t_mesh *mesh, t_arrays *arrays,
+                                double t, char *dir){
+
+    if(mesh->nSections <= 0)
+        return 1;
+
+    if(mesh->sec == NULL || mesh->sec->sec == NULL)
+        return 0;
+
+    char filename[1024];
+
+    // Calculate discharge and average hydraulic quantities
+    for(int i = 0; i < mesh->nSections; i++){
+
+        t_section *sec = &mesh->sec->sec[i];
+
+        double sumQ = 0.0;
+        double sumZ = 0.0;
+        double sumH = 0.0;
+        double validLength = 0.0;
+        double wetLength = 0.0;
+
+        for(int j = 0; j < sec->npoints - 1; j++){
+
+            int id1 = sec->probeSec->probe[j].idc;
+            int id2 = sec->probeSec->probe[j+1].idc;
+
+            // Only integrate segments whose endpoints are inside the domain
+            if(id1 < 0 || id1 >= arrays->ncells ||
+               id2 < 0 || id2 >= arrays->ncells){
+                continue;
+            }
+
+            double h1 = arrays->h[id1];
+            double h2 = arrays->h[id2];
+
+            double z1 = arrays->z[id1];
+            double z2 = arrays->z[id2];
+
+            double q1 = 0.0;
+            double q2 = 0.0;
+
+            if(h1 > 0.0){
+                q1 = h1 * (arrays->u[id1]*sec->normal[_X_] +
+                           arrays->v[id1]*sec->normal[_Y_]);
+            }
+
+            if(h2 > 0.0){
+                q2 = h2 * (arrays->u[id2]*sec->normal[_X_] +
+                           arrays->v[id2]*sec->normal[_Y_]);
+            }
+
+            // Trapezoidal integration of normal discharge
+            sumQ += 0.5 * (q1 + q2) * sec->deltaX;
+
+            // Bed elevation averaged over valid segments
+            sumZ += 0.5 * (z1 + z2) * sec->deltaX;
+            validLength += sec->deltaX;
+
+            // Flow depth averaged over wet portions
+            if(h1 > 0.0 && h2 > 0.0){
+                sumH += 0.5 * (h1 + h2) * sec->deltaX;
+                wetLength += sec->deltaX;
+            }
+        }
+
+        sec->discharge = sumQ;
+        sec->zAverage = validLength > 0.0
+                      ? sumZ / validLength : 0.0;
+        sec->hAverage = wetLength > 0.0
+                      ? sumH / wetLength : 0.0;
+    }
+
+    // Write discharge of all control sections
+    int n = snprintf(filename, sizeof(filename),
+                     "%sdischarge_section.out", dir);
+
+    if(n < 0 || n >= (int)sizeof(filename))
+        return 0;
+
+    FILE *fp = fopen(filename, "a");
+    if(fp == NULL)
+        return 0;
+
+    fprintf(fp, "%.6lf", t);
+
+    for(int i = 0; i < mesh->nSections; i++){
+        fprintf(fp, " %.6lf", mesh->sec->sec[i].discharge);
+    }
+
+    fprintf(fp, "\n");
+    fclose(fp);
+
+    // Write average values and detailed profiles
+    for(int i = 0; i < mesh->nSections; i++){
+
+        t_section *sec = &mesh->sec->sec[i];
+
+        n = snprintf(filename, sizeof(filename),
+                     "%saverage_section%d.out", dir, i+1);
+
+        if(n < 0 || n >= (int)sizeof(filename))
+            return 0;
+
+        fp = fopen(filename, "a");
+        if(fp == NULL)
+            return 0;
+
+        fprintf(fp, "%.6lf %.6lf %.6lf %.6lf %.6lf\n",
+                t,
+                sec->zAverage,
+                sec->hAverage,
+                sec->zAverage + sec->hAverage,
+                sec->discharge);
+
+        fclose(fp);
+
+        n = snprintf(filename, sizeof(filename),
+                     "%ssection%d.out", dir, i+1);
+
+        if(n < 0 || n >= (int)sizeof(filename))
+            return 0;
+
+        fp = fopen(filename, "a");
+        if(fp == NULL)
+            return 0;
+
+        fprintf(fp, "TIME: %.6lf \t DISCHARGE: %.6lf\n",
+                t, sec->discharge);
+
+        for(int j = 0; j < sec->npoints; j++){
+
+            int idc = sec->probeSec->probe[j].idc;
+            double distance = sec->deltaX * j;
+
+            if(idc >= 0 && idc < arrays->ncells){
+
+                fprintf(fp, "%d %.6lf %.6lf %.6lf %.6lf %.6lf %.6lf\n",
+                        idc,
+                        distance,
+                        arrays->z[idc],
+                        arrays->h[idc],
+                        arrays->z[idc] + arrays->h[idc],
+                        arrays->u[idc],
+                        arrays->v[idc]);
+
+            }else{
+
+                fprintf(fp,
+                        "-1 %.6lf -9999 -9999 -9999 -9999 -9999\n",
+                        distance);
+            }
+        }
+
+        fclose(fp);
+    }
+
+    return 1;
+}
+
+//------------------------------------------//

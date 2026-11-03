@@ -51,6 +51,7 @@ EXPORT_DLL int computeSimulation(
     }else{
         device = 0;
     }
+    device = 1;
     cudaSetDevice(device);
     sprintf(temp,"Selected device ID: %d",device);
     Notify(temp,MSG_L3,msg);
@@ -119,6 +120,50 @@ EXPORT_DLL int computeSimulation(
         Notify(temp,MSG_L2,msg);	
     }       
 
+    //------------------------------------------//
+    // Write initial observation point results
+    if(mesh->nProbes > 0){
+
+        for(int i = 0; i < mesh->nProbes; i++){
+            snprintf(filename, sizeof(filename),
+                     "%sprobe%d.out", spar.dir, i+1);
+            remove(filename);
+        }
+
+        if(!dump_probes_gpu(mesh, carrays, spar.dir, msg, 0.0)){
+            Notify("Could not write initial probe results", MSG_ERROR, msg);
+            return 0;
+        }
+    }
+    //------------------------------------------//
+
+    //------------------------------------------//
+    // Write initial control section results
+    if(mesh->nSections > 0){
+
+        // Remove the previous discharge file only once
+        snprintf(filename, sizeof(filename),
+                 "%sdischarge_section.out", spar.dir);
+        remove(filename);
+
+        for(int i = 0; i < mesh->nSections; i++){
+
+            snprintf(filename, sizeof(filename),
+                     "%saverage_section%d.out", spar.dir, i+1);
+            remove(filename);
+
+            snprintf(filename, sizeof(filename),
+                     "%ssection%d.out", spar.dir, i+1);
+            remove(filename);
+        }
+
+        if(!dump_sections_gpu(mesh, carrays, 0.0, spar.dir)){
+            Notify("Could not write initial section results",
+                   MSG_ERROR, msg);
+            return 0;
+        }
+    }
+    //------------------------------------------//
 
     //write initial condition      
     sprintf(filename,"%sstate%d.vtk",spar.dir,0);
@@ -162,6 +207,24 @@ EXPORT_DLL int computeSimulation(
         if(carrays->dumpComponent){ 
             //mass balance file
             write_massBalance(spar.dir, carrays, msg);  
+
+            //------------------------------------------//
+            // Write observation point results
+            if(mesh->nProbes > 0){
+                if(!dump_probes_gpu(mesh, carrays, spar.dir, msg, t)){
+                    Notify("Could not write probe results", MSG_ERROR, msg);
+                    return 0;
+                }
+            }
+
+            // Write control section results
+            if(mesh->nSections > 0){
+                if(!dump_sections_gpu(mesh, carrays, t, spar.dir)){
+                    Notify("Could not write section results", MSG_ERROR, msg);
+                    return 0;
+                }
+            }
+            //------------------------------------------//
 
             carrays->indexDump++;	
         }        
