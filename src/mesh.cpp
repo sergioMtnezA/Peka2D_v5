@@ -1178,8 +1178,299 @@ int build_inner_outlet(t_mesh *mesh,t_bound *outt, int i, t_message *msg){
 
 }
 
+//------------------------------------------//
+// Check if a point is inside a polygon
+int dentro_poligono(l_nodes *line, t_node point){
 
+    int contador;
+    int i, j;
+    double x_inters;
+    t_node *p1, *p2;
+    double coord_y, coord_x;
 
+    contador = 0;
 
+    coord_x = point.x;
+    coord_y = point.y;
+    j = line->n;
 
+    for(i = 0; i < j; i++){
 
+        p1 = line->nodes + i;
+        p2 = line->nodes + (i+1)%j;
+
+        if((coord_y > MIN(p1->y,p2->y)) &&
+           (coord_y <= MAX(p1->y,p2->y)) &&
+           (coord_x <= MAX(p1->x,p2->x))){
+
+            if(p1->y != p2->y){
+                x_inters = p1->x +
+                    (coord_y-p1->y)*(p2->x-p1->x)/(p2->y-p1->y);
+
+                if(p1->x == p2->x || coord_x <= x_inters){
+                    contador++;
+                }
+            }
+        }
+    }
+
+    if(contador % 2 == 0)
+        return(0);
+    else
+        return(1);
+}
+//------------------------------------------//
+
+//------------------------------------------//
+// Locate observation points in mesh cells
+int buscar_sondas(t_mesh *mesh, t_message *msg){
+
+    int *posicion;
+    l_nodes celda;
+    t_node punto;
+    int j, i, k;
+    int found;
+    char error[1024];
+
+    celda.n = mesh->NCwall;
+    celda.size = mesh->NCwall;
+
+    celda.nodes = (t_node*)malloc(sizeof(t_node)*mesh->NCwall);
+    posicion = (int*)malloc(sizeof(int)*mesh->nProbes);
+
+    if(celda.nodes == NULL || posicion == NULL){
+        Notify("Memory allocation failed in buscar_sondas", MSG_ERROR, msg);
+        free(celda.nodes);
+        free(posicion);
+        return(0);
+    }
+
+    found = 0;
+
+    for(i = 0; i < mesh->nProbes; i++){
+        posicion[i] = -1;
+        mesh->probe->probe[i].cell = NULL;
+    }
+
+    for(j = 0; j < mesh->ncells; j++){
+
+        for(k = 0; k < mesh->NCwall; k++){
+            celda.nodes[k].x = mesh->g_cells->cells[j].nodes[k]->x;
+            celda.nodes[k].y = mesh->g_cells->cells[j].nodes[k]->y;
+        }
+
+        for(i = 0; i < mesh->nProbes; i++){
+
+            if(posicion[i] < 0){
+
+                punto.x = mesh->probe->probe[i].x;
+                punto.y = mesh->probe->probe[i].y;
+
+                if(dentro_poligono(&celda, punto)){
+                    posicion[i] = j;
+                }
+            }
+        }
+    }
+
+    for(i = 0; i < mesh->nProbes; i++){
+
+        mesh->probe->probe[i].idc = posicion[i];
+
+        if(posicion[i] < 0){
+
+            sprintf(error, "Probe %d not found", i);
+            Notify(error, MSG_WARN, msg);
+
+        }else{
+
+            found++;
+
+            sprintf(error, "Probe %d is located in cell %d", i, posicion[i]);
+            Notify(error, MSG_L2, msg);
+
+            mesh->probe->probe[i].cell =
+                &mesh->c_cells->cells[posicion[i]];
+        }
+    }
+
+    free(celda.nodes);
+    free(posicion);
+
+    return(found);
+}
+//------------------------------------------//
+
+//------------------------------------------//
+// Build observation points along a control section
+int build_section(t_section *sec, int nSec, t_message *msg){
+
+    int i;
+    double npointsD;
+    double dist, distX, distY, difX, difY;
+    double sumX, sumY;
+    char error[1024];
+
+    if(sec->npoints < 2){
+        sprintf(error, "Section %d must have at least 2 points", nSec+1);
+        Notify(error, MSG_ERROR, msg);
+        return(0);
+    }
+
+    npointsD = sec->npoints * 1.0;
+
+    difX = sec->node[1].x - sec->node[0].x;
+    difY = sec->node[1].y - sec->node[0].y;
+
+    dist = sqrt(difX*difX + difY*difY);
+    sec->dist = dist;
+
+    if(fabs(dist) < TOL12){
+        sprintf(error,
+                "Points defining section %d are the same. Please redefine them",
+                nSec+1);
+        Notify(error, MSG_ERROR, msg);
+        return(0);
+    }
+
+    sec->probeSec = (l_probes*)malloc(sizeof(l_probes));
+
+    if(sec->probeSec == NULL){
+        Notify("Could not allocate section probe group", MSG_ERROR, msg);
+        return(0);
+    }
+
+    sec->probeSec->n = sec->npoints;
+    sec->probeSec->probe =
+        (t_probe*)calloc(sec->npoints, sizeof(t_probe));
+
+    if(sec->probeSec->probe == NULL){
+        Notify("Could not allocate section probes", MSG_ERROR, msg);
+        free(sec->probeSec);
+        sec->probeSec = NULL;
+        return(0);
+    }
+
+    distX = difX / (npointsD - 1.0);
+    distY = difY / (npointsD - 1.0);
+
+    sec->normal[_X_] = difY / dist;
+    sec->normal[_Y_] = -difX / dist;
+
+    sec->deltaX = dist / (npointsD - 1.0);
+
+    sumX = sec->node[0].x;
+    sumY = sec->node[0].y;
+
+    for(i = 0; i < sec->npoints; i++){
+
+        sec->probeSec->probe[i].x = sumX;
+        sec->probeSec->probe[i].y = sumY;
+
+        if(fabs(difX) > TOL9){
+            sumX += distX;
+            sumY = sec->node[0].y +
+                   difY/difX * (sumX - sec->node[0].x);
+        }else{
+            sumX = sec->node[0].x;
+            sumY += distY;
+        }
+
+        if(i == sec->npoints - 2){
+            sumX = sec->node[1].x;
+            sumY = sec->node[1].y;
+        }
+    }
+
+    return(1);
+}
+//------------------------------------------//
+
+//------------------------------------------//
+// Locate control section points in mesh cells
+int search_sections(t_mesh *mesh, t_message *msg){
+
+    int *posicion;
+    l_nodes celda;
+    t_node punto;
+    int j, i, k, l;
+    int warn;
+    t_section *sec;
+    char error[1024];
+
+    celda.n = mesh->NCwall;
+    celda.size = mesh->NCwall;
+
+    celda.nodes = (t_node*)malloc(sizeof(t_node)*mesh->NCwall);
+
+    if(celda.nodes == NULL){
+        Notify("Could not allocate cell nodes in search_sections", MSG_ERROR, msg);
+        return(0);
+    }
+
+    sec = mesh->sec->sec;
+
+    for(l = 0; l < mesh->nSections; l++){
+
+        posicion = (int*)malloc(sec->npoints*sizeof(int));
+
+        if(posicion == NULL){
+            Notify("Could not allocate section positions", MSG_ERROR, msg);
+            free(celda.nodes);
+            return(0);
+        }
+
+        for(i = 0; i < sec->npoints; i++){
+            posicion[i] = -1;
+            sec->probeSec->probe[i].idc = -1;
+            sec->probeSec->probe[i].cell = NULL;
+        }
+
+        for(j = 0; j < mesh->ncells; j++){
+
+            for(k = 0; k < mesh->NCwall; k++){
+                celda.nodes[k].x = mesh->g_cells->cells[j].nodes[k]->x;
+                celda.nodes[k].y = mesh->g_cells->cells[j].nodes[k]->y;
+            }
+
+            for(i = 0; i < sec->npoints; i++){
+
+                if(posicion[i] < 0){
+
+                    punto.x = sec->probeSec->probe[i].x;
+                    punto.y = sec->probeSec->probe[i].y;
+
+                    if(dentro_poligono(&celda, punto)){
+                        posicion[i] = j;
+                        sec->probeSec->probe[i].idc = j;
+                        sec->probeSec->probe[i].cell =
+                            &mesh->c_cells->cells[j];
+                    }
+                }
+            }
+        }
+
+        warn = 0;
+
+        for(i = 0; i < sec->npoints; i++){
+            if(posicion[i] < 0){
+                warn = 1;
+            }
+        }
+
+        if(warn){
+            sprintf(error,
+                    "The line defining the section %d is at least partially out of the domain",
+                    l+1);
+            Notify(error, MSG_WARN, msg);
+        }
+
+        free(posicion);
+        sec++;
+    }
+
+    free(celda.nodes);
+
+    return(1);
+}
+//------------------------------------------//
