@@ -5,6 +5,10 @@ DLEVEL=2
 WARN=no
 OMP=no
 
+# Set no coupling by default
+# Specify in command line: make COUPLING=yes to set coupling
+COUPLING=no
+
 # La siguiente no es necesariamente requerida, se agrega para
 # mostrar como funciona.
 
@@ -21,7 +25,7 @@ CC = g++
 NVCC = $(CUDA_HOME)/bin/nvcc
 
 # Define C flags
-C_CUDA_FLAGS = -I$(CUDA_HOME)/include -L$(CUDA_HOME)/lib64 -L$(PRECICE_LIB_PATH) -lcuda -lcudart -lcublas -lprecice -lrt -lm
+C_CUDA_FLAGS = -I$(CUDA_HOME)/include -L$(CUDA_HOME)/lib64 -L$(PRECICE_LIB_PATH) -lcublas -lprecice -lrt -lm
 C_REQ_FLAGS =
 C_OPT_FLAGS = -O3 -w
 C_DEBUG_FLAGS = -g
@@ -30,7 +34,7 @@ C_PROFILE_FLAGS = -pg
 C_WARN_FLAGS = -Wall
 C_OMP_FLAGS = -fopenmp
 
-CULIB_REQ_FLAGS = --compiler-bindir=g++ -w -m64 -arch sm_89 -Xptxas -dlcm=ca --use_fast_math -L$(CUDA_HOME)/lib64 -L$(PRECICE_LIB_PATH) -lcuda -lcudart -lcublas -lprecice -lrt -lm
+CULIB_REQ_FLAGS = --compiler-bindir=g++ -w -arch sm_89 -Xptxas -dlcm=ca --use_fast_math -L$(CUDA_HOME)/lib64 -L$(PRECICE_LIB_PATH) -lcublas -lprecice -lrt -lm
 CULIB_OPT_FLAGS = -O3 -w
 CULIB_DEBUG_FLAGS = -O0 -G -g -Xcompiler -rdynamic
 #additional flags for cuda-memcheck: (release version) -Xcompiler -rdynamic -lineinfo   (debug version) -G -g -Xcompiler -rdynamic
@@ -61,6 +65,11 @@ endif
 
 ifeq ($(OMP),yes)
 	CFLAGS=$(C_REQ_FLAGS) $(C_OPT_FLAGS) $(C_OMP_FLAGS)
+endif
+
+ifeq ($(COUPLING),yes)
+	CFLAGS     += -DSET_COUPLING=1
+	CULIBFLAGS += -DSET_COUPLING=1
 endif
 
 
