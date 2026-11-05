@@ -59,36 +59,42 @@ EXPORT_DLL void generateTimeStep(
 /*----------------------------*/
 
 // --- Functions for preCICE
+#if SET_COUPLING
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL int getCellsNumbersAtBC(
-    t_mesh *mesh
-);
+__global__ void readWriteCouplingValues(
+    int nTasks,
+    char cond,
+    t_arrays *arrays);
 /*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL std::vector<double> getCellsCoordinatesAtBC(
-    t_mesh *mesh
-);
+    t_mesh *mesh,
+    int k);
+/*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-EXPORT_DLL std::vector<int> getCellsIDsAtBC(
-    t_mesh *mesh
-);
+// --- update the arrays in CPU <-> GPU
+EXPORT_DLL void updateCouplingArrays(
+    t_arrays *carrays,   
+    t_cuPtr *cuPtr,
+    char cond);
+/*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-__global__ void g_get_coupling_values(
-    int nTasks,
-    t_arrays *arrays,
-    int *cellIDs,
-    double *hBC,
-    double *huBC,
-    double *hvBC);
+// --- create a bounding box for preCICE mapping
+EXPORT_DLL std::vector<double> CouplingBbox(
+    t_mesh *mesh,
+    int k,
+    double margin);
+/*----------------------------*/
 
 ////////////////////////////////////////////////////////////////
-__global__ void g_write_coupling_values(
-    int nTasks,
-    t_arrays *arrays,
-    int *cellIDs,
-    double *hBC,
-    double *huBC,
-    double *hvBC);
+// --- Function to map the nearest PEKA coupling cell for each OF face in x-y plane
+EXPORT_DLL void mapOFwithPEKA(
+    t_mesh *mesh,
+    int k,
+    t_coupInterface &ci);
+/*----------------------------*/
+
+#endif

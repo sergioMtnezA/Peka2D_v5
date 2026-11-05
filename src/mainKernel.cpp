@@ -148,6 +148,34 @@ int loadSimulationDomain(
 	} 
 	#endif	
 
+	#if SET_COUPLING
+	//Load coupling data
+	if(msg->error){
+		return 0;
+	}else{
+		char filename[1024];
+		sprintf(filename,"%s%s.COUP",spar->dir,spar->proj);
+		if(readCouplingFile(filename, pksetup, mesh, msg)){
+			sprintf(temp,"Coupling data (.COUP) loaded");
+			Notify(temp,MSG_L1,msg);		
+		}        
+	}
+
+	//Load Internal Boundary Coupling data
+	if(msg->error){
+		return 0;
+	}else{
+		char filename[1024];
+		sprintf(filename,"%s%s.CIBC",spar->dir,spar->proj);
+		if(readInternalCouplingBCFile(filename, pksetup, mesh, msg)){
+			sprintf(temp,"Internal coupling BCs (.CIBC) loaded");
+			Notify(temp,MSG_L1,msg);		
+		}        
+	}
+	#else
+	sprintf(temp,"Coupling is off");
+	Notify(temp,MSG_L1,msg);
+	#endif
 
     //Load boundary conditions
 	if(msg->error){
@@ -272,6 +300,20 @@ int initializeComputationArrays(
 			Notify(temp,MSG_L2,msg);		
 		} 
 
+	} 	
+	#endif
+
+	// Create Coupling CPU Arrays
+	#if SET_COUPLING
+	if(msg->error){
+		return 0;
+	}else{
+
+		//allocate RAM memory and initialize basic variables
+		if(allocInitCouplingArraysMem(mesh, carrays, msg)){
+			sprintf(temp,"Coupling arrays memory initial allocation completed");
+			Notify(temp,MSG_L2,msg);
+		}
 	} 	
 	#endif
 

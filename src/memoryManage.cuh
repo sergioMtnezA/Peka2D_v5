@@ -30,7 +30,7 @@ EXPORT_DLL int copyComputationControls(
 
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int allocateArraysCudaMem(
-    int NCwall, int ncells, int nWallCell, int nwc, int nwb,   
+    int NCwall, int ncells, int nWallCell, int nwc, int nwb, int ncc,  
     t_cuPtr *cuPtr);
 /*----------------------------*/
 
@@ -215,3 +215,34 @@ EXPORT_DLL int freeSoluteCudaMemory(
 /*----------------------------*/
 #endif
 
+// --- Assign coupling variables to CUDA
+#if SET_COUPLING
+__global__ void assignPEKACouplingArraysToCudaMem(
+    t_arrays *garrays,
+	int *couplingIDCells,
+	double *hInt,
+	double *huInt,
+	double *hvInt,
+    double *hExt,
+	double *huExt,
+	double *hvExt
+	);
+
+/*
+__global__ void assignOPENFOAMCouplingArraysToCudaMem(
+    t_arrays *garrays,
+	double *velocity3D,
+	double *pressure3D,
+	double *alpha2D,
+    double *velocity2D,
+	double *pressure2D
+	);
+
+EXPORT_DLL int createCoupling3DArraysCudaMemory(
+    t_arrays *carrays,
+    t_arrays *garrays,
+    t_cuPtr *cuPtr,
+    int nOFCells);
+*/
+
+#endif

@@ -75,3 +75,13 @@ EXPORT_DLL int initilizeSoluteArrays(
     t_message *msg);
 /*----------------------------*/
 #endif
+
+#if SET_COUPLING
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocInitCouplingArraysMem(
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg);
+/*----------------------------*/
+
+#endif

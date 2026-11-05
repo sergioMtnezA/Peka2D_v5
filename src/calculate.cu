@@ -2,13 +2,7 @@
 
 //--- Include preCICE lib
 #include <precice/precice.hpp>
-
-// --- for preCICE
-int meshDim;
-int BCCellsSize;
-int hDim;
-int huDim;
-int hvDim;
+#include <cmath>
 
 cublasHandle_t cuHandle;
 
@@ -25,19 +19,22 @@ EXPORT_DLL int computeSimulation(
 	char temp[1024], filename[1024];
 
     double t;
-    int nIter;
+    int nIter, ncc;
 
     clock_t stime1, stime2;
     clock_t start0, end0;
 
     t_arrays *garrays;
-    t_cuPtr cuPtr; 
+    t_cuPtr cuPtr;
     int nTasks, blocksPerGrid;
 
+    // --- for preCICE
+    int k;
+    std::vector<double> pekaOFbbox;
+    ncc = carrays->nCoupPEKACells;
+    
     t=carrays->ti;
     nIter=carrays->nIter;
-     
-
  	//Start GPU initialization time .....................................
 	stime1=clock();
 
@@ -87,7 +84,6 @@ EXPORT_DLL int computeSimulation(
     //cudaDeviceSetLimit(cudaLimitMallocHeapSize, heapsize);     
     //sprintf(temp,"HEAP memory set");
     //Notify(temp,MSG_L3,msg);
-
 
     //create CUDA memory and initialize
     cudaMalloc( (void **) &garrays, sizeof(t_arrays));
@@ -144,117 +140,144 @@ EXPORT_DLL int computeSimulation(
 	//End IO time .....................................   
 
 
-
-
 	/////////////////////////////////////////////////////////////////////////
 	// TIME LOOP
-	/////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////  
+    #if SET_COUPLING
     // --- Creates preCICE participant
-    precice::Participant sweParticipant("sweParticipant", "precice-config.xml", 0, 1);
+    precice::Participant sweParticipant(mesh->participantName, mesh->configFile, 0, 1);
 
-    // --- Prepare mesh informations for preCICE
-    // --- Mesh dimensions
-    meshDim = sweParticipant.getMeshDimensions("sweMesh");
+    // --- Coupling interface informations
+    std::vector<t_coupInterface> ifaces(mesh->nCoupInterfaces);
 
-    // --- Determine the number of vertices at the Coupling boundary
-    // --- The number of "vertices" and its coordinates refers to the preCICE vertices
-    // --- where the information will be exchanged
-    BCCellsSize = getCellsNumbersAtBC(mesh);
+    // --- Define one bounding box for each interface
+    for (k=0; k<mesh->nCoupInterfaces; k++){
+        // Check for ncells == 0
+        if (mesh->coupInfo[k].nCells == 0) continue;
 
-    // --- Create the vectors for coords and cellsIDs
-    std::vector<double> coords = getCellsCoordinatesAtBC(mesh); 
-    // coords has the meshDim*BCCellsSize dimensions 
-    std::vector<int> couplingCellsIDs = getCellsIDsAtBC(mesh); // PeKa IDs
-    std::vector<int> preCICEcellsIDs(BCCellsSize); // preCICE IDs
-    // cellsIDs and preCICEcellsIDs has the BCCellsSize dimensions
-
-    // --- GPU memory reservation
-    // Null pointers (just for memory allocation)
-    int *gpu_couplingCellsIDs = NULL; // for cellsIDs
-    double *gpu_hBC = NULL; // for h
-    double *gpu_huBC = NULL; // for hu
-    double *gpu_hvBC = NULL; // for hv
-
-    // GPU memory allocation
-    cudaMalloc((void**) &gpu_couplingCellsIDs, BCCellsSize*sizeof(int));
-    cudaMalloc((void**) &gpu_hBC, BCCellsSize*sizeof(double));
-    cudaMalloc((void**) &gpu_huBC, BCCellsSize*sizeof(double));
-    cudaMalloc((void**) &gpu_hvBC, BCCellsSize*sizeof(double));
-
-    // --- Send the cellsIDs where the data will be exchanged with preCICE
-    cudaMemcpy(gpu_couplingCellsIDs, couplingCellsIDs.data(), 
-                BCCellsSize*sizeof(int), cudaMemcpyHostToDevice);
-
-    // --- Load this information into the participant
-    sweParticipant.setMeshVertices("sweMesh", coords, preCICEcellsIDs);
-
-    // --- Create data arrays for coupling (read and write)
-    hDim = sweParticipant.getDataDimensions("sweMesh", "h");
-    std::vector<double> h_read(BCCellsSize*hDim);
-    std::vector<double> h_write(BCCellsSize*hDim);
-
-    huDim = sweParticipant.getDataDimensions("sweMesh", "hu");
-    std::vector<double> hu_read(BCCellsSize*huDim);
-    std::vector<double> hu_write(BCCellsSize*huDim);
-
-    hvDim = sweParticipant.getDataDimensions("sweMesh", "hv");
-    std::vector<double> hv_read(BCCellsSize*hvDim);
-    std::vector<double> hv_write(BCCellsSize*hvDim);
+        pekaOFbbox = CouplingBbox(mesh, k, 1.0);
+        sweParticipant.setMeshAccessRegion(mesh->meshNameReceived[k], pekaOFbbox);
+    }
 
     // --- Initialize preCICE participant
     sweParticipant.initialize();
+
+    // --- OpenFOAM faces, coordinates, buffers and map for each interface
+    for (k=0; k<mesh->nCoupInterfaces; k++){
+        // Access the coupling interface
+        t_coupInterface &ci = ifaces[k];
+
+        // Check if nCells == 0
+        if (mesh->coupInfo[k].nCells == 0) continue;
+
+        // Get the number of OpenFOAM faces and mesh dimension
+        ci.OFFaces = sweParticipant.getMeshVertexSize(mesh->meshNameReceived[k]);
+        ci.meshDim = sweParticipant.getMeshDimensions(mesh->meshNameReceived[k]);
+
+        // Vertex IDs and coordinates
+        ci.vertexIDs.resize(ci.OFFaces);
+        ci.OFCoord.resize(ci.OFFaces*ci.meshDim);
+        sweParticipant.getMeshVertexIDsAndCoordinates(mesh->meshNameReceived[k], ci.vertexIDs, ci.OFCoord);
+
+        // Buffers OpenFOAM -> Peka
+        ci.alpha2D.resize(ci.OFFaces);
+        ci.velocity2D.resize(ci.OFFaces*ci.meshDim);
+        ci.pressure2D.resize(ci.OFFaces);
+
+        // Buffers Peka -> OpenFOAM
+        ci.alpha3D.resize(ci.OFFaces);
+        ci.velocity3D.resize(ci.OFFaces*ci.meshDim);
+        ci.pressure3D.resize(ci.OFFaces);
+
+        // Manual neares-neighbor mapping
+        mapOFwithPEKA(mesh, k, ci);
+
+        sprintf(temp, "Interface %d (%s): # %d, %d Peka Cells, %d OpenFOAM Faces, max map dist %.4lf",
+            k, mesh->meshNameReceived[k], mesh->coupInfo[k].interfaceIndex,
+            mesh->coupInfo[k].nCells, ci.OFFaces, ci.mapMaxDist);
+        Notify(temp, MSG_L1, msg);
+    }
+
     sprintf(temp,"Simulation starts ...............");
     Notify(temp,MSG_L1,msg);
 
     //Start computation time .....................................
-	start0=clock();
+    start0=clock();
 
-	while(t < carrays->tf){
-        // --- preCICE max dt (CPU)
+    while(t < carrays->tf){
+        // --- preCICE max dt
         carrays->preciceDt = sweParticipant.getMaxTimeStepSize();
-
-        // --- send the preciceDt to GPU. Must stay before generateTimeStep
-        cudaMemcpy(&(garrays->preciceDt), &(carrays->preciceDt),
-                    sizeof(double), cudaMemcpyHostToDevice);
+        
+        // --- Send the dt to GPU
+        cudaMemcpy(&(garrays->preciceDt), &(carrays->preciceDt), sizeof(double), cudaMemcpyHostToDevice);
 
         //update carrays to next time step
-		generateTimeStep(&t, carrays, garrays, &(cuPtr), timers, msg);
+        generateTimeStep(&t, carrays, garrays, &(cuPtr), timers, msg);
 
-        // --- After the fields update
-        nTasks = BCCellsSize;
+        // --- After updating the fields
+        nTasks = carrays->nCoupPEKACells;
         blocksPerGrid = nTasks/threadsPerBlock + 1;
 
-        // --- Read internal data from GPU
-        g_get_coupling_values <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays,
-            gpu_couplingCellsIDs, gpu_hBC, gpu_huBC, gpu_hvBC);
-        
-        // --- Pass the information to the write array
-        cudaMemcpy(h_write.data(),  gpu_hBC,  BCCellsSize*sizeof(double), cudaMemcpyDeviceToHost);
-        cudaMemcpy(hu_write.data(),  gpu_huBC,  BCCellsSize*sizeof(double), cudaMemcpyDeviceToHost);
-        cudaMemcpy(hv_write.data(),  gpu_hvBC,  BCCellsSize*sizeof(double), cudaMemcpyDeviceToHost);
+        // --- Update hCoupInt, huCoupInt and hvCoupInt with the mesh values
+        readWriteCouplingValues <<<blocksPerGrid,threadsPerBlock>>> (nTasks, 'r', garrays);
+        updateCouplingArrays(carrays,  &(cuPtr), 'r');
 
+        // --- Read the arrays from preCICE
+        for (k=0; k<mesh->nCoupInterfaces; k++){
+            t_coupInterface &ci = ifaces[k];
+            if(mesh->coupInfo[k].nCells == 0) continue;
+
+            // Alpha
+            sweParticipant.readData(
+                mesh->meshNameReceived[k],
+                mesh->alphaWater2D,
+                ci.vertexIDs,
+                carrays->dt,
+                ci.alpha2D);
+            
+            // Velocity
+            sweParticipant.readData(
+                mesh->meshNameReceived[k],
+                mesh->velocity2D,
+                ci.vertexIDs,
+                carrays->dt,
+                ci.velocity2D);
+            
+            // Pressure
+            sweParticipant.readData(
+                mesh->meshNameReceived[k],
+                mesh->pressure2D,
+                ci.vertexIDs,
+                carrays->dt,
+                ci.pressure2D);
+        }
+
+
+
+
+/*
         // --- Pass the write arrays to preCICE
-        sweParticipant.writeData("sweMesh", "h", preCICEcellsIDs, h_write);
-        sweParticipant.writeData("sweMesh", "hu", preCICEcellsIDs, hu_write);
-        sweParticipant.writeData("sweMesh", "hv", preCICEcellsIDs, hv_write);
+        sweParticipant.writeData(mesh->meshName, mesh->alphaWater2D, preCICEcellsIDs,
+            precice::span<const double>(carrays->hCoupInt, carrays->nCouplingCells)); // <---- UPDATE THIS
+        sweParticipant.writeData(mesh->meshName, mesh->velocity2D, preCICEcellsIDs,
+            precice::span<const double>(carrays->huCoupInt, carrays->nCouplingCells)); // <---- UPDATE THIS
+        sweParticipant.writeData(mesh->meshName, mesh->pressure2D, preCICEcellsIDs,
+            precice::span<const double>(carrays->hvCoupInt, carrays->nCouplingCells)); // <---- UPDATE THIS
+*/
 
-        // --- Read external data from preCICE
-        sweParticipant.readData("sweMesh", "h", preCICEcellsIDs, carrays->dt, h_read);
-        sweParticipant.readData("sweMesh", "hu", preCICEcellsIDs, carrays->dt, hu_read);
-        sweParticipant.readData("sweMesh", "hv", preCICEcellsIDs, carrays->dt, hv_read);
+        // FUNCTION HERE 3D -> 2D
 
-        // --- Pass the external data to internal arrays
-        cudaMemcpy(h_read.data(),  gpu_hBC,  BCCellsSize*sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(hu_read.data(),  gpu_huBC,  BCCellsSize*sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(hv_read.data(),  gpu_hvBC,  BCCellsSize*sizeof(double), cudaMemcpyHostToDevice);
-
-        // --- Write the external data into the mesh
-        g_write_coupling_values <<<blocksPerGrid,threadsPerBlock>>> (nTasks, garrays,
-            gpu_couplingCellsIDs, gpu_hBC, gpu_huBC, gpu_hvBC);
+        //Function performing average values
 
 
+        // --- Update hCoup, huCoup and hvCoup with the received values
+        //readWriteCouplingValues <<<blocksPerGrid,threadsPerBlock>>> (nTasks, 'w', garrays);
+        //updateCouplingArrays(carrays,  &(cuPtr), 'w');
+        
 
-     	//Start IO time .....................................
+
+        
+        //Start IO time .....................................
         stime1=clock();
 
         //print screen info
@@ -298,12 +321,11 @@ EXPORT_DLL int computeSimulation(
 
         //--- advance preCICE dt
         sweParticipant.advance(carrays->dt);
-
-	}
-
-    // --- Free GPU memory
-    cudaFree(gpu_couplingCellsIDs);
-
+    }
+    // --- preCICE end communication
+    sweParticipant.finalize();
+    
+    #endif
 	/////////////////////////////////////////////////////////////////////////
 	// END TIME LOOP
 	/////////////////////////////////////////////////////////////////////////        
@@ -316,9 +338,6 @@ EXPORT_DLL int computeSimulation(
 
     sprintf(temp,"Computation loop completed");
     Notify(temp,MSG_L1,msg);
-
-    // --- end preCICE participant
-    sweParticipant.finalize();
 
 
 
@@ -859,107 +878,171 @@ EXPORT_DLL void generateTimeStep(
 
 }
 
+#if SET_COUPLING
 ////////////////////////////////////////////////////////////////
-// --- Number of the cells at the preCICE Coupling BC
-EXPORT_DLL int getCellsNumbersAtBC(
-    t_mesh *mesh){
+// --- Copy h, hu, hv of the coupling BC
+__global__ void readWriteCouplingValues(
+    int nTasks,
+    char cond,
+    t_arrays *arrays){
 /*----------------------------*/
-    int i;
-    int nCells;
 
-    for(i=0; i<mesh->nOutlet; i++){
-        if(mesh->out[i].type == HYD_PRECICE_COUPLING){
-            nCells = mesh->out[i].ncellsBound;
+    int idx;
+    int i = threadIdx.x+(blockIdx.x*blockDim.x);
+
+    if(i<nTasks){
+        if (cond == 'r'){
+            idx = arrays->couplingPEKAIDCells[i];
+            arrays->hCoupInt[i]  = arrays->h[idx];
+            arrays->huCoupInt[i] = arrays->hu[idx];
+            arrays->hvCoupInt[i] = arrays->hv[idx];
+        }
+        else if (cond == 'w'){
+            idx = arrays->couplingPEKAIDCells[i];
+            arrays->h[idx] = arrays->hCoupExt[i];
+            arrays->hu[idx] = arrays->huCoupExt[i];
+            arrays->hv[idx] = arrays->hvCoupExt[i];
         }
     }
-
-    return nCells;
 }
 
 ////////////////////////////////////////////////////////////////
 // --- Cells coordinates at the preCICE Coupling BC
 EXPORT_DLL std::vector<double> getCellsCoordinatesAtBC(
-    t_mesh *mesh){
+    t_mesh *mesh,
+    int k){
 /*----------------------------*/
     
-    int i, j;
+    int j;
     int cellID;
+    int iOut;
     std::vector<double> coords;
+    iOut = mesh->coupInfo[k].interfaceIndex;
 
-    for(i=0; i<mesh->nOutlet; i++){
-        if(mesh->out[i].type == HYD_PRECICE_COUPLING){
-            for(j=0; j<mesh->out[i].ncellsBound; j++){
-                cellID = mesh->out[i].cellBound[j]->id;
-                coords.push_back(mesh->g_cells->cells[cellID].center[0]); // x
-                coords.push_back(mesh->g_cells->cells[cellID].center[1]); // y
-            }
-        }
+    for(j=0; j<mesh->coupInfo[k].nCells; j++){
+        cellID = mesh->cibc->cellsIDs[k].cellsIDIn2D[j];
+        coords.push_back(mesh->g_cells->cells[cellID].center[0]); // x
+        coords.push_back(mesh->g_cells->cells[cellID].center[1]); // y
     }
 
     return coords;
 }
 
 ////////////////////////////////////////////////////////////////
-// --- Cells ids at the preCICE Coupling BC
-EXPORT_DLL std::vector<int> getCellsIDsAtBC(
-    t_mesh *mesh){
+// --- update the arrays in CPU <-> GPU
+EXPORT_DLL void updateCouplingArrays(
+    t_arrays *carrays,   
+    t_cuPtr *cuPtr,
+    char cond){
 /*----------------------------*/
     
-    int i, j;
-    int cellID;
-    std::vector<int> ids;
+    int ncc;
 
-    for(i=0; i<mesh->nOutlet; i++){
-        if(mesh->out[i].type == HYD_PRECICE_COUPLING){
-            for(j=0; j<mesh->out[i].ncellsBound; j++){
-                ids.push_back(mesh->out[i].cellBound[j]->id);
+    ncc = carrays->nCoupPEKACells;
+
+    if (cond == 'r'){
+        cudaMemcpy(carrays->hCoupInt, cuPtr->hCoupInt, ncc*sizeof(double), cudaMemcpyDeviceToHost);
+        cudaMemcpy(carrays->huCoupInt, cuPtr->huCoupInt, ncc*sizeof(double), cudaMemcpyDeviceToHost);
+        cudaMemcpy(carrays->hvCoupInt, cuPtr->hvCoupInt, ncc*sizeof(double), cudaMemcpyDeviceToHost);
+    }
+    else if (cond == 'w'){
+        cudaMemcpy(cuPtr->hCoupExt, carrays->hCoupExt, ncc*sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(cuPtr->huCoupExt, carrays->huCoupExt, ncc*sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(cuPtr->hvCoupExt, carrays->hvCoupExt, ncc*sizeof(double), cudaMemcpyHostToDevice);
+    }
+}
+
+
+// --- Create bounding boxes for preCICE direct mesh access
+// The margin should be sufficent to include the OpenFOAM patches
+// Returns an empty vector if no Cells
+EXPORT_DLL std::vector<double> CouplingBbox(
+    t_mesh *mesh,
+    int k,
+    double margin){
+
+    int j;
+    int nCells;
+
+    nCells = mesh->coupInfo[k].nCells;
+    
+    // If nCells == 0 return empty vector
+    if (nCells == 0) {
+        return std::vector<double>();
+    }
+
+    // Get the coordinates
+    std::vector<double> coords2D = getCellsCoordinatesAtBC(mesh, k);   // x,y
+    
+    // Create a bounding box
+    std::vector<double> bbox = { 1e30, -1e30, 1e30, -1e30, -1e3, 1e3 };
+   
+    // Update the limits of the boundingbox
+    for (j = 0; j < nCells; j++) {
+        bbox[0] = fmin(bbox[0], coords2D[2*j]);   bbox[1] = fmax(bbox[1], coords2D[2*j]);
+        bbox[2] = fmin(bbox[2], coords2D[2*j+1]); bbox[3] = fmax(bbox[3], coords2D[2*j+1]);
+    }
+
+    // Add and remove the margin value
+    bbox[0] -= margin; bbox[1] += margin;
+    bbox[2] -= margin; bbox[3] += margin;
+
+    return bbox;
+}
+
+// --- Function to map the nearest PEKA coupling cell for each OF face in x-y plane
+EXPORT_DLL void mapOFwithPEKA(
+    t_mesh *mesh,
+    int k,
+    t_coupInterface &ci){
+    
+    int i, j;
+    int offset;
+    int nCells;
+    double dx, dy, dist, distMin;
+    double xOFCell, yOFCell, xPKCell, yPKCell;
+    
+    // Offset in array position from one to another interface.
+    offset = mesh->coupInfo[k].offset;
+
+    // Number of cells of the interface
+    nCells = mesh->coupInfo[k].nCells;
+    
+    // Peka Coordinates
+    std::vector<double> pcc = getCellsCoordinatesAtBC(mesh, k);
+    
+    // Resize the std::vector and assign -1 values
+    ci.map.assign(ci.OFFaces, -1);
+
+    // Assign the maxDist as 0
+    ci.mapMaxDist = 0.0;
+
+    // --- For every OF Cell
+    for (i=0; i<ci.OFFaces; i++){
+        distMin = 1e30;
+
+        // --- OF cell coordinates
+        xOFCell = ci.OFCoord[(i*3)];
+        yOFCell = ci.OFCoord[(i*3)+1];
+        
+        // --- For every Peka Cell
+        for (j=0; j<nCells; j++){
+
+            // --- Peka cell coordinate
+            xPKCell = pcc[(j*2)];
+            yPKCell = pcc[(j*2)+1];
+            dx = (xPKCell - xOFCell);
+            dy = (yPKCell - yOFCell);
+            dist = sqrt(dx*dx + dy*dy);
+
+            // --- Map the index of Peka cell 
+            if (dist < distMin){
+                distMin = dist;
+                ci.map[i] = offset + j;
             }
         }
+        ci.mapMaxDist = fmax(ci.mapMaxDist, distMin);
     }
+};
 
-    return ids;
-}
-
-////////////////////////////////////////////////////////////////
-// --- Copy h, hu, hv of the coupling BC
-__global__ void g_get_coupling_values(
-    int nTasks,
-    t_arrays *arrays,
-    int *cellIDs,
-    double *hBC,
-    double *huBC,
-    double *hvBC){
-/*----------------------------*/
-
-    int idx;
-
-    int i = threadIdx.x+(blockIdx.x*blockDim.x);
-    if(i<nTasks){
-        idx = cellIDs[i];
-        hBC[i]  = arrays->h[idx];
-        huBC[i] = arrays->hu[idx];
-        hvBC[i] = arrays->hv[idx];
-    }
-}
-
-////////////////////////////////////////////////////////////////
-// --- Copy h, hu, hv of the coupling BC
-__global__ void g_write_coupling_values(
-    int nTasks,
-    t_arrays *arrays,
-    int *cellIDs,
-    double *hBC,
-    double *huBC,
-    double *hvBC){
-/*----------------------------*/
-
-    int idx;
-
-    int i = threadIdx.x+(blockIdx.x*blockDim.x);
-    if(i<nTasks){
-        idx = cellIDs[i];
-        arrays->h[idx] = hBC[i];
-        arrays->hu[idx] = huBC[i];
-        arrays->hv[idx] = hvBC[i];
-    }
-}
+#endif

@@ -10,7 +10,7 @@ EXPORT_DLL int createArraysCudaMemory(
 
 	int i,j;
     int NCwall;
-	int ncells,nwc,nwb;
+	int ncells,nwc,nwb,ncc;
     int nWallCell;
     int nSolutes;
 
@@ -28,6 +28,7 @@ EXPORT_DLL int createArraysCudaMemory(
     nWallCell=NCwall*ncells;
 	nwc=carrays->nw_calc;
 	nwb=carrays->nw_bound;
+    ncc=carrays->nCoupPEKACells;
    
     //Bound variables for allocation
     nInlet = carrays->nInlet;
@@ -48,7 +49,7 @@ EXPORT_DLL int createArraysCudaMemory(
     ) return 0;
 
     if(!allocateArraysCudaMem( 
-        NCwall, ncells, nWallCell, nwc, nwb, 
+        NCwall, ncells, nWallCell, nwc, nwb, ncc,
         cuPtr) 
     ) return 0;
 
@@ -56,7 +57,7 @@ EXPORT_DLL int createArraysCudaMemory(
         carrays, 
         garrays, 
         cuPtr)
-    ) return 0;      
+    ) return 0;     //include  at the end the copy to garrays
 
     assignMeshArraysToCudaMem <<<1,1>>> (garrays,
         //------------------------cells
@@ -108,7 +109,7 @@ EXPORT_DLL int createArraysCudaMemory(
         cuPtr->solidWall,
         cuPtr->qnormalL,
         cuPtr->localDt
-    ); 
+    );
 
     cudaDeviceSynchronize();
     //getCudaMemoryState(&free_mem, &total_mem);        
@@ -211,6 +212,18 @@ EXPORT_DLL int createArraysCudaMemory(
     );
     // cudaDeviceSynchronize();
     // //getCudaMemoryState(&free_mem, &total_mem); 
+    #endif
+
+    #if SET_COUPLING
+        assignPEKACouplingArraysToCudaMem <<<1,1>>> (garrays,
+            cuPtr->couplingPEKAIDCells,
+            cuPtr->hCoupInt,
+            cuPtr->huCoupInt,
+            cuPtr->hvCoupInt,
+            cuPtr->hCoupExt,
+            cuPtr->huCoupExt,
+            cuPtr->hvCoupExt
+        );
     #endif
 
     //Chech final CUDA memory
@@ -319,7 +332,12 @@ EXPORT_DLL int copyComputationControls(
     cudaMalloc((void**) &(cuPtr->massError), sizeof(double));
     cudaMemcpy(cuPtr->massOld, &(carrays->massOld), sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy(cuPtr->massNew, &(carrays->massNew), sizeof(double), cudaMemcpyHostToDevice );
-    cudaMemcpy(cuPtr->massError, &(carrays->massError), sizeof(double), cudaMemcpyHostToDevice );    
+    cudaMemcpy(cuPtr->massError, &(carrays->massError), sizeof(double), cudaMemcpyHostToDevice );
+    
+    #if SET_COUPLING
+        cudaMalloc((void**) &(cuPtr->nCoupPEKACells), sizeof(int)); 
+        cudaMemcpy(cuPtr->nCoupPEKACells, &(carrays->nCoupPEKACells), sizeof(int), cudaMemcpyHostToDevice );
+    #endif
 
     return 1;
 
@@ -331,7 +349,7 @@ EXPORT_DLL int copyComputationControls(
 
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int allocateArraysCudaMem(
-    int NCwall, int ncells, int nWallCell, int nwc, int nwb,
+    int NCwall, int ncells, int nWallCell, int nwc, int nwb, int ncc,
     t_cuPtr *cuPtr){
 /*----------------------------*/
 
@@ -400,7 +418,25 @@ EXPORT_DLL int allocateArraysCudaMem(
 
     cudaMalloc((void**) &(cuPtr->qnormalL), nwc*sizeof(double));
     cudaMalloc((void**) &(cuPtr->localDt), nwc*sizeof(double));
-      
+    
+    // --- Coupling Data GPU memory allocation
+    #if SET_COUPLING
+        if (ncc>0){
+            // Cells IDs with coupling interface
+            cudaMalloc((void**) &(cuPtr->couplingPEKAIDCells), ncc*sizeof(int));
+            
+            // Internal data
+            cudaMalloc((void**) &(cuPtr->hCoupInt), ncc*sizeof(double));
+            cudaMalloc((void**) &(cuPtr->huCoupInt), ncc*sizeof(double));
+            cudaMalloc((void**) &(cuPtr->hvCoupInt), ncc*sizeof(double));
+
+            // External data
+            cudaMalloc((void**) &(cuPtr->hCoupExt), ncc*sizeof(double));
+            cudaMalloc((void**) &(cuPtr->huCoupExt), ncc*sizeof(double));
+            cudaMalloc((void**) &(cuPtr->hvCoupExt), ncc*sizeof(double));
+        }
+    #endif
+    
     return(1);
 
 }
@@ -417,7 +453,7 @@ int copyMeshArraysCudaMem(
     
 	int i,j;
     int NCwall;
-	int ncells,nwc,nwb;
+	int ncells,nwc,nwb,ncc;
     int nWallCell;
 
 	//Local variables just for allocation
@@ -426,6 +462,7 @@ int copyMeshArraysCudaMem(
     nWallCell=NCwall*ncells;
 	nwc=carrays->nw_calc;
 	nwb=carrays->nw_bound;
+    ncc=carrays->nCoupPEKACells;
 
     // COMPUTATION ARRAYS ////////////////////////////////////////////
     //cells    
@@ -493,6 +530,24 @@ int copyMeshArraysCudaMem(
  
     cudaMemcpy((cuPtr->qnormalL), (carrays->qnormalL), nwc*sizeof(double), cudaMemcpyHostToDevice ); 
     cudaMemcpy((cuPtr->localDt), (carrays->localDt), nwc*sizeof(double), cudaMemcpyHostToDevice ); 
+
+    // --- Coupling Data from CPU do GPU
+    #if SET_COUPLING
+        if (ncc>0) {
+            // Cells IDs with Coupling Interfaces
+            cudaMemcpy((cuPtr->couplingPEKAIDCells), (carrays->couplingPEKAIDCells), ncc*sizeof(int), cudaMemcpyHostToDevice ); 
+            
+            // Internal data
+            cudaMemcpy((cuPtr->hCoupInt), (carrays->hCoupInt), ncc*sizeof(double), cudaMemcpyHostToDevice ); 
+            cudaMemcpy((cuPtr->huCoupInt), (carrays->huCoupInt), ncc*sizeof(double), cudaMemcpyHostToDevice ); 
+            cudaMemcpy((cuPtr->hvCoupInt), (carrays->hvCoupInt), ncc*sizeof(double), cudaMemcpyHostToDevice );     
+            
+            // External data
+            cudaMemcpy((cuPtr->hCoupExt), (carrays->hCoupExt), ncc*sizeof(double), cudaMemcpyHostToDevice ); 
+            cudaMemcpy((cuPtr->huCoupExt), (carrays->huCoupExt), ncc*sizeof(double), cudaMemcpyHostToDevice ); 
+            cudaMemcpy((cuPtr->hvCoupExt), (carrays->hvCoupExt), ncc*sizeof(double), cudaMemcpyHostToDevice );
+        }  
+    #endif
 
     return(1);
     
@@ -710,6 +765,18 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr){
 
     cudaFree(cuPtr->qnormalL);
     cudaFree(cuPtr->localDt);
+
+    // --- Coupling Data free GPU memory 
+    #if SET_COUPLING
+        cudaFree(cuPtr->nCoupPEKACells);
+        cudaFree(cuPtr->couplingPEKAIDCells);
+        cudaFree(cuPtr->hCoupInt);
+        cudaFree(cuPtr->huCoupInt);
+        cudaFree(cuPtr->hvCoupInt);
+        cudaFree(cuPtr->hCoupExt);
+        cudaFree(cuPtr->huCoupExt);
+        cudaFree(cuPtr->hvCoupExt);
+    #endif
       
     return(1);
 
@@ -1292,4 +1359,83 @@ EXPORT_DLL int freeSoluteCudaMemory(
 
 }
 
+#endif
+
+#if SET_COUPLING
+// --- preCICE Arrays to GPU (Peka)
+__global__ void assignPEKACouplingArraysToCudaMem(
+    t_arrays *garrays,
+	int *couplingIDCells,
+	double *hInt,
+	double *huInt,
+	double *hvInt,
+    double *hExt,
+	double *huExt,
+	double *hvExt
+	){
+/*----------------------------*/
+    
+	garrays->couplingPEKAIDCells=couplingIDCells;
+	garrays->hCoupInt=hInt;
+	garrays->huCoupInt=huInt;
+	garrays->hvCoupInt=hvInt;
+	garrays->hCoupExt=hExt;
+	garrays->huCoupExt=huExt;
+	garrays->hvCoupExt=hvExt;
+}
+
+/*
+// --- preCICE Arrays to GPU (OpenFOAM)
+__global__ void assignOPENFOAMCouplingArraysToCudaMem(
+    t_arrays *garrays,
+	double *velocity3D,
+	double *pressure3D,
+	double *alpha2D,
+    double *velocity2D,
+	double *pressure2D
+	){
+
+    
+	garrays->velocity3D=velocity3D;
+	garrays->pressure3D=pressure3D;
+	garrays->alpha2D=alpha2D;
+	garrays->velocity2D=velocity2D;
+	garrays->pressure2D=pressure2D;
+};
+
+
+EXPORT_DLL int createCoupling3DArraysCudaMemory(
+    t_arrays *carrays,
+    t_arrays *garrays,
+    t_cuPtr *cuPtr,
+    int nOFCells){
+
+
+    
+    // Allocate arrays Cuda Memory
+    cudaMalloc((void**) &(cuPtr->velocity3D), 3*nOFCells*sizeof(double)); //vx, vy, vz
+    cudaMalloc((void**) &(cuPtr->pressure3D), nOFCells*sizeof(double));
+    cudaMalloc((void**) &(cuPtr->alpha2D), nOFCells*sizeof(double));
+    cudaMalloc((void**) &(cuPtr->velocity2D), 3*nOFCells*sizeof(double)); //vx, vy, vz
+    cudaMalloc((void**) &(cuPtr->pressure2D), nOFCells*sizeof(double));
+
+    // Copy mesh arrays Cuda Memory
+    cudaMemcpy((cuPtr->velocity3D), (carrays->velocity3D), 3*nOFCells*sizeof(double), cudaMemcpyHostToDevice );
+    cudaMemcpy((cuPtr->pressure3D), (carrays->pressure3D), nOFCells*sizeof(double), cudaMemcpyHostToDevice ); 
+    cudaMemcpy((cuPtr->alpha2D), (carrays->alpha2D), nOFCells*sizeof(double), cudaMemcpyHostToDevice ); 
+    cudaMemcpy((cuPtr->velocity2D), (carrays->velocity2D), 3*nOFCells*sizeof(double), cudaMemcpyHostToDevice ); 
+    cudaMemcpy((cuPtr->pressure2D), (carrays->pressure2D), nOFCells*sizeof(double), cudaMemcpyHostToDevice ); 
+
+    // Assigning OpenFOAM Coupling Arrays to Cuda Memory
+    assignOPENFOAMCouplingArraysToCudaMem <<<1,1>>> (garrays,
+        cuPtr->velocity3D,
+        cuPtr->pressure3D,
+        cuPtr->alpha2D,
+        cuPtr->velocity2D,
+        cuPtr->pressure2D
+    );
+
+    return 1;
+};
+*/
 #endif

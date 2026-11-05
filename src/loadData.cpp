@@ -1858,3 +1858,193 @@ int readHotstartSoluteState(
 
 
 #endif
+
+
+#if SET_COUPLING
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int readInternalCouplingBCFile(
+    char *filename,
+    Peka2D_Setup *pksetup, 
+    t_mesh *mesh, 
+	t_message *msg){
+/*----------------------------*/
+    
+    FILE *fp;
+    char temp[STR_SIZE];
+    Peka2D_CouplingBCGroup *couplingItfcGroup;
+    int nCellsPair;
+
+    //Load .CIBC File
+    fp = fopen(filename, "r");
+	if(!fp){
+		sprintf(temp,"%s file not found",filename);
+		Notify(temp,MSG_ERROR,msg);
+		return 0;
+	}
+
+    //Assign local pointer to pksetup structure
+	couplingItfcGroup = &(pksetup->CIBC);
+    
+    // Line 1: File Version
+	fscanf(fp,"%d",&couplingItfcGroup->version);
+
+    if(couplingItfcGroup->version != 202611){
+		sprintf(temp,"Wrong .CIBC file version. It should be 202611.");
+		Notify(temp,MSG_ERROR,msg);
+        fclose(fp);
+		return 0;
+    }
+
+    // Line 2: Number of interfaces
+    fscanf(fp,"%d",&couplingItfcGroup->nCoupInterfaces);
+
+    if(couplingItfcGroup->nCoupInterfaces < 2 || couplingItfcGroup->nCoupInterfaces > 4){
+		sprintf(temp,"Number of interfaces must be between 2 and 4.");
+		Notify(temp,MSG_ERROR,msg);
+        fclose(fp);
+		return 0;
+    }
+
+    // Line 3: Number of interfaces
+    for(int k=0; k<couplingItfcGroup->nCoupInterfaces; k++){
+        fscanf(fp,"%s",couplingItfcGroup->interfaceName[k]);
+
+        fscanf(fp,"%d",&couplingItfcGroup->nCellsIDPairs[k]);
+        nCellsPair = couplingItfcGroup->nCellsIDPairs[k];
+
+        if(nCellsPair <= 0){
+            sprintf(temp,"Invalid number of pairs in %s",filename);
+            Notify(temp,MSG_ERROR,msg);
+            fclose(fp);
+            return 0;
+        }
+
+        couplingItfcGroup->cellsIn2D[k] = (int*) malloc(nCellsPair*sizeof(int));
+        couplingItfcGroup->cellsIn3D[k] = (int*) malloc(nCellsPair*sizeof(int));
+
+        for (int j=0; j<nCellsPair; j++){
+            if (fscanf(fp, "%d %d", &couplingItfcGroup->cellsIn2D[k][j], &couplingItfcGroup->cellsIn3D[k][j]) != 2) {
+                sprintf(temp,"Error: Expected %d pairs in %s", nCellsPair, filename);
+                Notify(temp,MSG_ERROR,msg);
+                fclose(fp);
+                return 0;
+            }
+            couplingItfcGroup->cellsIn2D[k][j] -= 1;
+            couplingItfcGroup->cellsIn3D[k][j] -= 1;
+        }
+
+    }
+
+    fclose(fp);
+
+    // Assign memory for cibc
+    mesh->cibc = (t_coup_int_BC*) malloc(sizeof(t_coup_int_BC));
+
+    // General info
+    mesh->cibc->version = couplingItfcGroup->version;
+    mesh->cibc->nCoupInterfaces = couplingItfcGroup->nCoupInterfaces;
+    
+    for(int k=0; k<couplingItfcGroup->nCoupInterfaces; k++){
+        strcpy(mesh->cibc->cellsIDs[k].interfaceName, couplingItfcGroup->interfaceName[k]);
+        mesh->cibc->cellsIDs[k].nPairs = couplingItfcGroup->nCellsIDPairs[k];
+        mesh->cibc->cellsIDs[k].cellsIDIn2D = couplingItfcGroup->cellsIn2D[k];
+        mesh->cibc->cellsIDs[k].cellsIDIn3D = couplingItfcGroup->cellsIn3D[k];
+    }
+
+    return 1;
+};
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int readCouplingFile(
+    char *filename,
+    Peka2D_Setup *pksetup, 
+    t_mesh *mesh, 
+	t_message *msg){
+/*----------------------------*/
+
+	FILE *fp;
+    char temp[1024];
+	Peka2D_Coupling *coupling;
+	
+	// Load .COUP file
+	fp = fopen(filename,"r");
+	if(!fp){
+		sprintf(temp,"%s file not found",filename);
+		Notify(temp,MSG_ERROR,msg);
+		return 0;
+	}
+
+    // Assign local pointer to pksetup structure
+	coupling = &(pksetup->COUP);
+
+	// Line 1: Participant Name
+	fscanf(fp,"%s",coupling->participantName);
+
+    // Line 2: Number of Coupling interfaces
+    fscanf(fp,"%d",&coupling->nCoupInterfaces);
+    
+    if(coupling->nCoupInterfaces < 1 || coupling->nCoupInterfaces > MAX_COUP_INTERFACES){
+        sprintf(temp,"Number of coupling interfaces %d out of range [1,%d]",
+            coupling->nCoupInterfaces, MAX_COUP_INTERFACES);
+        Notify(temp,MSG_ERROR,msg);
+        fclose(fp);
+        return 0;
+    }
+
+    // Interfaces names
+    for(int k=0; k<coupling->nCoupInterfaces; k++){
+        fscanf(fp,"%s",coupling->interfaceNameReceived[k]);
+    }
+
+    // Mesh name
+    for(int k=0; k<coupling->nCoupInterfaces; k++){
+        fscanf(fp,"%s",coupling->meshNameReceived[k]);
+    }
+    
+    // preCICE config file Name
+	fscanf(fp,"%s",coupling->configFile);
+
+    // OpenFOAM -> Peka
+    fscanf(fp,"%s",coupling->alphaWater2D);
+    fscanf(fp,"%s",coupling->velocity2D);
+    fscanf(fp,"%s",coupling->pressure2D);
+
+    // Peka -> OpenFOAM
+    fscanf(fp,"%s",coupling->alphaWater3D);
+    fscanf(fp,"%s",coupling->velocity3D);
+    fscanf(fp,"%s",coupling->pressure3D);
+
+    // Close file
+    fclose(fp);
+
+    // --- Send informations to mesh
+    // Participant name
+    strcpy(mesh->participantName, coupling->participantName);
+
+    // Interfaces
+    mesh->nCoupInterfaces = coupling->nCoupInterfaces;
+    for(int k=0; k<coupling->nCoupInterfaces; k++){
+        strcpy(mesh->interfaceNameReceived[k], coupling->interfaceNameReceived[k]);
+    }
+
+    // Mesh name
+    for(int k=0; k<coupling->nCoupInterfaces; k++){
+        strcpy(mesh->meshNameReceived[k], coupling->meshNameReceived[k]);
+    }
+
+    // Config File
+    strcpy(mesh->configFile, coupling->configFile);
+
+    // OpenFOAM -> Peka
+    strcpy(mesh->alphaWater2D, coupling->alphaWater2D);
+    strcpy(mesh->velocity2D, coupling->velocity2D);
+    strcpy(mesh->pressure2D, coupling->pressure2D);
+
+    // Peka -> OpenFOAM
+    strcpy(mesh->alphaWater3D, coupling->alphaWater3D);
+    strcpy(mesh->velocity3D, coupling->velocity3D);
+    strcpy(mesh->pressure3D, coupling->pressure3D);
+
+    return 1;
+};
+#endif

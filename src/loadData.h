@@ -53,6 +53,9 @@ typedef struct Peka2D_NodeBoundary_ Peka2D_NodeBoundary;
 typedef struct Peka2D_OBCWalls_ Peka2D_OBCWalls;
 typedef struct Peka2D_SoluteGroup_ Peka2D_SoluteGroup;
 typedef struct Peka2D_Solute_ Peka2D_Solute;
+typedef struct Peka2D_Coupling_ Peka2D_Coupling;
+typedef struct Peka2D_CouplingBCGroup_ Peka2D_CouplingBCGroup;
+typedef struct Peka2D_CouplingBC_ Peka2D_CouplingBC;
 
 
 struct Peka2D_Run_{
@@ -126,12 +129,42 @@ struct Peka2D_SoluteGroup_{
     Peka2D_Solute *solute;
 };
 
+struct Peka2D_Coupling_{
+    // --- preCICE INFO
+	char participantName[STR_SIZE];
+	int nCoupInterfaces;
+    char interfaceNameReceived[MAX_COUP_INTERFACES][STR_SIZE];
+	char meshNameReceived[MAX_COUP_INTERFACES][STR_SIZE];
+	char configFile[STR_SIZE];
+
+    // --- Info Peka -> OpenFOAM
+    char alphaWater2D[STR_SIZE];
+    char velocity2D[STR_SIZE];
+    char pressure2D[STR_SIZE];
+
+    // --- Info OpenFOAM -> Peka
+    char alphaWater3D[STR_SIZE];
+    char velocity3D[STR_SIZE];
+    char pressure3D[STR_SIZE];
+};
+
+struct Peka2D_CouplingBCGroup_{
+    int version;
+    int nCoupInterfaces;
+    char interfaceName[MAX_COUP_INTERFACES][STR_SIZE];
+    int nCellsIDPairs[MAX_COUP_INTERFACES];
+    int *cellsIn2D[MAX_COUP_INTERFACES];
+    int *cellsIn3D[MAX_COUP_INTERFACES];
+};
+
 struct Peka2D_Setup_{
     Peka2D_Run pkrun;
     Peka2D_NodeBoundary *pknode;
     Peka2D_OBCWalls *IOBC;
     Peka2D_OBCWalls *OOBC;  
-    Peka2D_SoluteGroup *soluteGroup;  
+    Peka2D_SoluteGroup *soluteGroup;
+    Peka2D_Coupling COUP;
+    Peka2D_CouplingBCGroup CIBC;
 };
 
 
@@ -325,3 +358,21 @@ int readHotstartSoluteState(
 #endif
 
 #endif //end #ifndef hy_mesh_
+
+#if SET_COUPLING
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int readCouplingFile(
+    char *filename,
+    Peka2D_Setup *pksetup, 
+    t_mesh *mesh, 
+	t_message *msg);
+/*----------------------------*/
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int readInternalCouplingBCFile(
+    char *filename,
+    Peka2D_Setup *pksetup, 
+    t_mesh *mesh, 
+	t_message *msg);
+/*----------------------------*/
+#endif

@@ -1020,5 +1020,99 @@ EXPORT_DLL int initilizeSoluteArrays(
 
 #endif
 
+#if SET_COUPLING
+////////////////////////////////////////////////////////////////
+EXPORT_DLL int allocInitCouplingArraysMem(
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg){
+/*----------------------------*/
+    
+    // Interators
+    int i, k;
 
+    // For msg
+    char temp[STR_SIZE*2];
+    
+    // Number of Cells and interfaces
+    int ncc, nIFC;
 
+    // --- Coupling interfaces
+    // Fill the t_coupInfo struct (in mesh)
+    k = 0;
+    ncc = 0;
+
+    nIFC = mesh->cibc->nCoupInterfaces;
+    for (i=0; i<nIFC; i++){
+        if(k < MAX_COUP_INTERFACES){
+            mesh->coupInfo[i].interfaceIndex = i;
+            mesh->coupInfo[i].offset = ncc;
+            mesh->coupInfo[i].nCells = mesh->cibc->cellsIDs[i].nPairs;
+        }
+        ncc += mesh->cibc->cellsIDs[i].nPairs;
+    }
+
+    // --- Consistency check between BC file and .COUP file
+    if(nIFC != mesh->nCoupInterfaces){
+        sprintf(temp,"Coupling outlets in BC file (%d) != interfaces in .COUP file (%d)",
+            nIFC, mesh->nCoupInterfaces);
+        Notify(temp,MSG_ERROR,msg);
+        return 0;
+    }
+
+    // --- Just a warning
+    if(ncc == 0){
+        sprintf(temp,"No cells found at the preCICE coupling boundaries");
+        Notify(temp,MSG_WARN,msg);
+        carrays->nCoupPEKACells = 0;
+    }
+
+    // --- Print Coupling BC Info
+    for(k=0; k<mesh->nCoupInterfaces; k++){
+        sprintf(temp,"Coupling interface %d (%.128s): Name %.128s, %d cells, offset %d",
+            k, 
+            mesh->meshNameReceived,
+            mesh->interfaceNameReceived[k],
+            mesh->coupInfo[k].nCells,
+            mesh->coupInfo[k].offset);
+        Notify(temp,MSG_L1,msg);
+    }
+
+    // --- Coupling arrays
+    if (ncc>0){
+        // Number of coupling cells
+        carrays->nCoupPEKACells = ncc;
+        
+        // Cells IDs
+        carrays->couplingPEKAIDCells = (int*)malloc(ncc*sizeof(int));
+
+        // Arrays for internal data
+        carrays->hCoupInt  = (double*)malloc(ncc*sizeof(double));
+        carrays->huCoupInt = (double*)malloc(ncc*sizeof(double));
+        carrays->hvCoupInt = (double*)malloc(ncc*sizeof(double));
+
+        // Arrays for external data
+        carrays->hCoupExt  = (double*)malloc(ncc*sizeof(double));
+        carrays->huCoupExt = (double*)malloc(ncc*sizeof(double));
+        carrays->hvCoupExt = (double*)malloc(ncc*sizeof(double));
+
+        // Initialize the cells IDs
+        for (k=0; k<mesh->cibc->nCoupInterfaces; k++){
+            int off = mesh->coupInfo[k].offset;
+            for (i=0; i<mesh->coupInfo[k].nCells; i++){
+                int id = mesh->cibc->cellsIDs[k].cellsIDIn2D[i];
+                if (id < 0 || id >= mesh->ncells){
+                    sprintf(temp, "Coupling interface %d: invalid cell ID %d (pair %d)",
+                        k, id, i);
+                    Notify(temp, MSG_ERROR,msg);
+                    return 0;
+                }
+            carrays->couplingPEKAIDCells[off + i] = id;
+            }
+        }
+    }
+
+    return 1;
+}
+
+#endif

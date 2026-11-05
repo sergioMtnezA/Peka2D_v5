@@ -4,6 +4,11 @@
 #define s_mesh_
 
 #define STR_SIZE 1024
+#define MAX_COUP_INTERFACES 4
+
+#if SET_COUPLING
+#include <vector>
+#endif
 
 typedef struct t_message_ t_message;
 
@@ -34,6 +39,14 @@ typedef struct t_arrays_ t_arrays;
 typedef struct t_cuPtr_ t_cuPtr;
 
 typedef struct t_timers_ t_timers;
+
+#if SET_COUPLING
+typedef struct t_coupInfo_ t_coupInfo;
+typedef struct t_coupInterface_ t_coupInterface;
+
+typedef struct t_coup_int_BC_ t_coup_int_BC;
+typedef struct t_coup_int_BC_cells_ t_coup_int_BC_cells;
+#endif
 
 /**
  * @brief Compilation and execution messages
@@ -76,6 +89,25 @@ struct t_parameters_{
 };
 
 
+#if SET_COUPLING
+/**
+ * @brief Information of the coupling interfaces (mesh)
+*/
+struct t_coupInfo_
+{
+	// The index i in mesh->out[i] (HYD_PRECICE_COUPLING)
+	int interfaceIndex; 
+
+	// First position in couplingPEKAIDCells
+	int offset;
+
+	// Number of Cells in the interface
+	int nCells;
+};
+
+#endif
+
+
 /**
  * @brief Geometrical mesh and flow data
 */
@@ -115,6 +147,29 @@ struct t_mesh_{
 	int nSolutes;
 	l_solutes *solutes;
 
+	#if SET_COUPLING
+	// --- Coupling Information read from .CIBC file
+	t_coup_int_BC *cibc;
+
+	// --- Coupling Information read from .COUP file
+	char participantName[STR_SIZE];
+	int nCoupInterfaces;
+	char interfaceNameReceived[MAX_COUP_INTERFACES][STR_SIZE];
+	char meshNameReceived[MAX_COUP_INTERFACES][STR_SIZE];
+	char configFile[STR_SIZE];
+
+	t_coupInfo coupInfo[MAX_COUP_INTERFACES];
+
+	// Peka <- OpenFOAM
+	char alphaWater2D[STR_SIZE];
+	char velocity2D[STR_SIZE];
+	char pressure2D[STR_SIZE];
+
+	// Peka -> OpenFOAM
+	char alphaWater3D[STR_SIZE];
+	char velocity3D[STR_SIZE];
+	char pressure3D[STR_SIZE];
+	#endif
 };
 
 
@@ -499,8 +554,21 @@ struct t_arrays_{
 	double massTotalOut; /**< @brief Run-control total outflow volume accumulated during the simulation*/ 
     ////////////////////////////////////////////	 
 	
-	// --- preCICE arrays
-	double preciceDt;
+	// --- preCICE Data
+	#if SET_COUPLING
+		// --- preCICE variables
+		double preciceDt;
+		int nCoupPEKACells;
+		
+		// --- preCICE Data Arrays
+		//Send
+		double *hCoupExt, *huCoupExt, *hvCoupExt;
+
+		//Receive 
+		double *hCoupInt, *huCoupInt, *hvCoupInt;
+
+		int *couplingPEKAIDCells;
+	#endif
 
 	// SOLUTE ARRAYS ///////////////////////////	
 	#if SET_SOLUTE
@@ -606,7 +674,21 @@ struct t_cuPtr_{
 	double *mTotalIn, *mTotalOut;
 
 
-    double *massTotalIn, *massTotalOut;	    	
+    double *massTotalIn, *massTotalOut;
+	
+	// --- preCICE Data
+	#if SET_COUPLING
+		// --- preCICE Arrays
+		int *nCoupPEKACells;
+		int *couplingPEKAIDCells;
+
+		//Send
+		double *hCoupExt, *huCoupExt, *hvCoupExt;
+
+		//Receive 
+		double *hCoupInt, *huCoupInt, *hvCoupInt;
+		
+	#endif
 
 	// SOLUTE ARRAYS ///////////////////////////
 	#if SET_SOLUTE
@@ -649,6 +731,54 @@ struct t_timers_{
 	double writeOut=0.0;
 	double closeSim=0.0;
 };
+
+
+#if SET_COUPLING
+/**
+ * @brief CPU arrays for storing the information received from OpenFOAM
+*/
+// --- Coupling interface structure
+struct t_coupInterface_{
+	// Number of faces in the OpenFOAM patch
+	int OFFaces;
+
+	// meshDim
+	int meshDim;
+
+	// OpenFOAM vertex IDs, Coordinates and map(nearest-neighbor)
+	std::vector<int> vertexIDs;
+	std::vector<double> OFCoord;
+	std::vector<int> map;
+
+	// mapMaxDist (for test only)
+	double mapMaxDist;
+
+    // Read arrays (OpenFOAM -> Peka)
+    std::vector<double> alpha2D, velocity2D, pressure2D;
+    // Write arrays (Peka -> OpenFOAM)
+    std::vector<double> alpha3D, velocity3D, pressure3D;
+};
+
+/**
+ * @brief Internal boundary (interface data)
+*/
+struct t_coup_int_BC_cells_{
+	char interfaceName[STR_SIZE];
+	int nPairs;
+	int *cellsIDIn2D;
+	int *cellsIDIn3D;
+};
+
+/**
+ * @brief Internal boundary (Coupling interfaces)
+*/
+struct t_coup_int_BC_{
+	int version; 											// File Version 202611
+	int nCoupInterfaces;									// Number of interfaces (min 2 / max 4)
+	t_coup_int_BC_cells_ cellsIDs[MAX_COUP_INTERFACES];		// Coupling cells set (min 2 / max 4)
+};
+
+#endif
 
 
 #endif
