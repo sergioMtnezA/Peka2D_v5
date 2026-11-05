@@ -563,6 +563,9 @@ __global__ void g_wall_rotated_calculus(int nTasks, t_arrays *arrays, double *lo
 __global__ void g_get_dtmin(t_arrays *arrays, double *localDt, int *idmin){
 /*----------------------------*/	
 	double minDt;
+    double minDtLim;
+
+    minDtLim = 1e-12;
 
 	minDt=localDt[(*idmin)-1];
 
@@ -573,8 +576,12 @@ __global__ void g_get_dtmin(t_arrays *arrays, double *localDt, int *idmin){
     }    
     minDt*=arrays->CFL;
 
+    #if SET_COUPLING
     // --- Set the mininum dt considering preCICE dt
     minDt = min(arrays->preciceDt, minDt);
+    minDt = max(minDt, minDtLim);
+    
+    #endif
 
     //storage time step
     arrays->dt=minDt;
