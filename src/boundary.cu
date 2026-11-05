@@ -186,16 +186,6 @@ __device__ void d_initialize_inlet(t_arrays *arrays,
 
 }
 
-
-
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////
 __global__ void g_update_open_boundary(int nTasks, t_arrays *arrays, 
 	double *qBoundByCell, double *mBoundByCell, double *mInnerByCell,
