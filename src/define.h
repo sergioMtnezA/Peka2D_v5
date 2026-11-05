@@ -327,3 +327,9 @@
 #ifndef HYDRO_FRICTION
     #define HYDRO_FRICTION HGM_MANNING
 #endif
+
+
+// preCICE Coupling
+#ifndef SET_COUPLING
+	#define SET_COUPLING 1
+#endif
