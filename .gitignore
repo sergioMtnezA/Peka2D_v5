@@ -32,5 +32,8 @@ gpeka2d
 .pytest_cache/
 __pycache__/
 
+# ignore precice files and directories
+precice*
+
 # tests files
 *.vtk
