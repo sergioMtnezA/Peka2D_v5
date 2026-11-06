@@ -591,5 +591,57 @@ EXPORT_DLL int write_timers(char *path, t_timers timers, t_message *msg){
 
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------//
+// Write hydraulic results at observation points
+EXPORT_DLL int dump_probes_gpu(t_mesh *mesh, t_arrays *arrays,
+                              char *path, t_message *msg, double t){
 
+    FILE *fp;
+    char filename[1024];
+    char error[1024];
+
+    for(int i = 0; i < mesh->nProbes; i++){
+
+        int n = snprintf(filename, sizeof(filename),
+                         "%sprobe%d.out", path, i+1);
+
+        if(n < 0 || n >= (int)sizeof(filename)){
+            Notify("Probe output filename is too long", MSG_ERROR, msg);
+            return 0;
+        }
+
+        fp = fopen(filename, "a");
+
+        if(fp == NULL){
+            snprintf(error, sizeof(error),
+                     "Could not open probe output file %d", i+1);
+            Notify(error, MSG_ERROR, msg);
+            return 0;
+        }
+
+        int idc = mesh->probe->probe[i].idc;
+
+        if(idc < 0 || idc >= arrays->ncells){
+
+            // Probe outside the computational domain
+            fprintf(fp, "%.6lf 0.0 0.0 0.0 0.0 0.0\n", t);
+
+        }else{
+
+            fprintf(fp, "%.6lf %.6lf %.6lf %.6lf %.6lf %.6lf\n",
+                    t,
+                    arrays->h[idc] + arrays->z[idc],
+                    arrays->h[idc],
+                    arrays->u[idc],
+                    arrays->v[idc],
+                    arrays->modulou[idc]);
+        }
+
+        fclose(fp);
+    }
+
+    return 1;
+}
+//------------------------------------------//
 

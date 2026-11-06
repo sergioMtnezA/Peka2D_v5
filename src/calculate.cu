@@ -119,6 +119,22 @@ EXPORT_DLL int computeSimulation(
         Notify(temp,MSG_L2,msg);	
     }       
 
+    //------------------------------------------//
+    // Write initial observation point results
+    if(mesh->nProbes > 0){
+
+        for(int i = 0; i < mesh->nProbes; i++){
+            snprintf(filename, sizeof(filename),
+                     "%sprobe%d.out", spar.dir, i+1);
+            remove(filename);
+        }
+
+        if(!dump_probes_gpu(mesh, carrays, spar.dir, msg, 0.0)){
+            Notify("Could not write initial probe results", MSG_ERROR, msg);
+            return 0;
+        }
+    }
+    //------------------------------------------//
 
     //write initial condition      
     sprintf(filename,"%sstate%d.vtk",spar.dir,0);
@@ -162,6 +178,17 @@ EXPORT_DLL int computeSimulation(
         if(carrays->dumpComponent){ 
             //mass balance file
             write_massBalance(spar.dir, carrays, msg);  
+
+            //------------------------------------------//
+            // Write observation point results
+            if(mesh->nProbes > 0){
+                if(!dump_probes_gpu(mesh, carrays, spar.dir, msg, t)){
+                    Notify("Could not write probe results", MSG_ERROR, msg);
+                    return 0;
+                }
+            }
+
+            //------------------------------------------//
 
             carrays->indexDump++;	
         }        

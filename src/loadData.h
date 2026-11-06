@@ -51,6 +51,12 @@ typedef struct Peka2D_OBCWalls_ Peka2D_OBCWalls;
 typedef struct Peka2D_SoluteGroup_ Peka2D_SoluteGroup;
 typedef struct Peka2D_Solute_ Peka2D_Solute;
 
+//------------------------------------------//
+// Observation points (probes)
+typedef struct Peka2D_ProbeGroup_ Peka2D_ProbeGroup;
+typedef struct Peka2D_Probe_ Peka2D_Probe;
+
+//------------------------------------------//
 
 struct Peka2D_Run_{
     int release;      // Release number
@@ -123,12 +129,31 @@ struct Peka2D_SoluteGroup_{
     Peka2D_Solute *solute;
 };
 
+//------------------------------------------//
+// Observation point read from input file
+struct Peka2D_Probe_ {
+    char id[STR_SIZE];
+    t_node p;
+};
+
+// Group of observation points
+struct Peka2D_ProbeGroup_ {
+    int n;
+    int nProbes;
+    Peka2D_Probe *probe;
+};
+
+//------------------------------------------//
+
 struct Peka2D_Setup_{
     Peka2D_Run pkrun;
     Peka2D_NodeBoundary *pknode;
     Peka2D_OBCWalls *IOBC;
     Peka2D_OBCWalls *OOBC;  
     Peka2D_SoluteGroup *soluteGroup;  
+    //------------------------------------------//
+    Peka2D_ProbeGroup *probeGroup;
+    //------------------------------------------//
 };
 
 
@@ -320,5 +345,21 @@ int readHotstartSoluteState(
 /*----------------------------*/
 
 #endif
+
+//------------------------------------------//
+// Observation points (probes)
+int ReadObservationPointData(
+    char *filename,
+    Peka2D_ProbeGroup *probeGroup,
+    t_message *msg);
+
+// Create observation point structures in the mesh
+int createProbeStructures(
+    Peka2D_Setup *pksetup,
+    t_parameters *spar,
+    t_mesh *mesh,
+    t_message *e);
+
+//------------------------------------------//
 
 #endif //end #ifndef hy_mesh_

@@ -380,6 +380,50 @@ EXPORT_DLL int loadMeshData(
 		return 0;
  	}    
 
+    //------------------------------------------//
+    // Load observation points (probes)
+    pksetup->probeGroup = NULL;
+    mesh->nProbes = 0;
+
+    if(pksetup->pkrun.obs){
+
+        Peka2D_ProbeGroup *probeGroup =
+            (Peka2D_ProbeGroup*)calloc(1, sizeof(Peka2D_ProbeGroup));
+
+        if(probeGroup == NULL){
+            Notify("Could not allocate observation point group", MSG_ERROR, msg);
+            return 0;
+        }
+
+        int n = snprintf(filename, sizeof(filename),
+                        "%s%s.OBS", spar->dir, spar->proj);
+
+        if(n < 0 || n >= (int)sizeof(filename)){
+            Notify("Observation point filename is too long", MSG_ERROR, msg);
+            free(probeGroup);
+            return 0;
+        }
+
+        if(!ReadObservationPointData(filename, probeGroup, msg)){
+            free(probeGroup);
+            return 0;
+        }
+
+        pksetup->probeGroup = probeGroup;
+
+        if(!createProbeStructures(pksetup, spar, mesh, msg)){
+            Notify("Could not create observation point structures", MSG_ERROR, msg);
+            return 0;
+        }
+
+        Notify("Probe structures completed", MSG_L1, msg);
+
+    }else{
+        Notify("No observation points in setup", MSG_L3, msg);
+    }
+    //------------------------------------------//
+
+    //------------------------------------------//
     return 1;
 }
 
@@ -445,6 +489,133 @@ int IsMeshAllocated(
     return(1);
 }
 
+//------------------------------------------//
+// Read observation points from .OBS file
+int ReadObservationPointData(
+    char *filename,
+    Peka2D_ProbeGroup *probeGroup,
+    t_message *msg){
+
+    int j;
+    int n = 0;
+    FILE *fp;
+    char temp[1024];
+
+    fp = fopen(filename, "r");
+    if(!fp){
+        sprintf(temp,"%s file not found",filename);
+        Notify(temp,MSG_ERROR,msg);
+        return(0);
+    }
+
+    if(fscanf(fp,"%d",&n) != 1 || n <= 0){
+        sprintf(temp,"Invalid number of observation points in %s",filename);
+        Notify(temp,MSG_ERROR,msg);
+        fclose(fp);
+        return(0);
+    }
+
+    probeGroup->n = n;
+    probeGroup->probe =
+        (Peka2D_Probe*) malloc(n * sizeof(Peka2D_Probe));
+
+    if(probeGroup->probe == NULL){
+        Notify("Could not allocate observation points",MSG_ERROR,msg);
+        probeGroup->n = 0;
+        fclose(fp);
+        return(0);
+    }
+
+    for(j=0; j<n; j++){
+        if(fscanf(fp,"%1023s %lf %lf",
+                  probeGroup->probe[j].id,
+                  &probeGroup->probe[j].p.x,
+                  &probeGroup->probe[j].p.y) != 3){
+
+            sprintf(temp,
+                    "In file %s, expected %d observation points; error at point %d",
+                    filename,n,j+1);
+            Notify(temp,MSG_ERROR,msg);
+
+            free(probeGroup->probe);
+            probeGroup->probe = NULL;
+            probeGroup->n = 0;
+            fclose(fp);
+            return(0);
+        }
+    }
+
+    fclose(fp);
+    Notify("Observation points file read",MSG_L1,msg);
+    return(1);
+}
+//------------------------------------------//
+
+//------------------------------------------//
+// Create observation point structures in the mesh
+int createProbeStructures(
+    Peka2D_Setup *pksetup,
+    t_parameters *spar,
+    t_mesh *mesh,
+    t_message *e){
+
+    char temp[1024];
+
+    Peka2D_ProbeGroup *probeGroup = pksetup->probeGroup;
+    int nProbes = probeGroup->n;
+    int found = 0;
+
+    mesh->nProbes = nProbes;
+
+    if(mesh->nProbes){
+
+        mesh->probe = (l_probes*) malloc(sizeof(l_probes));
+
+        if(mesh->probe == NULL){
+            Notify("Could not allocate probe group", MSG_ERROR, e);
+            return(0);
+        }
+
+        mesh->probe->n = mesh->nProbes;
+
+        mesh->probe->probe =
+            (t_probe*) malloc(sizeof(t_probe) * mesh->nProbes);
+
+        if(mesh->probe->probe == NULL){
+            Notify("Could not allocate probes", MSG_ERROR, e);
+            free(mesh->probe);
+            mesh->probe = NULL;
+            return(0);
+        }
+
+        for(int i = 0; i < mesh->nProbes; i++){
+
+            mesh->probe->probe[i].x = probeGroup->probe[i].p.x;
+            mesh->probe->probe[i].y = probeGroup->probe[i].p.y;
+
+            snprintf(mesh->probe->probe[i].idName,
+                    sizeof(mesh->probe->probe[i].idName),
+                    "%s", probeGroup->probe[i].id);
+        }
+
+        found = buscar_sondas(mesh, e);
+
+        if(found < mesh->nProbes){
+            sprintf(temp,
+                    "%d observation points (of %d) are outside the domain\n",
+                    mesh->nProbes - found,
+                    mesh->nProbes);
+
+            Notify(temp, MSG_ERROR, e);
+            return(0);
+        }
+
+        Notify("Observation points ready", MSG_L1, e);
+    }
+
+    return(1);
+}
+//------------------------------------------//
 
 ////////////////////////////////////////////////////////////////
 int readMeshFile(

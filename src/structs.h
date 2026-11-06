@@ -30,6 +30,13 @@ typedef struct t_bound_ t_bound;
 typedef struct t_solute_ t_solute;
 typedef struct l_solutes_ l_solutes;
 
+//------------------------------------------//
+// Observation points (probes)
+typedef struct t_probe_ t_probe;
+typedef struct l_probes_ l_probes;
+
+//------------------------------------------//
+
 typedef struct t_arrays_ t_arrays;
 typedef struct t_cuPtr_ t_cuPtr;
 
@@ -114,6 +121,13 @@ struct t_mesh_{
 	//solutes
 	int nSolutes;
 	l_solutes *solutes;
+
+	//------------------------------------------//
+    // Observation points (probes)
+    int nProbes;
+    l_probes *probe;
+
+	//------------------------------------------//
 
 };
 
@@ -332,7 +346,22 @@ struct l_solutes_{
 	t_solute *solute;
 };
 
+//------------------------------------------//
+// Observation point (probe)
+struct t_probe_ {
+    int idc;
+    t_c_cell *cell;
+    double x, y;
+    char idName[1024];
+};
 
+// List of observation points
+struct l_probes_ {
+    int n;
+    t_probe *probe;
+};
+
+//------------------------------------------//
 
 /**
  * @brief Arrange all the domain parameters, run controls and data arrays required for computation

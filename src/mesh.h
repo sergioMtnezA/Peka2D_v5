@@ -64,4 +64,12 @@ int build_wall_outlet(t_mesh *mesh, t_bound *outt, t_wall *w, int i,t_message *m
 
 int build_inner_outlet(t_mesh *mesh,t_bound *outt, int i, t_message *msg);
 
+//------------------------------------------//
+// Observation points (probes)
+int dentro_poligono(l_nodes *line, t_node point);
+
+int buscar_sondas(t_mesh *mesh, t_message *msg);
+
+//------------------------------------------//
+
 #endif
