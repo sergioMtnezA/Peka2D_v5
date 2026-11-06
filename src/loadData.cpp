@@ -424,6 +424,48 @@ EXPORT_DLL int loadMeshData(
     //------------------------------------------//
 
     //------------------------------------------//
+    // Load control sections
+    pksetup->secGroup = NULL;
+    mesh->nSections = 0;
+    mesh->sec = NULL;
+
+    if(pksetup->pkrun.crossSection){
+
+        Peka2D_CrossSectionGroup *secGroup =
+            (Peka2D_CrossSectionGroup*)calloc(1, sizeof(Peka2D_CrossSectionGroup));
+
+        if(secGroup == NULL){
+            Notify("Could not allocate cross section group", MSG_ERROR, msg);
+            return 0;
+        }
+
+        int n = snprintf(filename, sizeof(filename),
+                        "%s%s.XSECS", spar->dir, spar->proj);
+
+        if(n < 0 || n >= (int)sizeof(filename)){
+            Notify("Cross section filename is too long", MSG_ERROR, msg);
+            free(secGroup);
+            return 0;
+        }
+
+        if(!ReadCrossSectionData(filename, secGroup, msg)){
+            free(secGroup);
+            return 0;
+        }
+
+        pksetup->secGroup = secGroup;
+
+        if(!createCrossSectionStructures(pksetup, spar, mesh, msg)){
+            Notify("Could not create cross section structures", MSG_ERROR, msg);
+            return 0;
+        }
+
+        Notify("Cross section structures completed", MSG_L1, msg);
+
+    }else{
+        Notify("No control sections in setup", MSG_L3, msg);
+    }
+    //------------------------------------------//
     return 1;
 }
 
@@ -552,6 +594,109 @@ int ReadObservationPointData(
 //------------------------------------------//
 
 //------------------------------------------//
+// Read control sections from .XSECS file
+int ReadCrossSectionData(
+    char *filename,
+    Peka2D_CrossSectionGroup *secGroup,
+    t_message *e){
+
+    FILE *fp;
+    int i, j;
+    int n = 0;
+    char temp[1024];
+
+    fp = fopen(filename, "r");
+
+    if(!fp){
+        sprintf(temp, "%s file not found", filename);
+        Notify(temp, MSG_ERROR, e);
+        return(0);
+    }
+
+    if(fscanf(fp, "%d", &n) != 1 || n <= 0){
+        sprintf(temp, "Invalid number of cross sections in %s", filename);
+        Notify(temp, MSG_ERROR, e);
+        fclose(fp);
+        return(0);
+    }
+
+    secGroup->n = n;
+    secGroup->xs = (Peka2D_CrossSection*) calloc(n, sizeof(Peka2D_CrossSection));
+
+    if(secGroup->xs == NULL){
+        Notify("Could not allocate cross sections", MSG_ERROR, e);
+        fclose(fp);
+        return(0);
+    }
+
+    for(i = 0; i < n; i++){
+
+        if(fscanf(fp, "%1023s %d %d",
+                  secGroup->xs[i].id,
+                  &secGroup->xs[i].Nv,
+                  &secGroup->xs[i].Nd) != 3){
+
+            sprintf(temp, "Error reading cross section %d in %s", i+1, filename);
+            Notify(temp, MSG_ERROR, e);
+            break;
+        }
+
+        if(secGroup->xs[i].Nv != 2){
+            sprintf(temp, "Cross section %s must have exactly 2 vertices",
+                    secGroup->xs[i].id);
+            Notify(temp, MSG_ERROR, e);
+            break;
+        }
+
+        if(secGroup->xs[i].Nd < 3){
+            sprintf(temp, "Cross section %s must have Nd >= 3",
+                    secGroup->xs[i].id);
+            Notify(temp, MSG_ERROR, e);
+            break;
+        }
+
+        secGroup->xs[i].p = (t_node*) malloc(2 * sizeof(t_node));
+
+        if(secGroup->xs[i].p == NULL){
+            Notify("Could not allocate cross section vertices", MSG_ERROR, e);
+            break;
+        }
+
+        for(j = 0; j < 2; j++){
+            if(fscanf(fp, "%lf %lf",
+                      &secGroup->xs[i].p[j].x,
+                      &secGroup->xs[i].p[j].y) != 2){
+
+                sprintf(temp, "Error reading vertices of cross section %s",
+                        secGroup->xs[i].id);
+                Notify(temp, MSG_ERROR, e);
+                break;
+            }
+        }
+
+        if(j < 2){
+            break;
+        }
+    }
+
+    fclose(fp);
+
+    if(i < n){
+        for(j = 0; j < n; j++){
+            free(secGroup->xs[j].p);
+        }
+        free(secGroup->xs);
+        secGroup->xs = NULL;
+        secGroup->n = 0;
+        return(0);
+    }
+
+    Notify("Cross section data read", MSG_L1, e);
+    return(1);
+}
+//------------------------------------------//
+
+//------------------------------------------//
 // Create observation point structures in the mesh
 int createProbeStructures(
     Peka2D_Setup *pksetup,
@@ -611,6 +756,70 @@ int createProbeStructures(
         }
 
         Notify("Observation points ready", MSG_L1, e);
+    }
+
+    return(1);
+}
+//------------------------------------------//
+
+//------------------------------------------//
+// Create control section structures in the mesh
+int createCrossSectionStructures(
+    Peka2D_Setup *pksetup,
+    t_parameters *spar,
+    t_mesh *mesh,
+    t_message *e){
+
+    Peka2D_CrossSectionGroup *secGroup = pksetup->secGroup;
+    int nSections = secGroup->n;
+
+    mesh->nSections = nSections;
+    mesh->sec = NULL;
+
+    if(mesh->nSections){
+
+        mesh->sec = (l_sections*) malloc(sizeof(l_sections));
+
+        if(mesh->sec == NULL){
+            Notify("Could not allocate section group", MSG_ERROR, e);
+            return(0);
+        }
+
+        mesh->sec->n = mesh->nSections;
+
+        mesh->sec->sec =
+            (t_section*) calloc(mesh->nSections, sizeof(t_section));
+
+        if(mesh->sec->sec == NULL){
+            Notify("Could not allocate sections", MSG_ERROR, e);
+            free(mesh->sec);
+            mesh->sec = NULL;
+            return(0);
+        }
+
+        for(int i = 0; i < mesh->nSections; i++){
+
+            t_section *sec = &mesh->sec->sec[i];
+
+            sec->npoints = secGroup->xs[i].Nd;
+
+            sprintf(sec->idName, "%s", secGroup->xs[i].id);
+
+            sec->node[0].x = secGroup->xs[i].p[0].x;
+            sec->node[0].y = secGroup->xs[i].p[0].y;
+            sec->node[1].x = secGroup->xs[i].p[1].x;
+            sec->node[1].y = secGroup->xs[i].p[1].y;
+
+            if(!build_section(sec, i, e)){
+                return(0);
+            }
+        }
+
+        if(!search_sections(mesh, e)){
+            return(0);
+        }
+
+        Notify("Cross sections ready", MSG_L1, e);
     }
 
     return(1);

@@ -70,6 +70,10 @@ int dentro_poligono(l_nodes *line, t_node point);
 
 int buscar_sondas(t_mesh *mesh, t_message *msg);
 
+// Control sections
+int build_section(t_section *sec, int nSec, t_message *msg);
+
+int search_sections(t_mesh *mesh, t_message *msg);
 //------------------------------------------//
 
 #endif

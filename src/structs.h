@@ -35,6 +35,9 @@ typedef struct l_solutes_ l_solutes;
 typedef struct t_probe_ t_probe;
 typedef struct l_probes_ l_probes;
 
+// Control sections
+typedef struct t_section_ t_section;
+typedef struct l_sections_ l_sections;
 //------------------------------------------//
 
 typedef struct t_arrays_ t_arrays;
@@ -127,6 +130,9 @@ struct t_mesh_{
     int nProbes;
     l_probes *probe;
 
+    // Control sections
+    int nSections;
+    l_sections *sec;
 	//------------------------------------------//
 
 };
@@ -361,6 +367,24 @@ struct l_probes_ {
     t_probe *probe;
 };
 
+// Control section
+struct t_section_ {
+    char idName[1024];
+    double normal[2];
+    t_node node[2];
+    int npoints;
+    l_probes *probeSec;
+    double deltaX;
+    double discharge;
+    double zAverage, hAverage;
+    double dist;
+};
+
+// List of control sections
+struct l_sections_ {
+    int n;
+    t_section *sec;
+};
 //------------------------------------------//
 
 /**

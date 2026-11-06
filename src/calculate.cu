@@ -136,6 +136,34 @@ EXPORT_DLL int computeSimulation(
     }
     //------------------------------------------//
 
+    //------------------------------------------//
+    // Write initial control section results
+    if(mesh->nSections > 0){
+
+        // Remove the previous discharge file only once
+        snprintf(filename, sizeof(filename),
+                 "%sdischarge_section.out", spar.dir);
+        remove(filename);
+
+        for(int i = 0; i < mesh->nSections; i++){
+
+            snprintf(filename, sizeof(filename),
+                     "%saverage_section%d.out", spar.dir, i+1);
+            remove(filename);
+
+            snprintf(filename, sizeof(filename),
+                     "%ssection%d.out", spar.dir, i+1);
+            remove(filename);
+        }
+
+        if(!dump_sections_gpu(mesh, carrays, 0.0, spar.dir)){
+            Notify("Could not write initial section results",
+                   MSG_ERROR, msg);
+            return 0;
+        }
+    }
+    //------------------------------------------//
+
     //write initial condition      
     sprintf(filename,"%sstate%d.vtk",spar.dir,0);
     if(write_vtk_state(filename,mesh,carrays,msg)){
@@ -188,6 +216,13 @@ EXPORT_DLL int computeSimulation(
                 }
             }
 
+            // Write control section results
+            if(mesh->nSections > 0){
+                if(!dump_sections_gpu(mesh, carrays, t, spar.dir)){
+                    Notify("Could not write section results", MSG_ERROR, msg);
+                    return 0;
+                }
+            }
             //------------------------------------------//
 
             carrays->indexDump++;	

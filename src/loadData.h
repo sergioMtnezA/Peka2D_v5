@@ -56,6 +56,9 @@ typedef struct Peka2D_Solute_ Peka2D_Solute;
 typedef struct Peka2D_ProbeGroup_ Peka2D_ProbeGroup;
 typedef struct Peka2D_Probe_ Peka2D_Probe;
 
+// Control sections
+typedef struct Peka2D_CrossSectionGroup_ Peka2D_CrossSectionGroup;
+typedef struct Peka2D_CrossSection_ Peka2D_CrossSection;
 //------------------------------------------//
 
 struct Peka2D_Run_{
@@ -143,6 +146,19 @@ struct Peka2D_ProbeGroup_ {
     Peka2D_Probe *probe;
 };
 
+// Control section read from input file
+struct Peka2D_CrossSection_ {
+    char id[STR_SIZE];
+    int Nv;
+    int Nd;
+    t_node *p;
+};
+
+// Group of control sections
+struct Peka2D_CrossSectionGroup_ {
+    int n;
+    Peka2D_CrossSection *xs;
+};
 //------------------------------------------//
 
 struct Peka2D_Setup_{
@@ -153,6 +169,7 @@ struct Peka2D_Setup_{
     Peka2D_SoluteGroup *soluteGroup;  
     //------------------------------------------//
     Peka2D_ProbeGroup *probeGroup;
+    Peka2D_CrossSectionGroup *secGroup;
     //------------------------------------------//
 };
 
@@ -353,6 +370,12 @@ int ReadObservationPointData(
     Peka2D_ProbeGroup *probeGroup,
     t_message *msg);
 
+// Control sections
+int ReadCrossSectionData(
+    char *filename,
+    Peka2D_CrossSectionGroup *secGroup,
+    t_message *e);
+
 // Create observation point structures in the mesh
 int createProbeStructures(
     Peka2D_Setup *pksetup,
@@ -360,6 +383,12 @@ int createProbeStructures(
     t_mesh *mesh,
     t_message *e);
 
+// Create control section structures in the mesh
+int createCrossSectionStructures(
+    Peka2D_Setup *pksetup,
+    t_parameters *spar,
+    t_mesh *mesh,
+    t_message *e);
 //------------------------------------------//
 
 #endif //end #ifndef hy_mesh_
