@@ -7,6 +7,8 @@ EXPORT_DLL int computeSimulation(
     t_parameters spar,
     t_mesh *mesh, 
     t_arrays *carrays,
+    Peka2D_Rain *rainGroup, // Rainfall time series
+    int nRainPolygons,      // Number of rainfall polygons
     t_timers *timers,  
 	t_message *msg){
 /*----------------------------*/
@@ -22,11 +24,23 @@ EXPORT_DLL int computeSimulation(
 
     t_arrays *garrays;
     t_cuPtr cuPtr; 
+
+    //------------------------------------------//
+    double *hostRainIntensity = NULL; // Rainfall intensities on the CPU [m/s]
+    //------------------------------------------//
+
     int nTasks, blocksPerGrid;
 
     t=carrays->ti;
     nIter=carrays->nIter;
      
+    //------------------------------------------//
+    // Allocate rainfall intensities on the CPU
+    if(nRainPolygons > 0){
+        hostRainIntensity = (double*)malloc(nRainPolygons*sizeof(double));
+    }
+    //------------------------------------------//
+
 
  	//Start GPU initialization time .....................................
 	stime1=clock();
@@ -51,7 +65,8 @@ EXPORT_DLL int computeSimulation(
     }else{
         device = 0;
     }
-    cudaSetDevice(device);
+    //cudaSetDevice(device);
+    cudaSetDevice(1);
     sprintf(temp,"Selected device ID: %d",device);
     Notify(temp,MSG_L3,msg);
 
@@ -81,7 +96,7 @@ EXPORT_DLL int computeSimulation(
 
     //create CUDA memory and initialize
     cudaMalloc( (void **) &garrays, sizeof(t_arrays));
-    if( createArraysCudaMemory(carrays, garrays, &(cuPtr), msg) ){
+    if( createArraysCudaMemory(carrays, garrays, &(cuPtr), nRainPolygons, msg) ){
         sprintf(temp,"CUDA memory allocated and initialized");
         Notify(temp,MSG_L3,msg);	
     }
@@ -192,7 +207,7 @@ EXPORT_DLL int computeSimulation(
 	while(t < carrays->tf){
 
         //update carrays to next time step
-		generateTimeStep(&t, carrays, garrays, &(cuPtr), timers, msg);
+		generateTimeStep(&t, carrays, garrays, &(cuPtr), rainGroup, nRainPolygons, hostRainIntensity, timers, msg);
 
      	//Start IO time .....................................
         stime1=clock();
@@ -292,6 +307,11 @@ EXPORT_DLL int computeSimulation(
     freeCudaMemory(&(cuPtr));
     cudaFree(garrays);
     cublasDestroy(cuHandle);
+
+    //------------------------------------------//
+    // Release rainfall intensities from CPU memory.
+    free(hostRainIntensity);
+    //------------------------------------------//
 
     end0=clock();
 	timers->closeSim += double(end0-start0)/CLOCKS_PER_SEC;
@@ -422,6 +442,11 @@ EXPORT_DLL void generateTimeStep(
     t_arrays *carrays,
     t_arrays *garrays,     
     t_cuPtr *cuPtr,
+    //------------------------------------------//
+    Peka2D_Rain *rainGroup, // Rainfall time series
+    int nRainPolygons,      // Number of rainfall polygons
+    double *hostRainIntensity, // Rainfall intensities on the CPU [m/s]
+    //------------------------------------------//
     t_timers *timers, 
     t_message *msg){
 /*----------------------------*/
@@ -545,6 +570,26 @@ EXPORT_DLL void generateTimeStep(
     g_set_new_dt <<<1,1>>> (garrays);
     cudaMemcpy(&(carrays->t), &(garrays->t), sizeof(double), cudaMemcpyDeviceToHost );
     cudaMemcpy(&(carrays->dt), &(garrays->dt), sizeof(double), cudaMemcpyDeviceToHost );
+    
+    
+    //------------------------------------------//
+    // Compute and transfer rainfall intensities for each polygon
+    if(rainGroup != NULL && nRainPolygons > 0 && hostRainIntensity != NULL){
+        for(i = 0; i < nRainPolygons; i++){
+            hostRainIntensity[i] = getAverageRainfallIntensity(
+                &rainGroup[i],
+                carrays->t - carrays->dt,
+                carrays->t);
+        }
+
+        cudaMemcpy(
+            cuPtr->rainIntensity,
+            hostRainIntensity,
+            nRainPolygons*sizeof(double),
+            cudaMemcpyHostToDevice);
+    }
+    //------------------------------------------//
+    
     cudaMemcpy(&(carrays->dumpComponent), &(garrays->dumpComponent), sizeof(int), cudaMemcpyDeviceToHost );
     cudaMemcpy(&(carrays->dumpState), &(garrays->dumpState), sizeof(int), cudaMemcpyDeviceToHost );
     (*t) = carrays->t;
@@ -651,7 +696,18 @@ EXPORT_DLL void generateTimeStep(
     #endif
 
 
+    //------------------------------------------//
+    cudaMemset(&(garrays->rainVolume), 0, sizeof(double)); // Reset rainfall volume for the current time step
 
+    // Add polygon rainfall to the assigned mesh cells.
+    if(nRainPolygons > 0 && cuPtr->rainIntensity != NULL){
+        nTasks = carrays->ncells;
+        blocksPerGrid = nTasks/threadsPerBlock + 1;
+
+        g_add_polygon_rain_contributions <<<blocksPerGrid,threadsPerBlock>>> (
+            nTasks, garrays, cuPtr->rainIntensity);
+    }
+    //------------------------------------------//
 
     //Start openBoundaries time .....................................   
     stime1=clock();

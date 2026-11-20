@@ -706,6 +706,76 @@ __global__ void g_set_new_dt(t_arrays *arrays){
 }
 
 
+//------------------------------------------//
+////////////////////////////////////////////////////
+__global__ void g_add_polygon_rain_contributions(
+    int nTasks,
+    t_arrays *arrays,
+    const double *rainIntensity){
+/*----------------------------*/
+
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if(idx < nTasks){
+
+        // Find the rainfall polygon assigned to this cell
+        int region = arrays->rainRegion[idx];
+
+        if(region >= 0){
+
+            // Get the rainfall intensity for this polygon
+            double intensity = rainIntensity[region];
+
+            if(intensity > 0.0){
+
+                // Add rainfall to the water depth
+                arrays->h[idx] += intensity * arrays->dt;
+
+                // Add this cell's rainfall volume to the total
+                atomicAdd(
+                    &(arrays->rainVolume),
+                    intensity * arrays->dt * arrays->area[idx]);
+
+                // Update the hydraulic variables
+                if(arrays->h[idx] > TOL12){
+
+                    arrays->sqrh[idx] = sqrt(arrays->h[idx]);
+
+                    if(arrays->h[idx] >= arrays->minh){
+
+                        arrays->u[idx] = arrays->hu[idx] / arrays->h[idx];
+                        arrays->v[idx] = arrays->hv[idx] / arrays->h[idx];
+
+                        arrays->modulou[idx] =
+                            sqrt(arrays->u[idx] * arrays->u[idx] +
+                                 arrays->v[idx] * arrays->v[idx]);
+
+                    }else{
+
+                        arrays->hu[idx] = 0.0;
+                        arrays->hv[idx] = 0.0;
+                        arrays->u[idx] = 0.0;
+                        arrays->v[idx] = 0.0;
+                        arrays->modulou[idx] = 0.0;
+                    }
+
+                }else{
+
+                    arrays->h[idx] = 0.0;
+                    arrays->sqrh[idx] = 0.0;
+                    arrays->hu[idx] = 0.0;
+                    arrays->hv[idx] = 0.0;
+                    arrays->u[idx] = 0.0;
+                    arrays->v[idx] = 0.0;
+                    arrays->modulou[idx] = 0.0;
+                }
+            }
+        }
+    }
+}
+/*----------------------------*/
+//------------------------------------------//
+
 
 ////////////////////////////////////////////////////
 __global__ void g_update_cells(int nTasks, t_arrays *arrays){
@@ -917,6 +987,10 @@ __global__ void g_compute_mass_error(t_arrays *arrays){
                
         mass0 += arrays->qTotalIn*arrays->dt;
         mass0 -= arrays->qTotalOut*arrays->dt; 
+
+        //------------------------------------------//
+        mass0 += arrays->rainVolume; // Add rainfall contribution to the expected water volume [m3]
+        //------------------------------------------//
 
         massError=fabs(arrays->massNew-mass0)/(arrays->massOld);
         if(massError<TOL16) massError=TOL16;

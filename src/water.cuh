@@ -61,9 +61,20 @@ __global__ void g_reduce_dt(t_arrays *arrays);
  */
 __global__ void g_set_new_dt(t_arrays *arrays);
 
-//__global__ void g_add_rain_contributions
+//------------------------------------------//
+/**
+ * @brief Adds polygon rainfall to the water depth of each cell.
+ * @param nTasks Number of cells to update.
+ * @param arrays Pointer to the hydraulic arrays stored on the GPU.
+ * @param rainIntensity Rainfall intensity for each polygon in m/s.
+ */
+__global__ void g_add_polygon_rain_contributions(int nTasks, t_arrays *arrays, const double *rainIntensity);
+//------------------------------------------//
+
+
 //__global__ void g_add_infiltration_contributions
 //__global__ void g_add_evaporation_contributions
+
 
 /**
  * @brief This function updates the water depth and water discharges (in wet cells).

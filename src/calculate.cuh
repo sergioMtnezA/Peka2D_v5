@@ -27,6 +27,8 @@ EXPORT_DLL int computeSimulation(
     t_parameters spar,
     t_mesh *mesh, 
     t_arrays *carrays,
+    Peka2D_Rain *rainGroup, // Rainfall time series
+    int nRainPolygons,      // Number of rainfall polygons
     t_timers *timers,
 	t_message *msg);
 /*----------------------------*/
@@ -53,6 +55,9 @@ EXPORT_DLL void generateTimeStep(
     t_arrays *carrays,
     t_arrays *garrays,     
     t_cuPtr *cuPtr,
+    Peka2D_Rain *rainGroup, // Rainfall time series
+    int nRainPolygons,      // Number of rainfall polygons
+    double *hostRainIntensity, // Rainfall intensities on the CPU [m/s]
     t_timers *timers, 
     t_message *msg);
 /*----------------------------*/
