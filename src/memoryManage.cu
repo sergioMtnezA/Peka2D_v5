@@ -5,6 +5,9 @@ EXPORT_DLL int createArraysCudaMemory(
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr,
+    //------------------------------------------//
+    int nRainPolygons, // Number of rainfall polygons
+    //------------------------------------------//
     t_message *msg){
 /*----------------------------*/
 
@@ -49,6 +52,9 @@ EXPORT_DLL int createArraysCudaMemory(
 
     if(!allocateArraysCudaMem( 
         NCwall, ncells, nWallCell, nwc, nwb, 
+        //------------------------------------------//
+        nRainPolygons, // Number of rainfall polygons
+        //------------------------------------------//
         cuPtr) 
     ) return 0;
 
@@ -63,6 +69,9 @@ EXPORT_DLL int createArraysCudaMemory(
         cuPtr->activeC,
         cuPtr->actCells,
         cuPtr->cidx,
+        //------------------------------------------//
+        cuPtr->rainRegion, // Rainfall polygon index for each cell
+        //------------------------------------------//
         cuPtr->nneig,
         cuPtr->z,
         cuPtr->h,
@@ -276,6 +285,9 @@ EXPORT_DLL int copyComputationControls(
     cudaMemcpy(&(garrays->massOld), &(carrays->massOld), sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->massNew), &(carrays->massNew), sizeof(double), cudaMemcpyHostToDevice );
     cudaMemcpy(&(garrays->massError), &(carrays->massError), sizeof(double), cudaMemcpyHostToDevice );
+    //------------------------------------------//
+    cudaMemcpy(&(garrays->rainVolume), &(carrays->rainVolume), sizeof(double), cudaMemcpyHostToDevice);
+    //------------------------------------------//
 
     //boundary permanent flag
     cudaMemcpy(&(garrays->nInlet), &(carrays->nInlet), sizeof(int), cudaMemcpyHostToDevice );
@@ -332,6 +344,9 @@ EXPORT_DLL int copyComputationControls(
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int allocateArraysCudaMem(
     int NCwall, int ncells, int nWallCell, int nwc, int nwb,
+    //------------------------------------------//
+    int nRainPolygons, // Number of rainfall polygons
+    //------------------------------------------//
     t_cuPtr *cuPtr){
 /*----------------------------*/
 
@@ -340,6 +355,18 @@ EXPORT_DLL int allocateArraysCudaMem(
     cudaMalloc((void**) &(cuPtr->actCells), ncells*sizeof(int));
 
     cudaMalloc((void**) &(cuPtr->cidx), ncells*sizeof(int));
+
+    //------------------------------------------//
+    // Allocate rainfall polygon indices on the GPU
+    cudaMalloc((void**)&(cuPtr->rainRegion),ncells*sizeof(int));
+    
+    // Allocate rainfall intensities on the GPU
+    cuPtr->rainIntensity = NULL;
+    if(nRainPolygons > 0){
+        cudaMalloc((void**)&(cuPtr->rainIntensity),nRainPolygons*sizeof(double));
+    }
+    //------------------------------------------//
+
     cudaMalloc((void**) &(cuPtr->nneig), ncells*sizeof(int));
 
     cudaMalloc((void**) &(cuPtr->z), ncells*sizeof(double));
@@ -433,6 +460,12 @@ int copyMeshArraysCudaMem(
     cudaMemcpy((cuPtr->actCells), (carrays->actCells), ncells*sizeof(int), cudaMemcpyHostToDevice );    
 
     cudaMemcpy((cuPtr->cidx), (carrays->cidx), ncells*sizeof(int), cudaMemcpyHostToDevice );
+    
+    //------------------------------------------//
+    // Copy rainfall polygon indices from CPU to GPU
+    cudaMemcpy(cuPtr->rainRegion, carrays->rainRegion, ncells*sizeof(int), cudaMemcpyHostToDevice);
+    //------------------------------------------//
+    
     cudaMemcpy((cuPtr->nneig), (carrays->nneig), ncells*sizeof(int), cudaMemcpyHostToDevice );
 
     cudaMemcpy((cuPtr->z), (carrays->z), ncells*sizeof(double), cudaMemcpyHostToDevice );
@@ -505,6 +538,9 @@ __global__ void assignMeshArraysToCudaMem(t_arrays *garrays,
 	int *activeC,
 	int *actCells,
 	int *cidx,
+    //------------------------------------------//
+    int *rainRegion, // Rainfall polygon index for each cell
+    //------------------------------------------//
 	int *nneig,
 	double *z,
 	double *h,
@@ -556,6 +592,9 @@ __global__ void assignMeshArraysToCudaMem(t_arrays *garrays,
 	garrays->actCells=actCells;
 
 	garrays->cidx=cidx;
+    //------------------------------------------//
+    garrays->rainRegion=rainRegion;
+    //------------------------------------------//
 	garrays->nneig=nneig;
 
 	garrays->z=z;
@@ -650,6 +689,10 @@ EXPORT_DLL int freeCudaMemory(t_cuPtr *cuPtr){
     cudaFree(cuPtr->actCells);
 
     cudaFree(cuPtr->cidx);
+    //------------------------------------------//
+    cudaFree(cuPtr->rainRegion); // Release rainfall polygon indices from GPU memory
+    cudaFree(cuPtr->rainIntensity); // Release rainfall intensities from GPU memory
+    //------------------------------------------//
     cudaFree(cuPtr->nneig);
 
     cudaFree(cuPtr->z);

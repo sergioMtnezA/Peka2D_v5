@@ -51,6 +51,9 @@ EXPORT_DLL int initilizeComputationControls(
 	carrays->massOld=0.0;
 	carrays->massNew=0.0;
     carrays->massError=0.0; 
+    //------------------------------------------//
+    carrays->rainVolume=0.0; // Rainfall volume added during the current time step [m3]
+    //------------------------------------------//
 
     //boundary control
 	carrays->nInlet = mesh->nInlet; //permanent flag to switch on/off memory & computation
@@ -96,6 +99,15 @@ EXPORT_DLL int allocateMeshArraysMem(
 
     carrays->cidx=(int*)malloc(ncells*sizeof(int));
     carrays->nneig=(int*)malloc(ncells*sizeof(int));
+
+    //------------------------------------------//
+    // Allocate one rainfall polygon index per mesh cell
+    carrays->rainRegion=(int*)malloc(ncells*sizeof(int));
+    // Initially, no cell is assigned to a rainfall polygon
+    for (int i = 0; i < ncells; i++) {
+        carrays->rainRegion[i] = -1;
+    }
+    //------------------------------------------//
 
     carrays->z=(double*)malloc(ncells*sizeof(double));
 	carrays->h=(double*)malloc(ncells*sizeof(double));
@@ -359,6 +371,97 @@ EXPORT_DLL int initilizeMeshArrays(
 }
 
 
+/////////////////////////////////////////////////////////////////
+// Assign mesh cells to rainfall polygons
+EXPORT_DLL int assignRainPolygonsToCells(
+    Peka2D_Setup *pksetup,
+    t_mesh *mesh,
+    t_arrays *carrays,
+    t_message *msg)
+{
+    if (pksetup == NULL || mesh == NULL || carrays == NULL ||
+        carrays->rainRegion == NULL)
+    {
+        return 0;
+    }
+
+    // Initialize all cells as outside rainfall polygons
+    for (int i = 0; i < carrays->ncells; i++)
+    {
+        carrays->rainRegion[i] = -1;
+    }
+
+    if (pksetup->rainGroup == NULL || mesh->g_cells == NULL)
+    {
+        return 0;
+    }
+
+    // Loop over mesh cells
+    for (int i = 0; i < carrays->ncells; i++)
+    {
+        double px = mesh->g_cells->cells[i].center[0];
+        double py = mesh->g_cells->cells[i].center[1];
+
+        // Loop over rainfall polygons
+        for (int p = 0; p < pksetup->nRainPolygons; p++)
+        {
+            const Peka2D_Rain *rain = &pksetup->rainGroup[p];
+
+            if (rain->nVertices < 3 || rain->x == NULL ||
+                rain->y == NULL)
+            {
+                return 0;
+            }
+
+            bool inside = false;
+            int n = rain->nVertices;
+
+            // Point-in-polygon test
+            for (int k = 0, j = n - 1; k < n; j = k++)
+            {
+                double xi = rain->x[k];
+                double yi = rain->y[k];
+                double xj = rain->x[j];
+                double yj = rain->y[j];
+
+                // Check if the point lies on a polygon edge
+                double cross = (px - xi) * (yj - yi)
+                             - (py - yi) * (xj - xi);
+
+                double dot = (px - xi) * (px - xj)
+                           + (py - yi) * (py - yj);
+
+                if (cross == 0.0 && dot <= 0.0)
+                {
+                    inside = true;
+                    break;
+                }
+
+                // Count intersections with polygon edges
+                if (((yi > py) != (yj > py)) &&
+                    (px < xi + (py - yi) * (xj - xi) / (yj - yi)))
+                {
+                    inside = !inside;
+                }
+            }
+
+            if (inside)
+            {
+                // Reject cells belonging to multiple rainfall polygons
+                if (carrays->rainRegion[i] != -1)
+                {
+                    Notify("Overlapping rainfall polygons detected", MSG_ERROR, msg);
+                    return 0;
+                }
+
+                carrays->rainRegion[i] = p;
+            }
+        }
+    }
+
+    return 1;
+}
+/*----------------------------*/
 
 
 ////////////////////////////////////////////////////////////////
@@ -1021,4 +1124,79 @@ EXPORT_DLL int initilizeSoluteArrays(
 #endif
 
 
+//------------------------------------------//
+////////////////////////////////////////////////////////////////
+// Release CPU memory allocated for mesh computation arrays
+EXPORT_DLL int freeMeshArraysMem(t_arrays *carrays){
+/*----------------------------*/
 
+    if(carrays == NULL){
+        return 0;
+    }
+
+    // Cells
+    free(carrays->activeC);
+    free(carrays->actCells);
+    free(carrays->cidx);
+    free(carrays->nneig);
+    free(carrays->rainRegion);
+
+    free(carrays->z);
+    free(carrays->h);
+    free(carrays->hu);
+    free(carrays->hv);
+    free(carrays->u);
+    free(carrays->v);
+    free(carrays->modulou);
+    free(carrays->sqrh);
+
+    free(carrays->area);
+    free(carrays->nman);
+    free(carrays->SOX);
+    free(carrays->SOY);
+    free(carrays->mass);
+
+    // Cell-wall arrays
+    free(carrays->dh);
+    free(carrays->dhu);
+    free(carrays->dhv);
+
+    free(carrays->solidWallByCell);
+    free(carrays->neighCell);
+    free(carrays->neighWall);
+    free(carrays->typeWallByCell);
+
+    free(carrays->normalXbyCell);
+    free(carrays->normalYbyCell);
+
+    // Internal walls
+    free(carrays->activeW);
+    free(carrays->actWalls);
+    free(carrays->widx);
+
+    free(carrays->idx1);
+    free(carrays->idx2);
+    free(carrays->idw1);
+    free(carrays->idw2);
+
+    free(carrays->normalX);
+    free(carrays->normalY);
+    free(carrays->deltaX);
+    free(carrays->length);
+    free(carrays->distNormal);
+    free(carrays->distCentX);
+    free(carrays->distCentY);
+
+    free(carrays->nman2wall);
+    free(carrays->gp);
+
+    free(carrays->typeOfBound);
+    free(carrays->solidWall);
+
+    free(carrays->qnormalL);
+    free(carrays->localDt);
+
+    return 1;
+}
+/*----------------------------*/
+//------------------------------------------//

@@ -47,7 +47,9 @@ int main (int argc, char * argv[]) {
 	sprintf(arguments[0],"C:\\svnPeka2D\\Casos\\YubaOBCP\\");
 	sprintf(arguments[1],"YubaP");
 
-	pksetup=(Peka2D_Setup*)malloc(sizeof(Peka2D_Setup));
+	//pksetup=(Peka2D_Setup*)malloc(sizeof(Peka2D_Setup));
+	// Initialize the setup structure to zero
+	pksetup=(Peka2D_Setup*)calloc(1, sizeof(Peka2D_Setup)); // Rainfall and infiltration (v4.3 -> v5)
 
 	msg=(t_message*)malloc(sizeof(t_message));
 	mesh=(t_mesh*)malloc(sizeof(t_mesh));

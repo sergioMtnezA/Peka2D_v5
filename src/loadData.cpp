@@ -186,6 +186,349 @@ EXPORT_DLL int readControlDataFile(
 
 
 ////////////////////////////////////////////////////////////////
+EXPORT_DLL int ReadRainfallData(
+    const char *filename,
+    Peka2D_Setup *pksetup,
+    t_message *msg){
+/*----------------------------*/
+
+    FILE *fp = fopen(filename, "r");
+
+    if(fp == NULL){
+        Notify("Could not open rainfall input file", MSG_ERROR, msg);
+        return 0;
+    }
+
+    char label[1024];
+    char timeUnits[32];
+    char rainUnits[32];
+    double rainConversion;
+    int nRainPolygons;
+    
+    char polygonFilename[1024]; // Rainfall polygon filename
+    char polygonPath[2048];     // Full path to the polygon file
+    int i;                      // Rainfall polygon index
+
+
+    // Read and validate the rainfall time units
+    if(fscanf(fp, "%1023s %31s", label, timeUnits) != 2 ||
+       strcmp(label, "timeUnits") != 0 ||
+       strcmp(timeUnits, "s") != 0){
+
+        Notify("Invalid rainfall time units (expected: timeUnits s)",
+               MSG_ERROR, msg);
+        fclose(fp);
+        return 0;
+    }
+
+    // Read and validate the rainfall intensity units
+    if(fscanf(fp, "%1023s %31s", label, rainUnits) != 2 ||
+       strcmp(label, "rainUnits") != 0){
+
+        Notify("Invalid rainfall intensity units", MSG_ERROR, msg);
+        fclose(fp);
+        return 0;
+    }
+
+    // Convert rainfall intensity to SI units [m/s]
+    if(strcmp(rainUnits, "mm/h") == 0){
+        rainConversion = 1.0 / 3600000.0;
+    }else if(strcmp(rainUnits, "mm/s") == 0){
+        rainConversion = 0.001;
+    }else{
+        Notify("Unsupported rainfall units (use mm/h or mm/s)",
+               MSG_ERROR, msg);
+        fclose(fp);
+        return 0;
+    }
+
+    // Read and validate the number of rainfall polygons
+    if(fscanf(fp, "%1023s %d", label, &nRainPolygons) != 2 ||
+       strcmp(label, "numberRainPol") != 0 ||
+       nRainPolygons <= 0){
+
+        Notify("Invalid number of rainfall polygons: at least one polygon is required",
+               MSG_ERROR, msg);
+        fclose(fp);
+        return 0;
+    }
+
+    // Store the number of rainfall polygons
+    pksetup->nRainPolygons = nRainPolygons;
+
+    // Allocate rainfall data for all polygons
+    int nRainRegions = nRainPolygons;
+
+    // Prevent overwriting an existing rainfall allocation
+    if(pksetup->rainGroup != NULL){
+        Notify("Rainfall data has already been allocated",
+               MSG_ERROR, msg);
+        fclose(fp);
+        return 0;
+    }
+
+    pksetup->rainGroup = (Peka2D_Rain*) calloc(
+        nRainRegions, sizeof(Peka2D_Rain));
+
+    if(pksetup->rainGroup == NULL){
+        Notify("Could not allocate rainfall regions", MSG_ERROR, msg);
+        fclose(fp);
+        return 0;
+    }
+
+    
+    // Read the filename of each rainfall polygon
+    for(i = 0; i < nRainPolygons; i++){
+
+        if(fscanf(fp, "%1023s", polygonFilename) != 1){
+            Notify("Could not read rainfall polygon filename",
+                   MSG_ERROR, msg);
+            fclose(fp);
+            FreeRainfallData(pksetup);
+            return 0;
+        }
+
+        // Locate the polygon file relative to the main rainfall file
+        const char *lastSlash = strrchr(filename, '/');
+
+        if(lastSlash != NULL){
+            int directoryLength = (int)(lastSlash - filename + 1);
+
+            snprintf(polygonPath, sizeof(polygonPath),
+                     "%.*s%s", directoryLength, filename, polygonFilename);
+        }else{
+            snprintf(polygonPath, sizeof(polygonPath),
+                     "%s", polygonFilename);
+        }
+
+        
+        // Open the rainfall polygon file
+        FILE *polygonFile = fopen(polygonPath, "r");
+
+        if(polygonFile == NULL){
+            Notify("Could not open rainfall polygon file",
+                   MSG_ERROR, msg);
+            fclose(fp);
+            FreeRainfallData(pksetup);
+            return 0;
+        }
+
+        
+        // Read and validate the number of polygon vertices
+        int nVertices;
+
+        if(fscanf(polygonFile, "%1023s %d", label, &nVertices) != 2 ||
+           strcmp(label, "nVertexPol") != 0 ||
+           nVertices < 3){
+
+            Notify("Invalid number of rainfall polygon vertices",
+                   MSG_ERROR, msg);
+            fclose(polygonFile);
+            fclose(fp);
+            FreeRainfallData(pksetup);
+            return 0;
+        }
+
+        // Store the number of vertices for this polygon
+        pksetup->rainGroup[i].nVertices = nVertices;
+
+        // Allocate memory for polygon vertex coordinates
+        pksetup->rainGroup[i].x =
+            (double*) calloc(nVertices, sizeof(double));
+
+        pksetup->rainGroup[i].y =
+            (double*) calloc(nVertices, sizeof(double));
+
+        if(pksetup->rainGroup[i].x == NULL ||
+           pksetup->rainGroup[i].y == NULL){
+
+            Notify("Could not allocate rainfall polygon coordinates",
+                   MSG_ERROR, msg);
+            fclose(polygonFile);
+            fclose(fp);
+            FreeRainfallData(pksetup);
+            return 0;
+        }
+
+        
+        // Read and validate polygon vertex coordinates
+        for(int j = 0; j < nVertices; j++){
+
+            if(fscanf(polygonFile, "%lf %lf",
+                      &pksetup->rainGroup[i].x[j],
+                      &pksetup->rainGroup[i].y[j]) != 2 ||
+               !isfinite(pksetup->rainGroup[i].x[j]) ||
+               !isfinite(pksetup->rainGroup[i].y[j])){
+
+                Notify("Invalid rainfall polygon coordinates",
+                       MSG_ERROR, msg);
+                fclose(polygonFile);
+                fclose(fp);
+                FreeRainfallData(pksetup);
+                return 0;
+            }
+        }
+
+        
+        // Read and validate the number of rainfall time-series points
+        int nPoints;
+
+        if(fscanf(polygonFile, "%1023s %d", label, &nPoints) != 2 ||
+           strcmp(label, "TimeSeriesNp") != 0 ||
+           nPoints < 1){
+
+            Notify("Invalid number of rainfall time-series points",
+                   MSG_ERROR, msg);
+            fclose(polygonFile);
+            fclose(fp);
+            FreeRainfallData(pksetup);
+            return 0;
+        }
+
+        // Store the number of time-series points for this polygon
+        pksetup->rainGroup[i].npoints = nPoints;
+
+        // Rainfall time-series values will be read here
+        
+        // Allocate memory for rainfall time and intensity values
+        pksetup->rainGroup[i].t =
+            (double*) calloc(nPoints, sizeof(double));
+
+        pksetup->rainGroup[i].q =
+            (double*) calloc(nPoints, sizeof(double));
+
+        if(pksetup->rainGroup[i].t == NULL ||
+           pksetup->rainGroup[i].q == NULL){
+
+            Notify("Could not allocate rainfall time-series data",
+                   MSG_ERROR, msg);
+            fclose(polygonFile);
+            fclose(fp);
+            FreeRainfallData(pksetup);
+            return 0;
+        }
+
+        // Read rainfall time-series values and convert intensity to SI units
+        for(int j = 0; j < nPoints; j++){
+
+            double timeValue;
+            double rainValue;
+
+            if(fscanf(polygonFile, "%lf %lf",
+                      &timeValue, &rainValue) != 2 ||
+               !isfinite(timeValue) ||
+               !isfinite(rainValue) ||
+               timeValue < 0.0 ||
+               rainValue < 0.0 ||
+               (j > 0 && timeValue <= pksetup->rainGroup[i].t[j - 1])){
+
+                Notify("Invalid rainfall time-series values",
+                       MSG_ERROR, msg);
+                fclose(polygonFile);
+                fclose(fp);
+                FreeRainfallData(pksetup);
+                return 0;
+            }
+
+            pksetup->rainGroup[i].t[j] = timeValue;
+            pksetup->rainGroup[i].q[j] = rainValue * rainConversion;
+        }
+
+        fclose(polygonFile);
+
+    }
+
+    
+    fclose(fp);
+
+    return 1;
+}
+/*----------------------------*/
+
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL void FreeRainfallData(
+    Peka2D_Setup *pksetup){
+/*----------------------------*/
+
+    if(pksetup == NULL || pksetup->rainGroup == NULL){
+        return;
+    }
+
+    // Determine how many rainfall regions were allocated
+    int nRainRegions = pksetup->nRainPolygons;
+
+    // Release time series and polygon coordinates
+    for(int i = 0; i < nRainRegions; i++){
+        free(pksetup->rainGroup[i].t);
+        free(pksetup->rainGroup[i].q);
+        free(pksetup->rainGroup[i].x);
+        free(pksetup->rainGroup[i].y);
+    }
+
+    // Release the array of rainfall regions
+    free(pksetup->rainGroup);
+
+    pksetup->rainGroup = NULL;
+    pksetup->nRainPolygons = 0;
+}
+/*----------------------------*/
+
+
+////////////////////////////////////////////////////////////////
+EXPORT_DLL double getAverageRainfallIntensity(
+    const Peka2D_Rain *rain,
+    double tStart,
+    double tEnd){
+/*----------------------------*/
+
+    int i;
+    double currentTime, nextTime;
+    double rainDepth = 0.0;
+
+    // Return zero when rainfall data or the time interval is invalid
+    if(rain == NULL || rain->npoints <= 0 ||
+       rain->t == NULL || rain->q == NULL ||
+       !isfinite(tStart) || !isfinite(tEnd) ||
+       tEnd <= tStart){
+        return 0.0;
+    }
+
+    currentTime = tStart;
+
+    // Integrate the piecewise-constant rainfall intensity
+    while(currentTime < tEnd){
+
+        // Use the first intensity before the first time point
+        i = 0;
+
+        // Find the intensity corresponding to the current time
+        while(i < rain->npoints - 1 &&
+              currentTime >= rain->t[i + 1]){
+            i++;
+        }
+
+        nextTime = tEnd;
+
+        // Stop at the next rainfall intensity change
+        if(i < rain->npoints - 1 &&
+           rain->t[i + 1] < nextTime){
+            nextTime = rain->t[i + 1];
+        }
+
+        // Accumulate rainfall depth over this subinterval
+        rainDepth += rain->q[i] * (nextTime - currentTime);
+
+        currentTime = nextTime;
+    }
+
+    // Return the equivalent average rainfall intensity
+    return rainDepth / (tEnd - tStart);
+}
+/*----------------------------*/
+
+
+////////////////////////////////////////////////////////////////
 EXPORT_DLL int setControlParameters(
     Peka2D_Setup *pksetup, 
     t_parameters *spar, 

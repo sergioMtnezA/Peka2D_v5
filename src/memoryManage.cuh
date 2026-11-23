@@ -18,6 +18,9 @@ EXPORT_DLL int createArraysCudaMemory(
     t_arrays *carrays,
     t_arrays *garrays,
     t_cuPtr *cuPtr,
+    //------------------------------------------//
+    int nRainPolygons, // Number of rainfall polygons
+    //------------------------------------------//
     t_message *msg);
 /*----------------------------*/
 
@@ -31,6 +34,7 @@ EXPORT_DLL int copyComputationControls(
 ////////////////////////////////////////////////////////////////
 EXPORT_DLL int allocateArraysCudaMem(
     int NCwall, int ncells, int nWallCell, int nwc, int nwb,   
+    int nRainPolygons, // Number of rainfall polygons
     t_cuPtr *cuPtr);
 /*----------------------------*/
 
@@ -47,6 +51,9 @@ __global__ void assignMeshArraysToCudaMem(t_arrays *garrays,
 	int *activeC,
 	int *actCells,
 	int *cidx,
+    //------------------------------------------//
+    int *rainRegion, // Rainfall polygon index for each cell
+    //------------------------------------------//
 	int *nneig,
 	double *z,
 	double *h,
