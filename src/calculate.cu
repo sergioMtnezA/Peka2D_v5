@@ -65,8 +65,7 @@ EXPORT_DLL int computeSimulation(
     }else{
         device = 0;
     }
-    //cudaSetDevice(device);
-    cudaSetDevice(1);
+    cudaSetDevice(device);
     sprintf(temp,"Selected device ID: %d",device);
     Notify(temp,MSG_L3,msg);
 
