@@ -44,13 +44,24 @@ int runMainKernel (int argc, char * argv[]) {
 
 	//getchar(); 	
 
-    if(!computeSimulation(
+	//------------------------------------------//
+	int simulationStatus = computeSimulation(
         spar,
         mesh, 
         carrays,
+		pksetup->rainGroup, // Rainfall time series
+		pksetup->nRainPolygons, // Number of rainfall polygons
 		&(timers),
-		msg)
-	) return 0;
+		msg
+	);
+
+	// Release CPU mesh computation arrays.
+	freeMeshArraysMem(carrays);
+
+	if(!simulationStatus){
+		return 0;
+	}
+	//------------------------------------------//
 
 	clock_t end0=clock();
 	double dtime=double(end0-start0)/CLOCKS_PER_SEC;
@@ -135,6 +146,24 @@ int loadSimulationDomain(
 		}        
 	}
 
+	//------------------------------------------//
+    // Load rainfall data when rainfall is enabled
+    if(msg->error){
+        return 0;
+    }else if(pksetup->pkrun.rain){
+
+        // Build the rainfall file path
+        snprintf(filename, sizeof(filename),
+                 "%s%s.rain", spar->dir, spar->proj);
+        
+        // Read rainfall data using the unified input format
+        if(!ReadRainfallData(filename, pksetup, msg)){
+            return 0;
+        }
+
+
+    }
+	//------------------------------------------//
 
     //Load solute data
 	#if SET_SOLUTE
@@ -222,6 +251,23 @@ int initializeComputationArrays(
 			sprintf(temp,"Initialize mesh arrays completed");
 			Notify(temp,MSG_L2,msg);		
 		}  				
+	     		
+		//------------------------------------------//
+		// Assign rainfall polygons to mesh cells
+		if (!msg->error && pksetup->pkrun.rain)
+		{
+			if (assignRainPolygonsToCells(pksetup, mesh, carrays, msg))
+			{
+				sprintf(temp, "Rainfall polygon assignment completed");
+				Notify(temp, MSG_L2, msg);
+			}
+			else
+			{
+				return 0;
+			}
+		}
+		//------------------------------------------//
+
 	     		
 	}    
 

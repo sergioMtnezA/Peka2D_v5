@@ -427,6 +427,9 @@ struct t_arrays_{
 	double massOld; /**< @brief Run-control integrated volume at the beginning of the time step*/
 	double massNew; /**< @brief Run-control current integrated volume */
     double massError; /**< @brief Run-control mass error computed at the end of the time stop */
+	//------------------------------------------//
+	double rainVolume; /**< @brief Rainfall volume added during the current time step [m3] */
+	//------------------------------------------//
 
 	//solute controls
 	int nSolutes; /**< @brief Number of solutes */
@@ -450,6 +453,9 @@ struct t_arrays_{
 	double *sqrh; /**< @brief [NCELLS] Square root of flow depth in cells*/
 
 	double *area; /**< @brief [NCELLS] Cell area*/
+	//------------------------------------------//
+	int *rainRegion; /**< @brief [NCELLS] Rainfall polygon index (-1 = no rainfall) */
+	//------------------------------------------//
 	double *nman; /**< @brief [NCELLS] Manning roughness coefficient nMan [s m^(-1/3)] in cells*/
     double *SOX; /**< @brief [NCELLS] X-direction bed slope*/
 	double *SOY; /**< @brief [NCELLS] Y-direction bed slope*/
@@ -604,6 +610,10 @@ struct t_cuPtr_{
 	int *cidx, *nneig;
 	int *activeC, *actCells;
 	double *z, *h, *hu, *hv, *u, *v, *modulou, *sqrh;
+	//------------------------------------------//
+	int *rainRegion; /**< [NCELLS] Rainfall polygon index on the GPU */
+	double *rainIntensity; /**< [NRAINPOLYGONS] Rainfall intensity for each polygon [m/s] */
+	//------------------------------------------//
 	double *area, *nman, *SOX, *SOY;
 	double *mass;
 

@@ -59,6 +59,19 @@ typedef struct Peka2D_Probe_ Peka2D_Probe;
 // Control sections
 typedef struct Peka2D_CrossSectionGroup_ Peka2D_CrossSectionGroup;
 typedef struct Peka2D_CrossSection_ Peka2D_CrossSection;
+
+// Polygon rainfall data
+typedef struct Peka2D_Rain_ Peka2D_Rain;
+
+struct Peka2D_Rain_ {
+    int npoints;    // Number of rainfall time-series points
+    double *t;      // Time values [s]
+    double *q;      // Rainfall intensity [m/s]
+
+    int nVertices;  // Number of polygon vertices
+    double *x;      // Polygon vertex X coordinates [m]
+    double *y;      // Polygon vertex Y coordinates [m]
+};
 //------------------------------------------//
 
 struct Peka2D_Run_{
@@ -163,6 +176,10 @@ struct Peka2D_CrossSectionGroup_ {
 
 struct Peka2D_Setup_{
     Peka2D_Run pkrun;
+    //------------------------------------------//
+    int nRainPolygons; // Number of rainfall polygons
+    Peka2D_Rain *rainGroup; // Rainfall time series and optional polygons
+    //------------------------------------------//
     Peka2D_NodeBoundary *pknode;
     Peka2D_OBCWalls *IOBC;
     Peka2D_OBCWalls *OOBC;  
@@ -196,6 +213,48 @@ EXPORT_DLL int readControlDataFile(
     Peka2D_Setup *pksetup,
     t_message *msg);
 /*----------------------------*/
+
+
+
+////////////////////////////////////////////////////////////////
+/**
+ * @brief Reads polygon-based rainfall data from a .rain file.
+ * @param filename Path to the main rainfall input file.
+ * @param pksetup Simulation setup that receives rainfall data.
+ * @param msg Message handler for errors and notifications.
+ * @return 1 on success, 0 on failure.
+ */
+EXPORT_DLL int ReadRainfallData(
+    const char *filename,
+    Peka2D_Setup *pksetup,
+    t_message *msg);
+/*----------------------------*/
+
+
+////////////////////////////////////////////////////////////////
+/**
+ * @brief Releases rainfall time series and polygon geometry.
+ * @param pksetup Simulation setup containing rainfall data.
+ */
+EXPORT_DLL void FreeRainfallData(
+    Peka2D_Setup *pksetup);
+/*----------------------------*/
+
+
+////////////////////////////////////////////////////////////////
+/**
+ * @brief Computes the average rainfall intensity over a time interval.
+ * @param rain Pointer to the polygon rainfall time series.
+ * @param tStart Start time of the interval [s].
+ * @param tEnd End time of the interval [s].
+ * @return Average rainfall intensity [m/s].
+ */
+EXPORT_DLL double getAverageRainfallIntensity(
+    const Peka2D_Rain *rain,
+    double tStart,
+    double tEnd);
+/*----------------------------*/
+
 
 ////////////////////////////////////////////////////////////////
 /**
